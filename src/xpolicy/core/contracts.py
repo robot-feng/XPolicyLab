@@ -319,3 +319,28 @@ class ContractValidator:
             issues.append(ContractIssue("state_layout", "observation.state", "named state order or units differ from RobotProfile", [names, units], [obs.state_names, obs.state_units]))
         if issues:
             raise ContractError(tuple(issues))
+
+    @staticmethod
+    def prediction(result: ActionChunk, model: ModelManifest, *, source_frame_id: int,
+                   episode_id: str, sequence_id: int, clock_domain: str,
+                   allow_missing_context: bool = False) -> None:
+        if not isinstance(result, ActionChunk):
+            raise TypeError("complete-chunk policies must return ActionChunk, never a legacy action list")
+        expected = {"shape": (model.predicted_horizon, len(model.action_fields)),
+                    "action_type": model.action_type,
+                    "action_units": tuple(field.unit for field in model.action_fields),
+                    "reference_frame": model.reference_frame}
+        actual = {"shape": result.values.shape, "action_type": result.action_type,
+                  "action_units": result.action_units, "reference_frame": result.reference_frame}
+        if model.action_type != ActionType.EEF_POSE:
+            expected["joint_names"] = tuple(field.name for field in model.action_fields)
+            actual["joint_names"] = result.joint_names
+        issues = [ContractIssue("prediction_contract", f"prediction.{field}", "prediction differs from manifest", value, actual[field])
+                  for field, value in expected.items() if actual[field] != value]
+        for field, value in {"source_frame_id": source_frame_id, "episode_id": episode_id,
+                             "sequence_id": sequence_id, "clock_domain": clock_domain}.items():
+            declared = getattr(result, field)
+            if declared != value and not (allow_missing_context and declared is None):
+                issues.append(ContractIssue("prediction_context", f"prediction.{field}", "prediction context differs from current request", value, declared))
+        if issues:
+            raise ContractError(tuple(issues))

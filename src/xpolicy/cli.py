@@ -19,7 +19,7 @@ def _parser():
     doctor.add_argument("--mode", choices=["contract"], default="contract")
     doctor.add_argument("--verify-artifacts", action="store_true")
     doctor.add_argument("--output", type=Path)
-    evaluation = commands.add_parser("eval", help="run synchronous dataset_direct replay into a record-only sink")
+    evaluation = commands.add_parser("eval", help="run dataset_direct replay with shared record-only execution")
     evaluation.add_argument("--config", type=Path, required=True)
     golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
     golden_actions = golden.add_subparsers(dest="golden_action", required=True)

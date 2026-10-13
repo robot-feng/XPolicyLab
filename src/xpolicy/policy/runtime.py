@@ -6,8 +6,8 @@ from dataclasses import replace
 
 from xpolicy.core.artifacts import verify_artifact
 from xpolicy.core.config import LoadedContracts
-from xpolicy.core.contracts import ActionChunk, ActionType, ContractValidator, Observation
-from xpolicy.core.errors import ContractError, ContractIssue, UnsupportedCapability
+from xpolicy.core.contracts import ActionChunk, ContractValidator, Observation
+from xpolicy.core.errors import UnsupportedCapability
 from xpolicy.core.registry import Registry, policy_registry
 
 
@@ -89,35 +89,9 @@ class ChunkPolicyRuntime:
             self.model.predict(obs) if self.native else
             self.model.predict_action_chunk(legacy_observation(obs, self.contracts, self._sequence_id))
         )
-        if not isinstance(result, ActionChunk):
-            raise TypeError("complete-chunk policies must return ActionChunk, never a legacy action list")
-        manifest = self.contracts.manifest
-        issues = []
-        expected = {
-            "shape": (manifest.predicted_horizon, len(manifest.action_fields)),
-            "action_type": manifest.action_type,
-            "action_units": tuple(field.unit for field in manifest.action_fields),
-            "reference_frame": manifest.reference_frame,
-        }
-        actual = {
-            "shape": result.values.shape, "action_type": result.action_type,
-            "action_units": result.action_units, "reference_frame": result.reference_frame,
-        }
-        if manifest.action_type != ActionType.EEF_POSE:
-            expected["joint_names"] = tuple(field.name for field in manifest.action_fields)
-            actual["joint_names"] = result.joint_names
-        for field, value in expected.items():
-            if actual[field] != value:
-                issues.append(ContractIssue("prediction_contract", f"prediction.{field}", "prediction differs from manifest", value, actual[field]))
-        for field, value in {
-            "source_frame_id": obs.frame_id, "episode_id": obs.episode_id,
-            "sequence_id": self._sequence_id, "clock_domain": obs.clock_domain,
-        }.items():
-            declared = getattr(result, field)
-            if declared is not None and declared != value:
-                issues.append(ContractIssue("prediction_context", f"prediction.{field}", "prediction context differs from current request", value, declared))
-        if issues:
-            raise ContractError(tuple(issues))
+        ContractValidator.prediction(result, self.contracts.manifest, source_frame_id=obs.frame_id,
+                                     episode_id=obs.episode_id, sequence_id=self._sequence_id,
+                                     clock_domain=obs.clock_domain, allow_missing_context=True)
         result = replace(result, source_frame_id=obs.frame_id, episode_id=obs.episode_id,
                          sequence_id=self._sequence_id, clock_domain=obs.clock_domain)
         self._sequence_id += 1

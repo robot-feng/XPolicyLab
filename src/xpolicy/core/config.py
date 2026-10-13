@@ -35,7 +35,7 @@ class PolicyServiceConfig(Schema):
 
 class ExperimentSettings(Schema):
     name: Name
-    seed: int = Field(default=0, strict=True)
+    seed: int = Field(default=0, ge=0, le=4294967295, strict=True)
     repeats: int = Field(default=1, ge=1, strict=True)
     max_duration_s: Rate = 60.0
 
@@ -53,6 +53,16 @@ class ExecutionConfig(Schema):
     strategy: Literal["sync", "async_latest_only"] = "sync"
     control_hz: Rate
     execute_horizon: int = Field(ge=1, strict=True)
+    latency_trim: StrictBool = False
+    overlap_blend_steps: int = Field(default=0, ge=0, strict=True)
+    # This is the only implemented empty-buffer action in a record-only sink.
+    empty_buffer: Literal["skip_record"] = "skip_record"
+
+    @model_validator(mode="after")
+    def overlap_window(self):
+        if self.overlap_blend_steps > self.execute_horizon:
+            raise ValueError("overlap_blend_steps cannot exceed execute_horizon")
+        return self
 
 
 class ValidationConfig(Schema):

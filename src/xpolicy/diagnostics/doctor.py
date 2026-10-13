@@ -11,7 +11,7 @@ from packaging.requirements import Requirement
 
 from xpolicy.core.artifacts import file_sha256, source_revision, verify_artifact
 from xpolicy.core.config import load_experiment
-from xpolicy.core.contracts import ContractValidator
+from xpolicy.core.contracts import ActionType, ContractValidator
 from xpolicy.core.registry import policy_registry
 
 
@@ -62,7 +62,12 @@ def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
             checks.append({"id": "policy_api", "status": "BLOCKED", "message": str(exc)})
         horizon_ok = config.execution.execute_horizon <= contracts.manifest.predicted_horizon
         rate_ok = config.execution.control_hz == contracts.robot.control_hz
-        checks.append({"id": "execution_schedule", "status": "PASS" if horizon_ok and rate_ok else "FAIL", "details": {"horizon_within_prediction": horizon_ok, "control_rate_matches_robot": rate_ok}})
+        blend_ok = not config.execution.overlap_blend_steps or contracts.manifest.action_type == ActionType.JOINT_POSITION
+        dataset_rate_ok = contracts.dataset is None or config.execution.control_hz == contracts.dataset.sample_hz
+        checks.append({"id": "execution_schedule", "status": "PASS" if horizon_ok and rate_ok and blend_ok and dataset_rate_ok else "FAIL", "details": {
+            "horizon_within_prediction": horizon_ok, "control_rate_matches_robot": rate_ok,
+            "control_rate_matches_dataset": dataset_rate_ok, "overlap_requires_absolute_joint_position": blend_ok,
+            "strategy": config.execution.strategy, "latency_trim": config.execution.latency_trim}})
         identities = [(name, getattr(contracts.manifest, name), contracts.manifest_path) for name in ("checkpoint", "training_loader", "normalization_stats") if getattr(contracts.manifest, name) is not None]
         if contracts.dataset is not None:
             identities.append(("dataset", contracts.dataset.artifact, contracts.dataset_profile_path))

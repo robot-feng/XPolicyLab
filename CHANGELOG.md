@@ -19,6 +19,10 @@
 - Add hash-verified golden bundles and `xpolicy golden diff` for first-boundary diagnosis.
 - Add an explicit StarVLA PIL resize option and verify its image preprocessing against
   genuine loader samples; preserve the existing OpenCV resize default.
+- Add a shared record-only chunk buffer, generation-aware latest-only inference,
+  explicit latency trimming and absolute-position overlap with contributor traces.
+- Add paced asynchronous dataset replay and actual WebSocket reset interleaving checks;
+  retain first faults, cleanup errors, skipped frames and unmeasured feedback in reports.
 
 ## 72f6b36f
 

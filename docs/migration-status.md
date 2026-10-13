@@ -4,7 +4,8 @@
 
 This checkout is the `robot-feng/XPolicyLab` fork. The v4 blueprint is a design and
 acceptance specification; the full unified platform is not implemented. The current
-change implements the public core and policy-service foundation. EVA changes were
+change implements the public core, policy service, offline diagnostics and record-only
+execution foundations. EVA changes were
 deferred by the user. No EVA robot, transport, SDK, recorder or source archive is
 imported, modified or bundled in this change.
 
@@ -38,9 +39,10 @@ are not attributed to the surrounding checkout's git SHA.
 | C01 full chunk | Counted mock and real StarVLA adapter with a model-server double | Genuine checkpoint forward and training-loader tensor comparison |
 | C02 API ownership | Separate chunk and legacy services; original legacy result preserved | Original benchmark task baseline |
 | C03/C04 protocol faults | Timeout surfaces, same request retries execute once, restart identity rejected | Device-local stale-command behavior |
-| Dataset direct / offline scoring | Explicit HDF5 mappings, record-only prefixes, linked trace and per-field behavior cloning error; synthetic fixture | Genuine training-source golden data and checkpoint parity |
+| Dataset direct / offline scoring | Explicit HDF5 mappings, shared sync/async record-only execution, linked trace and per-field behavior cloning error; synthetic fixture | Genuine 24D replay profiles, final processor and checkpoint parity |
 | Training golden / first divergence | Actual G2 DataLoader samples and padding masks, raw-data lossless roundtrips, named statistics alignment, adapter image-only parity; numeric bundle/CLI checks | Final VLM tensors, state/action adapter parity, unit calibration and genuine checkpoint forward |
-| Device / execution | Contract schemas and truthful unexecuted report entries | Dataset wire, generation-aware asynchronous execution, SDK mappings and on-site safety |
+| C05/C06 record-only execution | Immediate generation invalidation, latest-only pending observations, actual WS reset interleaving, fixed trim/overlap/tick-consumption checks and paced async replay | EVA strategy/physical SDK regression, device-local invalidation and failure behavior |
+| Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
 particular, a model-server double does not establish real-checkpoint normalization or

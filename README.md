@@ -220,6 +220,8 @@ Each run writes profiles, source identities, predictions, recorded execution pre
 
 Export actual G2 training-loader samples and locate the first data/preprocessing divergence with `xpolicy golden diff`; see [Training-source golden samples](docs/training-golden.md) for commands and verified scope.
 
+Dataset replay supports synchronous and paced `async_latest_only` record-only execution, with generation resets, explicit latency trimming and optional absolute-joint overlap. See [Chunk execution](docs/execution.md) for runnable examples, algorithms and trace scope.
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:

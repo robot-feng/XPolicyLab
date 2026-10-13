@@ -617,7 +617,10 @@ class PolicyEvalClient:
         action_case_id: str | None = None,
         repeat_index: int | None = None,
         step: int = 0,
+        request_id: str | None = None,
     ) -> Frame:
+        if request_id is not None and (not isinstance(request_id, str) or not request_id.strip()):
+            raise ValueError("request_id must be a nonempty string or None")
         payload: dict[str, Any] = {"func_name": func_name}
         if obs is not None:
             payload["obs"] = obs
@@ -628,6 +631,7 @@ class PolicyEvalClient:
             action_case_id=action_case_id,
             repeat_index=repeat_index,
             step=step,
+            _request_id=request_id,
         )
 
     async def infer(

@@ -17,9 +17,11 @@ from xpolicy.core.config import load_service
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def create_fixture(output: Path, frames=5):
+def create_fixture(output: Path, frames=5, strategy="sync"):
     if isinstance(frames, bool) or not isinstance(frames, int) or frames < 1:
         raise ValueError("frames must be a positive integer")
+    if strategy not in {"sync", "async_latest_only"}:
+        raise ValueError("unsupported fixture execution strategy")
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
     _, contracts = load_service(ROOT / "configs/policies/mock.yaml")
@@ -53,7 +55,8 @@ def create_fixture(output: Path, frames=5):
     experiment = {"schema_version": 1, "experiment": {"name": "synthetic_dataset_replay", "seed": 42, "repeats": 2, "max_duration_s": 10},
                   "policy": {"name": "mock", "api": "chunk", "manifest": str(contracts.manifest_path)},
                   "environment": {"kind": "dataset_direct", "robot": str(contracts.robot_path), "dataset_profile": "dataset.yaml", "dataset_path": "trajectory.hdf5"},
-                  "execution": {"mode": "record_only", "strategy": "sync", "control_hz": contracts.robot.control_hz, "execute_horizon": 2},
+                  "execution": {"mode": "record_only", "strategy": strategy, "control_hz": contracts.robot.control_hz, "execute_horizon": 2,
+                                "latency_trim": strategy == "async_latest_only", "overlap_blend_steps": 0, "empty_buffer": "skip_record"},
                   "artifacts": {"root": "results"}}
     for name, value in (("dataset.yaml", profile), ("experiment.yaml", experiment)):
         (output / name).write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
@@ -63,8 +66,10 @@ def create_fixture(output: Path, frames=5):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--frames", type=int, default=5)
+    parser.add_argument("--strategy", choices=("sync", "async_latest_only"), default="sync")
     args = parser.parse_args(argv)
-    print(create_fixture(args.output))
+    print(create_fixture(args.output, args.frames, args.strategy))
 
 
 if __name__ == "__main__":
