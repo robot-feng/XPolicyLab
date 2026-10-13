@@ -1,0 +1,9 @@
+schema_version: 1
+policy:
+  name: mock
+  api: chunk
+  manifest: mock_manifest.yaml
+robot: ../robots/mock_arm.yaml
+server:
+  host: 127.0.0.1
+  port: 19000

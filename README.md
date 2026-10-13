@@ -190,10 +190,24 @@ Clone XPolicyLab as a normal Python project for adapter development, offline che
 ```bash
 mkdir demo_env
 cd demo_env
-git clone https://github.com/XPolicyLab/XPolicyLab.git
+git clone https://github.com/robot-feng/XPolicyLab.git
 cd XPolicyLab
-pip install -e .
+conda activate XPolicyLab
+uv pip install --python "$CONDA_PREFIX/bin/python" -e .
 ```
+
+Keep Python and the policy's existing PyTorch/CUDA stack in Conda; manage this project's Python dependencies in `pyproject.toml` with uv. Activate an existing compatible environment, or clone it first with `conda create --name XPolicyLab --clone <existing_env>`. The editable install keeps installed dependencies that satisfy the project requirements. Model dependencies remain in each policy's own environment and installation guide.
+
+The unified core has a CPU mock service and contract preflight:
+
+```bash
+xpolicy --help
+xpolicy policy list
+xpolicy doctor --mode contract --config configs/experiments/mock_contract.yaml
+xpolicy policy serve --config configs/policies/mock.yaml
+```
+
+The mock declares synthetic camera and joint semantics; it is not a trained policy or a robot benchmark. Contract preflight checks declared profiles and reports runtime checks as `NOT_RUN`. See [Core development](docs/core-development.md) for the configuration contract, Conda/uv workflow, and locked CPU installation.
 
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 

@@ -165,7 +165,7 @@ class ActionChunk:
 
     @property
     def execution_ready(self) -> bool:
-        """Whether the chunk carries the metadata needed for strict execution."""
+        """Metadata completeness only; device bounds, expiry and permission need local checks."""
         return not self.execution_gaps
 
     def require_execution_ready(self) -> ActionChunk:
@@ -202,7 +202,7 @@ class ActionChunk:
         if not isinstance(data, Mapping):
             raise TypeError("ActionChunk wire value must be a mapping.")
         version = data.get("schema_version")
-        if version != cls.SCHEMA_VERSION:
+        if type(version) is not int or version != cls.SCHEMA_VERSION:
             raise ValueError(
                 f"Unsupported ActionChunk schema_version {version!r}; "
                 f"expected {cls.SCHEMA_VERSION}."

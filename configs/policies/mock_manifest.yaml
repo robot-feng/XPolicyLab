@@ -1,0 +1,17 @@
+schema_version: 1
+model_id: deterministic_mock_hold_v1
+source_kind: mock
+training_robot_id: mock_arm
+predicted_horizon: 4
+cameras:
+  - name: cam_head
+    color_space: RGB
+    shape: [8, 8, 3]
+state_fields:
+  - {name: arm_joint, unit: rad}
+  - {name: gripper, unit: m}
+action_fields:
+  - {name: arm_joint, unit: rad}
+  - {name: gripper, unit: m}
+action_type: joint_position
+normalization: none

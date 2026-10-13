@@ -1,0 +1,13 @@
+XPolicyLab
+
+This checkout derives from XPolicyLab (https://github.com/XPolicyLab/XPolicyLab),
+licensed under the Apache License, Version 2.0. The upstream checkout baseline
+is f6e309e8 (full SHA recorded in docs/migration-status.md).
+
+The unified xpolicy core reuses the upstream XPolicyLab WebSocket RPC and
+image-processing helpers. Local modifications and new files are recorded
+in CHANGELOG.md and docs/migration-status.md.
+
+Policy implementations, model weights, third-party SDKs, datasets, and robot
+assets retain their own licenses and attribution requirements. This notice
+does not grant additional rights to redistribute those external assets.

@@ -12,6 +12,11 @@ checkpoints/
 runs/
 Log/
 logs/
+build/
+dist/
+.pytest_cache/
+.coverage*
+htmlcov/
 
 # H_RDT local artifacts and large model assets
 policy/H_RDT/.cache/

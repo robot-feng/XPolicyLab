@@ -1,0 +1,20 @@
+schema_version: 1
+experiment:
+  name: mock_contract_baseline
+  seed: 42
+  repeats: 1
+  max_duration_s: 10
+policy:
+  name: mock
+  api: chunk
+  manifest: ../policies/mock_manifest.yaml
+environment:
+  kind: fake_plant
+  robot: ../robots/mock_arm.yaml
+execution:
+  mode: record_only
+  strategy: sync
+  control_hz: 30
+  execute_horizon: 2
+artifacts:
+  root: ../../runs/mock_contract_baseline

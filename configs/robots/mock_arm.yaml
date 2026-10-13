@@ -1,0 +1,18 @@
+schema_version: 1
+profile_id: mock_arm_v1
+robot_id: mock_arm
+control_hz: 30
+cameras:
+  - name: cam_head
+    color_space: RGB
+    shape: [8, 8, 3]
+state_fields:
+  - {name: arm_joint, unit: rad}
+  - {name: gripper, unit: m}
+action_fields:
+  - {name: arm_joint, unit: rad}
+  - {name: gripper, unit: m}
+action_type: joint_position
+legacy_state_groups:
+  joint_state: [arm_joint]
+  ee_joint_state: [gripper]

@@ -193,10 +193,24 @@ policy/<POLICY>/
 ```bash
 mkdir demo_env
 cd demo_env
-git clone https://github.com/XPolicyLab/XPolicyLab.git
+git clone https://github.com/robot-feng/XPolicyLab.git
 cd XPolicyLab
-pip install -e .
+conda activate XPolicyLab
+uv pip install --python "$CONDA_PREFIX/bin/python" -e .
 ```
+
+Conda 提供 Python 和策略已有的 PyTorch/CUDA 环境；项目的 Python 依赖统一在 `pyproject.toml` 中声明，由 uv 管理。可以激活已有的兼容环境，或先用 `conda create --name XPolicyLab --clone <existing_env>` 克隆。editable 安装会保留满足项目约束的已安装依赖。模型依赖继续遵循各策略自己的环境和安装说明。
+
+统一 core 提供 CPU mock 服务和契约预检：
+
+```bash
+xpolicy --help
+xpolicy policy list
+xpolicy doctor --mode contract --config configs/experiments/mock_contract.yaml
+xpolicy policy serve --config configs/policies/mock.yaml
+```
+
+mock 声明的是合成相机与关节语义，不代表已训练策略或机器人 benchmark。契约预检检查声明的 profile，将未执行的运行时检查标记为 `NOT_RUN`。配置契约、Conda/uv 工作流和锁定版本的 CPU 安装见 [Core development](docs/core-development.md)。
 
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。
 

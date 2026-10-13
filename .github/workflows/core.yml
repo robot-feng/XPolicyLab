@@ -1,0 +1,37 @@
+name: Unified core (CPU)
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: '0.10.9'
+      - name: Install locked core and test extra
+        run: uv sync --locked --extra test --default-index https://pypi.org/simple --python '${{ matrix.python }}'
+      - name: Validate core and write evidence
+        run: uv run --no-sync python tools/validate_core.py --environment cpu --output runs/core-validation/locked
+      - name: Validate a clean wheel installation
+        run: uv run --no-sync python tools/validate_install.py --output runs/core-validation/wheel
+      - name: Verify supported WebSocket 14 behavior
+        run: |
+          uv pip install --python .venv/bin/python 'websockets==14.2'
+          uv run --no-sync python tools/validate_core.py --environment cpu --output runs/core-validation/ws14
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: core-evidence-py${{ matrix.python }}
+          path: runs/core-validation/

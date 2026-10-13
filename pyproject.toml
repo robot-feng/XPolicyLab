@@ -7,20 +7,30 @@ name = "xpolicylab"
 version = "0.0.1"
 requires-python = ">=3.10"
 dependencies = [
-    "numpy>=1.23",
-    "pyyaml>=6",
+    "numpy>=1.23,<3",
+    "pyyaml>=6,<7",
     "opencv-python-headless>=4.8",
     "h5py>=3.8",
-    "websockets>=14.0",
-    "msgpack>=1.0.8",
-    "msgpack-numpy>=0.4.8",
-    "pydantic>=2.5",
+    "websockets>=14.0,<16",
+    "msgpack>=1.0.8,<2",
+    "msgpack-numpy>=0.4.8,<1",
+    "pydantic>=2.5,<3",
+    "packaging>=23",
 ]
+
+[project.optional-dependencies]
+test = ["pytest>=8,<10", "pytest-cov>=5,<8"]
+
+[project.scripts]
+xpolicy = "xpolicy.cli:main"
 
 [tool.setuptools]
 py-modules = ["XPolicyLab"]
 
 [tool.setuptools.packages.find]
-where = ["."]
-include = ["client_server*", "utils*"]
+where = [".", "src"]
+include = ["client_server*", "utils*", "xpolicy*"]
 exclude = ["policy*", "build*", "scripts*", "__pycache__*", "tests*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
