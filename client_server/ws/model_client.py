@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import threading
-from collections.abc import Coroutine
+from collections.abc import Coroutine, Mapping
 from typing import Any
 
 from client_server.ws.protocol.client import PolicyEvalClient, PolicyEvalClientConfig
+from XPolicyLab.utils.contracts import ActionChunk
 
 
 class WsModelClient:
@@ -22,9 +23,9 @@ class WsModelClient:
     Not thread-safe: issue calls from a single thread at a time (concurrent
     calls would interleave requests and the reconnect logic on one client).
 
-    The `step` sent on each frame counts INFERENCE calls (get_action /
-    get_action_batch), not environment control steps — one inference call
-    yields a whole action chunk. The server currently only echoes it back.
+    The `step` sent on each frame counts policy prediction calls, not
+    environment control steps — one inference call may yield a whole action
+    chunk. The server currently only echoes it back.
     """
 
     def __init__(
@@ -189,9 +190,29 @@ class WsModelClient:
                 step=self._step,
             )
         )
-        if func_name in {"get_action", "get_action_batch"}:
+        if func_name in {
+            "get_action",
+            "get_action_batch",
+            "predict_action_chunk",
+        }:
             self._step += 1
         return response.payload.get("result")
+
+    def predict_action_chunk(self, obs: dict[str, Any]) -> ActionChunk:
+        """Request and decode a complete chunk from an opt-in policy adapter."""
+        if not isinstance(obs, dict):
+            raise TypeError(
+                f"predict_action_chunk expects an observation dict, got {type(obs).__name__}."
+            )
+        result = self.call("predict_action_chunk", obs=obs)
+        if isinstance(result, ActionChunk):
+            return result
+        if not isinstance(result, Mapping):
+            raise TypeError(
+                "Policy server returned a non-mapping value for predict_action_chunk: "
+                f"{type(result).__name__}."
+            )
+        return ActionChunk.from_wire_dict(result)
 
     @staticmethod
     def _dict_payload(func_name: str, obs: Any) -> dict | None:

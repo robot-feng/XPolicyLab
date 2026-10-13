@@ -151,6 +151,23 @@ The policy environment argument may be a Conda environment name, a venv director
 
 `deploy.yml` keys to check before evaluation: `starvla_root`, `checkpoint_path`, `starvla_server_host`, `starvla_server_port`, `unnorm_key`, `use_ddim`, `num_ddim_steps`, `image_size`, `execute_horizon` (number of actions executed before requesting a new predicted chunk), `include_state` (`auto` reads the checkpoint config; an explicit boolean overrides it), `require_runtime_contract` (rejects a server that cannot prove it applies the released checkpoint's RGB/state/action contract), and `required_pi_v3_forward` (set by the dedicated released-checkpoint entry point when the manifest requires a particular PI-v3 forward).
 
+### Complete action chunk API
+
+The legacy benchmark path keeps using `update_obs` / `get_action`; its
+`execute_horizon` cursor remains inside this adapter. Runtimes that own chunk
+consumption can instead call `WsModelClient.predict_action_chunk(observation)`
+or issue the equivalent `CALL` for `predict_action_chunk`. That path returns
+the full advertised `[horizon, action_dim]` prediction and does not advance the
+legacy cursor. The response is an `ActionChunk` with a versioned wire form.
+
+The adapter identifies these checkpoint outputs as unnormalized absolute joint
+positions. It does not guess joint names, units, source frame, episode, command
+sequence, or freshness deadline. `action_units` and `joint_names` may be added
+to `deploy.yml` only after verification; each must be a list in exact action
+vector order. Frame/episode/sequence/deadline and clock-domain values must come
+from the observation contract. Until that metadata is complete,
+`chunk.execution_ready` is false and a strict execution runtime must reject it.
+
 `include_state: auto` reads `datasets.vla_data.include_state` from `config.yaml`, then falls back to `config.full.yaml` and finally `false`. `STARVLA_INCLUDE_STATE` remains the highest-priority explicit override.
 
 Environment variables used by the adapter scripts:

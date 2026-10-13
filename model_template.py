@@ -1,3 +1,6 @@
+from XPolicyLab.utils.contracts import ActionChunk
+
+
 class ModelTemplate:
     """
     Base template for a policy/model class.
@@ -80,6 +83,22 @@ class ModelTemplate:
         """
         raise NotImplementedError(
             self._error_msg("get_action_batch() must be implemented by the user.")
+        )
+
+    def predict_action_chunk(self, obs) -> ActionChunk:
+        """Optionally return one complete prediction without consuming it.
+
+        可选接口：返回完整动作块，不在模型侧推进执行游标。
+
+        Legacy adapters should keep implementing ``update_obs`` and
+        ``get_action``. This method deliberately has no single-action
+        fallback: one legacy call may be a cursor into an adapter-owned chunk,
+        which is not equivalent to a fresh full-chunk prediction.
+        """
+        raise NotImplementedError(
+            self._error_msg(
+                "predict_action_chunk() is optional and is not implemented by this policy."
+            )
         )
 
     def reset(self):

@@ -25,3 +25,8 @@ execute_horizon: 16
 include_state: auto
 require_runtime_contract: true
 required_pi_v3_forward: null
+# Optional metadata for the complete-chunk API. Fill these only from a
+# verified robot/checkpoint contract; an incomplete ActionChunk is not safe
+# for device execution.
+action_units: null
+joint_names: null

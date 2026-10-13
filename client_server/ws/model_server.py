@@ -23,6 +23,7 @@ from client_server.ws.protocol.exceptions import ErrorCode, WsError
 from client_server.ws.protocol.keepalive import normalize_ws_ping
 from client_server.ws.protocol.messages import MessageType
 from client_server.ws.protocol.schemas import Frame
+from XPolicyLab.utils.contracts import ActionChunk
 from XPolicyLab.utils.process_data import decode_obs_images
 
 logger = logging.getLogger(__name__)
@@ -502,6 +503,9 @@ class PolicyServer:
                 result = await self._call_model_method(method, obs)
         except Exception as exc:
             raise WsError(ErrorCode.CALL_FAILED, str(exc)) from exc
+
+        if isinstance(result, ActionChunk):
+            result = result.to_wire_dict()
 
         payload = _ok_payload(result)
         payload["latency_ms"] = (time.perf_counter() - start) * 1000.0

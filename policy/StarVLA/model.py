@@ -8,6 +8,7 @@ import cv2
 import numpy as np
 
 from XPolicyLab.model_template import ModelTemplate
+from XPolicyLab.utils.contracts import ActionChunk, ActionType
 from XPolicyLab.utils.process_data import (
     get_robot_action_dim_info,
     pack_robot_state,
@@ -202,12 +203,9 @@ class Model(ModelTemplate):
             self._latest_env_idx_list.append(env_idx)
             self.obs_by_env[env_idx] = self._convert_obs(obs)
 
-    def _infer_chunk(self, env_idx: int) -> np.ndarray:
-        if env_idx not in self.obs_by_env:
-            raise AssertionError("update_obs must be called before get_action.")
-
+    def _infer_converted_chunk(self, converted_obs: dict[str, Any]) -> np.ndarray:
         vla_input = {
-            "examples": [self.obs_by_env[env_idx]],
+            "examples": [converted_obs],
             "do_sample": False,
             "use_ddim": self.use_ddim,
             "num_ddim_steps": self.num_ddim_steps,
@@ -217,7 +215,45 @@ class Model(ModelTemplate):
         response = self.client.predict_action(vla_input)
         if not response.get("ok", False):
             raise RuntimeError(f"StarVLA inference failed: {response.get('error', response)}")
-        return np.asarray(response["data"]["actions"][0], dtype=np.float32)
+        actions = np.asarray(response["data"]["actions"][0], dtype=np.float32)
+        expected_shape = (self.action_chunk_size, self.action_dim)
+        if actions.shape != expected_shape:
+            raise ValueError(
+                "StarVLA returned an action chunk with shape "
+                f"{actions.shape}; expected the full advertised chunk {expected_shape}."
+            )
+        if not np.isfinite(actions).all():
+            raise ValueError("StarVLA returned an action chunk containing non-finite values.")
+        return actions
+
+    def _infer_chunk(self, env_idx: int) -> np.ndarray:
+        if env_idx not in self.obs_by_env:
+            raise AssertionError("update_obs must be called before get_action.")
+        return self._infer_converted_chunk(self.obs_by_env[env_idx])
+
+    def predict_action_chunk(self, obs: dict[str, Any]) -> ActionChunk:
+        """Return a full prediction without advancing the legacy action cursor.
+
+        The old benchmark API still uses ``update_obs`` / ``get_action`` and
+        its ``execute_horizon`` cursor. This explicit API is for runtimes that
+        own chunk consumption. Robot-specific names, units and freshness data
+        are copied only when supplied by a verified profile/observation.
+        """
+        if not isinstance(obs, dict):
+            raise TypeError(
+                f"predict_action_chunk expects an observation dict, got {type(obs).__name__}."
+            )
+        return ActionChunk(
+            values=self._infer_converted_chunk(self._convert_obs(obs)),
+            action_type=ActionType.JOINT_POSITION,
+            action_units=self.model_cfg.get("action_units"),
+            source_frame_id=obs.get("source_frame_id", obs.get("frame_id")),
+            episode_id=obs.get("episode_id"),
+            sequence_id=obs.get("sequence_id"),
+            joint_names=self.model_cfg.get("joint_names"),
+            valid_until_s=obs.get("valid_until_s"),
+            clock_domain=obs.get("clock_domain"),
+        )
 
     def _next_action_vector(self, env_idx: int) -> np.ndarray:
         step = self.step_by_env.get(env_idx, 0)
