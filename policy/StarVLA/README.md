@@ -170,6 +170,20 @@ from the observation contract. Until that metadata is complete,
 
 `include_state: auto` reads `datasets.vla_data.include_state` from `config.yaml`, then falls back to `config.full.yaml` and finally `false`. `STARVLA_INCLUDE_STATE` remains the highest-priority explicit override.
 
+### Image preprocessing contract
+
+`image_resize_backend` selects resizing of already-decoded RGB arrays:
+`opencv_area` preserves the existing default; `pillow_bicubic` matches the audited G2
+training loader's `Image.fromarray(rgb).resize((224, 224))`. It requires Pillow in
+the policy environment. Set this explicitly from the checkpoint's actual training
+preprocessing, alongside `image_size: [224, 224]`; no color conversion is performed.
+
+The genuine G2 loader comparison and reproduction commands are documented in
+[Training-source golden samples](../../docs/training-golden.md). Image parity alone
+does not establish 24D state/head/waist mapping, physical units, normalization or
+checkpoint forward parity. This change supports the existing joint adapter; no G2
+runtime registration or hardware mapping is added.
+
 Environment variables used by the adapter scripts:
 
 | Variable | Notes |

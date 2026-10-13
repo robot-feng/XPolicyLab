@@ -4,7 +4,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import cv2
 import numpy as np
 
 from XPolicyLab.model_template import ModelTemplate
@@ -20,6 +19,7 @@ from .runtime_config import (
     resolve_include_state,
     validate_server_runtime_contract,
 )
+from .image_preprocessing import resize_rgb, validate_resize_backend
 
 
 _CUR_DIR = Path(__file__).resolve().parent
@@ -76,6 +76,7 @@ def _extract_camera(observation: dict[str, Any], camera_names: list[str]) -> np.
 class Model(ModelTemplate):
     def __init__(self, model_cfg):
         self.model_cfg = dict(model_cfg)
+        self.image_resize_backend = validate_resize_backend(self.model_cfg.get("image_resize_backend", "opencv_area"))
         self.action_type = self.model_cfg.get("action_type", "joint")
         if self.action_type != "joint":
             raise ValueError("starVLA currently supports action_type='joint' first.")
@@ -162,7 +163,7 @@ class Model(ModelTemplate):
             _extract_camera(observation, ["cam_right_wrist", "right_camera"]),
         ]
         images = [
-            cv2.resize(image, tuple(self.image_size), interpolation=cv2.INTER_AREA)
+            resize_rgb(image, self.image_size, self.model_cfg.get("image_resize_backend", "opencv_area"))
             for image in images
         ]
 

@@ -157,7 +157,8 @@ hashes, source-file hashes and a software inventory. Reports retain `FAIL`, `BLO
 `environment_runtime` remains `NOT_RUN`.
 
 The current experiment fixture names `fake_plant` for preflight, but no device or fake plant is
-started by doctor. Dataset wire replay, genuine training-loader golden samples,
-normalization parity, generation-aware asynchronous execution, SDK mappings, shadow and physical safety
+started by doctor. [Training-source golden samples](training-golden.md) now export the actual
+G2 DataLoader and compare lossless raw data plus adapter image preprocessing. Final model tensor/
+normalization parity, dataset wire replay, generation-aware asynchronous execution, SDK mappings, shadow and physical safety
 acceptance are still pending. EVA migration is deferred by user instruction. See
 [Migration status](migration-status.md) for upstream provenance and acceptance scope.

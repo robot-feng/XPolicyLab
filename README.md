@@ -218,6 +218,8 @@ xpolicy eval --config runs/mock-replay-fixture/experiment.yaml
 
 Each run writes profiles, source identities, predictions, recorded execution prefixes and per-field behavior cloning errors. Recorded observations remain independent of the actions; task success and device feedback are not measured.
 
+Export actual G2 training-loader samples and locate the first data/preprocessing divergence with `xpolicy golden diff`; see [Training-source golden samples](docs/training-golden.md) for commands and verified scope.
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:

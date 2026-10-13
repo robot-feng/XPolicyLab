@@ -39,6 +39,7 @@ are not attributed to the surrounding checkout's git SHA.
 | C02 API ownership | Separate chunk and legacy services; original legacy result preserved | Original benchmark task baseline |
 | C03/C04 protocol faults | Timeout surfaces, same request retries execute once, restart identity rejected | Device-local stale-command behavior |
 | Dataset direct / offline scoring | Explicit HDF5 mappings, record-only prefixes, linked trace and per-field behavior cloning error; synthetic fixture | Genuine training-source golden data and checkpoint parity |
+| Training golden / first divergence | Actual G2 DataLoader samples and padding masks, raw-data lossless roundtrips, named statistics alignment, adapter image-only parity; numeric bundle/CLI checks | Final VLM tensors, state/action adapter parity, unit calibration and genuine checkpoint forward |
 | Device / execution | Contract schemas and truthful unexecuted report entries | Dataset wire, generation-aware asynchronous execution, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
@@ -70,7 +71,9 @@ separate, explicitly limited scope. CI additionally checks WebSocket 14.2; the l
 
 The original demo/StarVLA benchmark path needs an outer `env_cfg/`, benchmark client,
 dataset and checkpoint. The outer benchmark client/configuration is absent here; other
-host directories contain checkpoints and datasets, but a compatible pair has not yet
-been configured for this project. Real benchmark regression is BLOCKED. Device tests
+host directories contain checkpoints and datasets. A G2 pair is now identified and its actual
+training DataLoader is exported by `tools/export_g2_training_golden.py`; see
+[Training-source golden samples](training-golden.md) for commands, findings and scope.
+The pair is not configured as a complete 24D runtime adapter. Real benchmark regression is BLOCKED. Device tests
 and on-site acceptance are also BLOCKED. The project goal remains
 in progress while these requirements and the later blueprint phases remain outstanding.

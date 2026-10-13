@@ -14,6 +14,11 @@
 - Add explicit HDF5 dataset mappings and synchronous, noncausal `xpolicy eval` replay.
 - Record full predictions, execution prefixes and per-field behavior cloning errors;
   preserve recorded observations and leave physical feedback/task success unmeasured.
+- Export genuine local G2 training DataLoader samples with source/weight identities,
+  lossless shared-decoder roundtrips, padding masks and named statistics comparisons.
+- Add hash-verified golden bundles and `xpolicy golden diff` for first-boundary diagnosis.
+- Add an explicit StarVLA PIL resize option and verify its image preprocessing against
+  genuine loader samples; preserve the existing OpenCV resize default.
 
 ## 72f6b36f
 
@@ -21,4 +26,4 @@
 - Add StarVLA complete predictions without advancing its legacy execution cursor.
 
 The architecture blueprint remains a design specification. EVA migration is deferred;
-dataset wire runtime, genuine training-loader parity and device acceptance remain outstanding.
+dataset wire runtime, final model tensor/state parity and device acceptance remain outstanding.

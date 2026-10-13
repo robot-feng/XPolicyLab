@@ -2,6 +2,7 @@ policy_name: StarVLA
 protocol: ws
 bench_name: null
 task_name: null
+ckpt_name: null
 env_cfg_type: null
 action_type: joint
 gpu_id: null
@@ -21,6 +22,9 @@ unnorm_key: arx_x5
 use_ddim: true
 num_ddim_steps: 10
 image_size: [224, 224]
+# Match the checkpoint's training image transform. The legacy default is
+# retained; the audited G2 loader uses pillow_bicubic.
+image_resize_backend: opencv_area
 execute_horizon: 16
 include_state: auto
 require_runtime_contract: true

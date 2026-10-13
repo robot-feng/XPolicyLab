@@ -21,6 +21,15 @@ def _parser():
     doctor.add_argument("--output", type=Path)
     evaluation = commands.add_parser("eval", help="run synchronous dataset_direct replay into a record-only sink")
     evaluation.add_argument("--config", type=Path, required=True)
+    golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
+    golden_actions = golden.add_subparsers(dest="golden_action", required=True)
+    comparison = golden_actions.add_parser("diff", help="locate the first divergent boundary")
+    comparison.add_argument("--expected", type=Path, required=True)
+    comparison.add_argument("--observed", type=Path, required=True)
+    comparison.add_argument("--layers", nargs="+", choices=["O1", "O2", "A0", "A1", "A2", "A3", "A4", "A5"])
+    comparison.add_argument("--atol", type=float, default=0.0)
+    comparison.add_argument("--rtol", type=float, default=0.0)
+    comparison.add_argument("--output", type=Path)
     policy = commands.add_parser("policy", help="inspect or serve a policy")
     actions = policy.add_subparsers(dest="policy_action", required=True)
     listing = actions.add_parser("list", help="list factories without importing models")
@@ -62,6 +71,15 @@ def main(argv=None) -> int:
             report = run_experiment(args.config)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "COMPLETED" else 2
+        if args.command == "golden":
+            from xpolicy.core.artifacts import write_json
+            from xpolicy.diagnostics.golden import compare_bundles
+
+            report = compare_bundles(args.expected, args.observed, layers=args.layers, atol=args.atol, rtol=args.rtol)
+            if args.output is not None:
+                write_json(args.output, report)
+            print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
+            return 0 if report["status"] == "PASS" else 2
         if args.policy_action == "list":
             from xpolicy.core.registry import policy_registry
 
