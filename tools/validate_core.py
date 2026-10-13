@@ -68,9 +68,9 @@ def main(argv=None):
     write_json(output / "software-inventory.json", {"python": sys.version, "executable": sys.executable, "platform": platform.platform(), "packages": inventory})
     checks.extend([
         {"id": "actual_training_loader_parity", "status": "BLOCKED", "message": "no identified checkpoint plus genuine training-loader golden sample has been supplied"},
-        {"id": "golden_dataset_direct_wire", "status": "NOT_RUN", "message": "dataset runtime and same-frame golden fixture are not implemented yet"},
+        {"id": "golden_dataset_direct_wire", "status": "NOT_RUN", "message": "HDF5 direct replay has synthetic checks; genuine training-source golden data and the device wire path remain unverified"},
         {"id": "eva_robot_runtime", "status": "NOT_RUN", "message": "EVA migration deferred by user; no EVA source was changed or imported"},
-        {"id": "original_benchmark_regression", "status": "BLOCKED", "message": "benchmark workspace, env_cfg and checkpoint are not available in this checkout"},
+        {"id": "original_benchmark_regression", "status": "BLOCKED", "message": "the outer benchmark client/env_cfg and a verified compatible checkpoint/dataset pairing are not configured"},
         {"id": "device_shadow_safety", "status": "BLOCKED", "message": "no device driver migration, verified SDK mapping or on-site acceptance evidence"},
         {"id": "external_asset_license_audit", "status": "NOT_RUN", "message": "core attribution is recorded; per-policy models, SDKs and robot assets still require separate audits"},
     ])

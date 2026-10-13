@@ -11,6 +11,9 @@
 - Manage project dependencies through `pyproject.toml` with uv in existing Conda environments;
   provide a separate core lock and CPU CI for reproducible installation.
 - Add protocol and contract checks plus evidence reports that retain unfinished checks.
+- Add explicit HDF5 dataset mappings and synchronous, noncausal `xpolicy eval` replay.
+- Record full predictions, execution prefixes and per-field behavior cloning errors;
+  preserve recorded observations and leave physical feedback/task success unmeasured.
 
 ## 72f6b36f
 
@@ -18,4 +21,4 @@
 - Add StarVLA complete predictions without advancing its legacy execution cursor.
 
 The architecture blueprint remains a design specification. EVA migration is deferred;
-dataset runtime, genuine training-loader parity and device acceptance remain outstanding.
+dataset wire runtime, genuine training-loader parity and device acceptance remain outstanding.

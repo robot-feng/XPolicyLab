@@ -108,6 +108,46 @@ UTF-8 filename length as eight unsigned big-endian bytes, the filename bytes and
 32-byte SHA256 of the file. Empty directories are ignored; symlinks and special files are
 rejected. Compute an identity with `xpolicy.core.artifacts.artifact_sha256(Path(...))`.
 
+## Dataset direct replay
+
+```bash
+python tools/create_mock_dataset.py --output runs/mock-replay-fixture
+xpolicy doctor --config runs/mock-replay-fixture/experiment.yaml --verify-artifacts
+xpolicy eval --config runs/mock-replay-fixture/experiment.yaml
+```
+
+The fixture generator requires a new output directory and declares `source_kind: synthetic`.
+For a recorded trajectory, supply a `DatasetProfile` with `decoder_id: xpl_hdf5_v1`, a verified
+HDF5 artifact, and explicit mappings. Every camera has its HDF5 `source_key`. Every state field
+maps to `{key: state/<array>, column: <index>}` under `hdf5.state`; optional action labels use
+the same structure under `hdf5.action`. These mappings select columns; they never infer a
+robot's physical order from vector length. Units are the declared physical units, with no
+implicit conversion or normalization. Duplicate source-column bindings are rejected.
+
+Camera/state/action streams must have equal lengths. Optional `timestamp_key` and
+`frame_id_key` identify strictly increasing recorded arrays. Without them, time is explicitly
+reported as `nominal_index_rate` and frame IDs are row indices. `instruction_mode: constant`
+reads a scalar string or JSON list of alternatives, selecting `instruction_index`;
+`per_frame` requires one string per source row. Camera bytes decode through the existing
+`decode_image_bit`; encoded, legacy and already-decoded layouts retain its RGB semantics.
+
+The runner currently accepts only `dataset_direct`, `record_only`, `sync`, and a complete-chunk
+policy. One HDF5 file is one episode (`episode: 0`); the robot/control/dataset rates must agree.
+It predicts a full chunk, records the `execute_horizon` prefix, then advances that many
+recorded source rows. The final prefix is truncated to the remaining rows. RecordOnly has
+no actuator and cannot update recorded state or images. Frame seeking uses source row indices;
+recorded frame IDs are preserved in every observation and trace.
+
+Each run gets a unique directory with `config.json`, `profiles.json`, software inventory,
+`trace.jsonl`, optional decoded RGB/state NPZ inputs, and `results.json`. Trace events link
+run/trial/episode/frame/request/chunk/sequence IDs. Each repeat resets policy state. Action
+labels are compared by physical field and unit, reporting MAE/RMSE as behavior cloning error.
+Label disagreement is not a protocol fault. Task success and device feedback remain unmeasured.
+Model exceptions and elapsed-budget overruns produce `FAULT` trials, retaining available
+evidence. Duration is checked between synchronous predictions and when they return; this
+runner does not interrupt a blocked model call. The seed is recorded and NumPy is seeded;
+backend-specific randomness still needs that policy's own seed configuration.
+
 ## Evidence and remaining work
 
 `tools/validate_core.py` writes `TEST_REPORT.json`, exact commands, exit codes, log paths and
@@ -117,7 +157,7 @@ hashes, source-file hashes and a software inventory. Reports retain `FAIL`, `BLO
 `environment_runtime` remains `NOT_RUN`.
 
 The current experiment fixture names `fake_plant` for preflight, but no device or fake plant is
-started by doctor. Dataset direct/wire replay, genuine training-loader golden samples,
-normalization parity, generation-aware execution, SDK mappings, shadow and physical safety
+started by doctor. Dataset wire replay, genuine training-loader golden samples,
+normalization parity, generation-aware asynchronous execution, SDK mappings, shadow and physical safety
 acceptance are still pending. EVA migration is deferred by user instruction. See
 [Migration status](migration-status.md) for upstream provenance and acceptance scope.

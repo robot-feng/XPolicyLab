@@ -19,6 +19,8 @@ def _parser():
     doctor.add_argument("--mode", choices=["contract"], default="contract")
     doctor.add_argument("--verify-artifacts", action="store_true")
     doctor.add_argument("--output", type=Path)
+    evaluation = commands.add_parser("eval", help="run synchronous dataset_direct replay into a record-only sink")
+    evaluation.add_argument("--config", type=Path, required=True)
     policy = commands.add_parser("policy", help="inspect or serve a policy")
     actions = policy.add_subparsers(dest="policy_action", required=True)
     listing = actions.add_parser("list", help="list factories without importing models")
@@ -54,6 +56,12 @@ def main(argv=None) -> int:
                 write_json(args.output, report)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "PASS" else 2
+        if args.command == "eval":
+            from xpolicy.evaluation.runner import run_experiment
+
+            report = run_experiment(args.config)
+            print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
+            return 0 if report["status"] == "COMPLETED" else 2
         if args.policy_action == "list":
             from xpolicy.core.registry import policy_registry
 

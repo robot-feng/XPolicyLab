@@ -132,6 +132,21 @@ class RobotProfile(BoundaryProfile):
         return self
 
 
+class Hdf5Column(Schema):
+    key: Name
+    column: Annotated[int, Field(ge=0, strict=True)]
+
+
+class Hdf5Layout(Schema):
+    state: dict[Name, Hdf5Column]
+    action: dict[Name, Hdf5Column] = Field(default_factory=dict)
+    timestamp_key: Name | None = None
+    frame_id_key: Name | None = None
+    instruction_key: Name = "instruction"
+    instruction_mode: Literal["constant", "per_frame"] = "constant"
+    instruction_index: Annotated[int, Field(ge=0, strict=True)] = 0
+
+
 class DatasetProfile(BoundaryProfile):
     dataset_id: Name
     robot_id: Name
@@ -139,6 +154,25 @@ class DatasetProfile(BoundaryProfile):
     decoder_id: Name
     sample_hz: Rate
     clock_domain: Name
+    source_kind: Literal["recorded", "synthetic"] = "recorded"
+    hdf5: Hdf5Layout | None = None
+
+    @model_validator(mode="after")
+    def decoder_layout(self):
+        if self.decoder_id == "xpl_hdf5_v1":
+            if self.hdf5 is None:
+                raise ValueError("xpl_hdf5_v1 requires an explicit hdf5 layout")
+            if set(self.hdf5.state) != {field.name for field in self.state_fields}:
+                raise ValueError("hdf5.state must map every named state field exactly")
+            if self.hdf5.action and set(self.hdf5.action) != {field.name for field in self.action_fields}:
+                raise ValueError("hdf5.action must map every named action field exactly")
+            if any(camera.source_key is None for camera in self.cameras):
+                raise ValueError("HDF5 cameras require explicit source_key paths")
+            for columns in (self.hdf5.state, self.hdf5.action):
+                bindings = [(value.key, value.column) for value in columns.values()]
+                if len(bindings) != len(set(bindings)):
+                    raise ValueError("HDF5 named fields cannot reuse a source column")
+        return self
 
 
 def _owned_array(value, *, ndim: int, field_name: str) -> np.ndarray:

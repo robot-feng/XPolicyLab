@@ -38,7 +38,8 @@ are not attributed to the surrounding checkout's git SHA.
 | C01 full chunk | Counted mock and real StarVLA adapter with a model-server double | Genuine checkpoint forward and training-loader tensor comparison |
 | C02 API ownership | Separate chunk and legacy services; original legacy result preserved | Original benchmark task baseline |
 | C03/C04 protocol faults | Timeout surfaces, same request retries execute once, restart identity rejected | Device-local stale-command behavior |
-| Dataset / execution / device / scoring | Contract schemas and truthful unexecuted report entries | Dataset direct/wire, generation-aware execution, complete trace, SDK mappings and on-site safety |
+| Dataset direct / offline scoring | Explicit HDF5 mappings, record-only prefixes, linked trace and per-field behavior cloning error; synthetic fixture | Genuine training-source golden data and checkpoint parity |
+| Device / execution | Contract schemas and truthful unexecuted report entries | Dataset wire, generation-aware asynchronous execution, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
 particular, a model-server double does not establish real-checkpoint normalization or
@@ -68,6 +69,8 @@ separate, explicitly limited scope. CI additionally checks WebSocket 14.2; the l
 15.0.1. CI definition does not prove a remote CI run succeeded: inspect its uploaded report.
 
 The original demo/StarVLA benchmark path needs an outer `env_cfg/`, benchmark client,
-dataset and checkpoint. Those resources are absent here, so real benchmark regression
-is BLOCKED. Device tests and on-site acceptance are also BLOCKED. The project goal remains
+dataset and checkpoint. The outer benchmark client/configuration is absent here; other
+host directories contain checkpoints and datasets, but a compatible pair has not yet
+been configured for this project. Real benchmark regression is BLOCKED. Device tests
+and on-site acceptance are also BLOCKED. The project goal remains
 in progress while these requirements and the later blueprint phases remain outstanding.

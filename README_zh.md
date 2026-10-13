@@ -212,6 +212,15 @@ xpolicy policy serve --config configs/policies/mock.yaml
 
 mock 声明的是合成相机与关节语义，不代表已训练策略或机器人 benchmark。契约预检检查声明的 profile，将未执行的运行时检查标记为 `NOT_RUN`。配置契约、Conda/uv 工作流和锁定版本的 CPU 安装见 [Core development](docs/core-development.md)。
 
+运行合成 HDF5 数据的离线回放，记录预测动作：
+
+```bash
+python tools/create_mock_dataset.py --output runs/mock-replay-fixture
+xpolicy eval --config runs/mock-replay-fixture/experiment.yaml
+```
+
+每次运行都会记录 profile、源码与数据身份、完整预测、执行前缀，以及按物理字段计算的行为克隆误差。录制观测不受动作影响；不测量任务成功率和设备反馈。
+
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。
 
 下载一个小的 Hugging Face demo 包，并把数据放在 `XPolicyLab/` 旁：

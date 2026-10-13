@@ -209,6 +209,15 @@ xpolicy policy serve --config configs/policies/mock.yaml
 
 The mock declares synthetic camera and joint semantics; it is not a trained policy or a robot benchmark. Contract preflight checks declared profiles and reports runtime checks as `NOT_RUN`. See [Core development](docs/core-development.md) for the configuration contract, Conda/uv workflow, and locked CPU installation.
 
+Run an offline, synthetic HDF5 replay and record the predicted actions:
+
+```bash
+python tools/create_mock_dataset.py --output runs/mock-replay-fixture
+xpolicy eval --config runs/mock-replay-fixture/experiment.yaml
+```
+
+Each run writes profiles, source identities, predictions, recorded execution prefixes and per-field behavior cloning errors. Recorded observations remain independent of the actions; task success and device feedback are not measured.
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:
