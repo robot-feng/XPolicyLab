@@ -33,6 +33,36 @@ bash process_data.sh RoboDojo stack_bowls_50ep arx_x5 joint 50 stack_bowls
 
 ## Training
 
+Both bundled `EpisodicDataset` implementations read HDF5 camera frames through the
+adapter's `image_preprocessing.read_camera_images`. It calls the shared
+`XPolicyLab.utils.process_data.decode_image_bit` before checking dimensions or resizing,
+so XPolicyLab's marked JPEGs, legacy buffers and raw HWC uint8 RGB arrays use the same
+boundary. The HDF5 `compress` flag does not determine color order. No channel swap follows
+decoding. A singleton legacy container is accepted; multiple frames, invalid channels
+and non-uint8 raw images are rejected with camera/frame context.
+
+The existing raw-image resize rule is preserved: a decoded width unequal to `imsize`
+resizes to 320×180 with OpenCV linear interpolation. Normalization and augmentation
+remain in the original loader. Arbitrary unmarked standard JPEGs from other producers
+are not distinguishable from legacy XPolicyLab buffers; convert external data with its
+known source codec into RGB and use `encode_image_bit` for stored XPolicyLab image bits.
+
+An offline diagnostic executes the actual `__getitem__`/index methods with real
+Torch/HDF5 and synthetic images, comparing them with the retained pre-fix Git revision:
+
+```bash
+python tools/validate_tinyvla_image_boundary.py \
+  --output runs/tinyvla-image-boundary/check
+```
+
+Run this from the repository root in an existing PyTorch environment. It requires the
+default baseline `c378d3f04d68f41681077d97ea68b632598f9cd6` locally, or an explicit
+`--baseline-ref`; a missing baseline is BLOCKED. The report retains vector-buffer shape
+failures and a legacy red/blue reversal before the fix, along with current exact pixel
+comparisons and source hashes. It bypasses the full loader constructor, augmentation and
+language backbone. No checkpoint training, debug policy evaluation or simulator result
+is established by this diagnostic.
+
 ```bash
 cd XPolicyLab/policy/TinyVLA
 bash train.sh <bench_name> <ckpt_name> <env_cfg_type> <action_type> <seed> <gpu_id>

@@ -46,6 +46,7 @@ are not attributed to the surrounding checkout's git SHA.
 | Environment registry / provider ownership | Lazy implementation/capability metadata, actual recorded timeline provider owning HDF5/record sink/context, provider doctor and traced reset/preparation receipts; separated trial evidence code | Genuine simulator/live feedback contracts and providers; original benchmark/device acceptance |
 | Simulator runtime bring-up | Supervised SDK probes, actual SAPIEN CPU steps, cloned Isaac environment with preserved native binary identities and restored vendor package inventory | SAPIEN device creation segfault, Isaac EULA prompt, host libc/GPU requirements, genuine camera/task/provider and original benchmark regression |
 | Config/seed experiment suites | Separate sequential Runner processes, explicit plans and snapshots, bounded host process deadlines/stop, nested result binding/verification and grouped summaries | Genuine multi-checkpoint model/benchmark acceptance, causal task/device comparisons and physical stop behavior |
+| TinyVLA RGB image boundary | Shared decode before resize in both HDF5 loaders; raw RGB behavior preserved; actual method checks with real Torch and retained before/after shape/color counterexamples | Full loader constructor, augmentation/language backbone, checkpoint training/debug evaluation and original benchmark regression |
 | Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In

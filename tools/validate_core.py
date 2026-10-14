@@ -22,7 +22,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def snapshot():
-    directories = ("src", "tests", "configs", "client_server", "utils", "policy/StarVLA", "tools")
+    directories = ("src", "tests", "configs", "client_server", "utils", "policy/StarVLA", "policy/TinyVLA", "tools")
     files = {ROOT / name for name in ("pyproject.toml", "uv.lock", "XPolicyLab.py", "model_template.py")}
     for directory in directories:
         files.update(path for path in (ROOT / directory).rglob("*") if path.is_file() and path.suffix in {".py", ".yaml", ".yml", ".sh"} and "__pycache__" not in path.parts)

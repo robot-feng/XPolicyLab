@@ -4,7 +4,7 @@ import os
 import h5py
 import pickle
 import fnmatch
-import cv2
+from XPolicyLab.policy.TinyVLA.image_preprocessing import read_camera_images
 from time import time
 from torch.utils.data import TensorDataset, DataLoader
 import torchvision.transforms as transforms
@@ -92,7 +92,6 @@ class EpisodicDataset(torch.utils.data.Dataset):
                 is_sim = root.attrs['sim']
             except:
                 is_sim = False
-            compressed = root.attrs.get('compress', False)
 
             raw_lang = root['language_raw'][0].decode('utf-8')
 
@@ -103,16 +102,7 @@ class EpisodicDataset(torch.utils.data.Dataset):
             # get observation at start_ts only
             qpos = root['/observations/qpos'][start_ts]
             qvel = root['/observations/qvel'][start_ts]
-            image_dict = dict()
-            for cam_name in self.camera_names:
-                image_dict[cam_name] = root[f'/observations/images/{cam_name}'][start_ts]
-                if self.imsize != image_dict[cam_name].shape[1]:
-                    image_dict[cam_name] = cv2.resize(image_dict[cam_name], (320, 180))
-
-            if compressed:
-                for cam_name in image_dict.keys():
-                    decompressed_image = cv2.imdecode(image_dict[cam_name], 1)
-                    image_dict[cam_name] = cv2.cvtColor(decompressed_image, cv2.COLOR_BGR2RGB)
+            image_dict = read_camera_images(root['/observations/images'], self.camera_names, start_ts, self.imsize)
 
             # get all actions after and including start_ts
             if is_sim:

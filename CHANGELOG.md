@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fix TinyVLA's two HDF5 loaders inspecting/resizing encoded buffers before decoding
+  and swapping RGB channels after decode; use one shared-codec image boundary.
+- Preserve raw-image resize behavior and add real Torch/HDF5 method checks plus a
+  retained Git-baseline diagnostic; checkpoint training/evaluation remains unverified.
+
 - Add explicit configuration/base-seed suites using separate sequential Runner processes,
   preserving blocked, failed, timed-out and unstarted cases without inventing trial scores.
 - Bind child results to their planned config/profile/seed identities; verify closed suite

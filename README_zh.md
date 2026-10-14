@@ -239,6 +239,8 @@ G2 模型边界诊断还可核对显式 state 精度、记录最终 VLM/action-h
 
 `tools/probe_simulator_runtime.py` 可在指定解释器中监督执行真实 SDK 元数据、CPU 物理、相机或应用启动检查。日志、原生崩溃与超时和 benchmark/provider 验收分别记录；见 [Simulator runtime probes](docs/environments.md#simulator-runtime-probes)。
 
+TinyVLA 的压缩 HDF5 训练图片已改为先经共享 RGB helper 解码，再 resize。修改前后诊断保留原有 shape/颜色失败；图片边界的验证范围见 [TinyVLA training](policy/TinyVLA/README.md#training)。
+
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。
 
 下载一个小的 Hugging Face demo 包，并把数据放在 `XPolicyLab/` 旁：

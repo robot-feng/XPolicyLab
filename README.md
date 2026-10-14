@@ -236,6 +236,8 @@ Use `xpolicy eval suite --config <suite.yaml>` for sequential configuration/seed
 
 `tools/probe_simulator_runtime.py` supervises actual SDK metadata, CPU physics, camera or application startup checks in a supplied interpreter. Logs, native failures and timeouts remain separate from benchmark/provider acceptance; see [Simulator runtime probes](docs/environments.md#simulator-runtime-probes).
 
+TinyVLA's compressed HDF5 training images now decode through the shared RGB helper before resize. A before/after diagnostic retains the original shape/color failures; see [TinyVLA training](policy/TinyVLA/README.md#training) for its limited image-boundary scope.
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:
