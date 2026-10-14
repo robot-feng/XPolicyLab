@@ -172,6 +172,25 @@ fi
 source "${SCRIPT_DIR}/scripts/activate_policy_env.sh"
 starvla_activate_policy_env "${policy_conda_env}"
 
+# Apply the same precision to both processes. Environment overrides take
+# precedence; otherwise honor deploy.yml rather than silently resetting it.
+starvla_precision_values="$("${STARVLA_POLICY_PYTHON}" - "${yaml_file}" <<'PY'
+import os
+import sys
+import yaml
+from XPolicyLab.utils.state_precision import resolve_state_precision
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    config = yaml.safe_load(stream)
+for value in resolve_state_precision(config, os.environ):
+    print(value)
+PY
+)"
+mapfile -t starvla_precision_parts <<< "${starvla_precision_values}"
+starvla_state_input_dtype="${starvla_precision_parts[0]}"
+starvla_model_state_dtype="${starvla_precision_parts[1]}"
+echo "[SERVER] state precision: raw=${starvla_state_input_dtype}, packed=${starvla_model_state_dtype}"
+
 (
     cd "${STARVLA_ROOT}"
     PYTHONPATH="${STARVLA_ROOT}:${PYTHONPATH:-}" \
@@ -179,6 +198,8 @@ starvla_activate_policy_env "${policy_conda_env}"
     "${STARVLA_POLICY_PYTHON}" "${STARVLA_ROOT}/deployment/model_server/server_policy.py" \
         --ckpt_path "${checkpoint_path}" \
         --port "${starvla_server_port}" \
+        --state_input_dtype "${starvla_state_input_dtype}" \
+        --model_state_dtype "${starvla_model_state_dtype}" \
         --use_bf16
 ) &
 STARVLA_SERVER_PID=$!
@@ -206,6 +227,8 @@ CUDA_VISIBLE_DEVICES="${policy_gpu_id}" \
         unnorm_key="${starvla_unnorm_key}" \
         execute_horizon="${starvla_execute_horizon}" \
         image_size="${starvla_image_size}" \
+        state_input_dtype="${starvla_state_input_dtype}" \
+        model_state_dtype="${starvla_model_state_dtype}" \
         required_pi_v3_forward="${starvla_required_pi_v3_forward}" \
         starvla_root="${STARVLA_ROOT}" \
         starvla_server_host="${starvla_server_host}" \

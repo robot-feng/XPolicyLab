@@ -42,8 +42,16 @@ class PolicyServerWrapper:
         device: str = "cuda",
         use_bf16: bool = False,
         unnorm_key: Optional[str] = None,
+        state_input_dtype: str = "float32",
+        model_state_dtype: str = "float32",
     ) -> None:
         self._ckpt_path = str(ckpt_path)
+        from XPolicyLab.utils.state_precision import state_dtype
+
+        state_dtype(state_input_dtype)
+        state_dtype(model_state_dtype, normalized=True)
+        self._state_input_dtype = state_input_dtype
+        self._model_state_dtype = model_state_dtype
 
         logging.info("PolicyServerWrapper: loading framework from %s", self._ckpt_path)
         framework = baseframework.from_pretrained(self._ckpt_path)
@@ -118,7 +126,9 @@ class PolicyServerWrapper:
         cache_key = unnorm_key if unnorm_key is not None else "__default__"
         if cache_key not in self._norm_processors:
             self._norm_processors[cache_key] = PolicyNormProcessor(
-                self._ckpt_path, unnorm_key=unnorm_key
+                self._ckpt_path, unnorm_key=unnorm_key,
+                state_input_dtype=self._state_input_dtype,
+                model_state_dtype=self._model_state_dtype,
             )
         return self._norm_processors[cache_key]
 
@@ -146,6 +156,8 @@ class PolicyServerWrapper:
                 "action_output": "unnormalized_env",
                 "action_dim": proc.action_dim,
                 "state_dim": proc.state_dim,
+                "state_input_dtype": proc.state_input_dtype,
+                "model_state_dtype": proc.model_state_dtype,
             }
             if self._pi_v3_forward is not None:
                 base["runtime_contract"]["pi_v3_forward"] = self._pi_v3_forward
@@ -159,7 +171,7 @@ class PolicyServerWrapper:
         for example in examples:
             normalized = dict(example)
             if "state" in normalized and normalized["state"] is not None:
-                raw_state = np.asarray(normalized["state"], dtype=np.float32)
+                raw_state = np.asarray(normalized["state"])
                 normalized_state = proc.apply_state(raw_state)
                 normalized["state"] = normalized_state
                 if not self._logged_state_contract:

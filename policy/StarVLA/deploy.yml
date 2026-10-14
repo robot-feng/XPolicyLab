@@ -25,6 +25,10 @@ image_size: [224, 224]
 # Match the checkpoint's training image transform. The legacy default is
 # retained; the audited G2 loader uses pillow_bicubic.
 image_resize_backend: opencv_area
+# Raw normalization precision and normalized model input precision. Select
+# both from genuine loader evidence; the existing defaults stay float32.
+state_input_dtype: float32
+model_state_dtype: float32
 execute_horizon: 16
 include_state: auto
 require_runtime_contract: true

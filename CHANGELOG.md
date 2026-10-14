@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add explicit StarVLA raw/normalized state precision, handshake checks and
+  launcher forwarding; keep float32 defaults and reject nonfinite/overflowing states.
+- Add a genuine G2 model-boundary diagnostic using the original loader, checkpoint,
+  actual XPL normalization wrapper and optional CUDA inference with a memory cap.
+- Revise the v4 blueprint from implementation evidence: distinguish packed/final
+  model boundaries, returned/planning horizons and model/device acceptance scope.
+
 - Add the `xpolicy` import and CLI alongside the existing XPolicyLab package.
 - Add strict, versioned model/robot/dataset profiles and canonical RGB observations.
 - Validate camera names, state/action ordering, physical units and robot compatibility.

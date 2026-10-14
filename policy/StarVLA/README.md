@@ -184,6 +184,29 @@ does not establish 24D state/head/waist mapping, physical units, normalization o
 checkpoint forward parity. This change supports the existing joint adapter; no G2
 runtime registration or hardware mapping is added.
 
+### State precision contract
+
+`state_input_dtype` selects raw-state normalization precision (`float32`, the
+existing default, or `float64`). `model_state_dtype` selects the normalized state
+packing precision (`float32`, the existing default, or `float16`). These are
+separate from the framework's compute dtype. The server advertises both in its
+runtime contract; the adapter rejects a mismatch before evaluation. Older servers
+without these fields retain the float32 interpretation. Input values must be finite
+and representable in the selected dtype.
+
+The audited G2 loader uses float64 normalization followed by float16 packing.
+Converting directly to float32 can alter the eventual bfloat16 model input. The
+generic launcher forwards `STARVLA_STATE_INPUT_DTYPE` and `STARVLA_MODEL_STATE_DTYPE`
+to both the model server and adapter. These environment overrides take precedence;
+otherwise the launcher honors the two deploy.yml keys. Set them from actual training evidence.
+Casting an already-rounded float32 observation to float64 cannot restore lost precision.
+
+`tools/validate_g2_model_boundary.py` compares genuine loader samples with the actual
+XPL normalization methods. With `--forward` it also loads the genuine RollingFlow
+checkpoint and captures VLM tensors, action-head state and inverse-normalized actions.
+This explicitly composes the supplied upstream framework with XPL's wrapper; it does
+not register G2 hardware, construct the full robot adapter or change EVA.
+
 Environment variables used by the adapter scripts:
 
 | Variable | Notes |

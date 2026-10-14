@@ -223,6 +223,8 @@ xpolicy eval --config runs/mock-replay-fixture/experiment.yaml
 
 可导出真实 G2 训练 loader 样本，并用 `xpolicy golden diff` 定位数据或预处理的首个分歧；命令及已验证范围见 [Training-source golden samples](docs/training-golden.md)。
 
+G2 模型边界诊断还可核对显式 state 精度、记录最终 VLM/action-head 输入，并按选项执行真实 checkpoint。其范围是模型侧组合；完整 G2 硬件适配器仍未验收。
+
 数据回放支持同步和按时钟采样的 `async_latest_only` 仅记录执行，包含 generation reset、显式延迟裁剪和可选的绝对关节位置重叠融合。运行示例、算法及 trace 范围见 [Chunk execution](docs/execution.md)。
 
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。

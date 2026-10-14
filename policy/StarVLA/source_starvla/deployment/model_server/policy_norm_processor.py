@@ -28,6 +28,7 @@ from typing import Any, Dict, List, Optional, Sequence
 
 import numpy as np
 import torch
+from XPolicyLab.utils.state_precision import cast_state, state_dtype
 
 from starVLA.dataloader.gr00t_lerobot.registry import (
     DATASET_NAMED_MIXTURES,
@@ -248,7 +249,12 @@ class PolicyNormProcessor:
             ``None`` → auto-pick the only key.
     """
 
-    def __init__(self, ckpt_path: str, unnorm_key: Optional[str] = None) -> None:
+    def __init__(self, ckpt_path: str, unnorm_key: Optional[str] = None,
+                 state_input_dtype: str = "float32", model_state_dtype: str = "float32") -> None:
+        state_dtype(state_input_dtype)
+        state_dtype(model_state_dtype, normalized=True)
+        self.state_input_dtype = state_input_dtype
+        self.model_state_dtype = model_state_dtype
         self._ckpt_path = str(ckpt_path)
         cfg, norm_stats = read_mode_config(self._ckpt_path)
         self._model_cfg = cfg
@@ -351,6 +357,14 @@ class PolicyNormProcessor:
         return sum(self._state_key_dims.values())
 
     @property
+    def state_key_dims(self) -> Dict[str, int]:
+        return dict(self._state_key_dims)
+
+    @property
+    def action_key_dims(self) -> Dict[str, int]:
+        return dict(self._action_key_dims)
+
+    @property
     def transform(self) -> ComposedModalityTransform:
         return self._transform
 
@@ -369,12 +383,12 @@ class PolicyNormProcessor:
             expected by the framework at training time.
         """
         if not self._state_keys:
-            return np.asarray(state, dtype=np.float32)
+            raise ValueError("checkpoint declares no state keys")
 
         # MessagePack/websocket decoders may return a read-only NumPy view.
         # Training transforms convert slices to tensors, so keep this buffer
         # writable to avoid undefined behavior in PyTorch.
-        state_arr = np.array(state, dtype=np.float32, copy=True)
+        state_arr = cast_state(state, self.state_input_dtype)
         original_ndim = state_arr.ndim
         if state_arr.ndim == 1:
             state_arr = state_arr[None, :]
@@ -400,8 +414,8 @@ class PolicyNormProcessor:
             v = out[full_key]
             if isinstance(v, torch.Tensor):
                 v = v.detach().cpu().numpy()
-            parts.append(np.asarray(v, dtype=np.float32))
-        normalized = np.concatenate(parts, axis=-1)
+            parts.append(np.asarray(v))
+        normalized = cast_state(np.concatenate(parts, axis=-1), self.model_state_dtype, normalized=True)
         return normalized[0] if original_ndim == 1 else normalized
 
     # ------------------------------------------------------------------

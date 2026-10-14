@@ -67,7 +67,7 @@ def main(argv=None):
     inventory = sorted([{"name": distribution.metadata.get("Name", "unknown"), "version": distribution.version} for distribution in importlib.metadata.distributions()], key=lambda item: (item["name"].lower(), item["version"]))
     write_json(output / "software-inventory.json", {"python": sys.version, "executable": sys.executable, "platform": platform.platform(), "packages": inventory})
     checks.extend([
-        {"id": "actual_training_loader_parity", "status": "NOT_RUN", "message": "core checks do not invoke a vendor loader; tools/export_g2_training_golden.py separately verifies genuine packed samples and adapter images, while final model tensors remain unverified"},
+        {"id": "actual_training_loader_parity", "status": "NOT_RUN", "message": "core checks do not invoke a vendor loader; export_g2_training_golden.py and validate_g2_model_boundary.py separately verify genuine packed samples, actual XPL normalization and final tensors/checkpoint output in a diagnostic composition; full G2 runtime registration remains unverified"},
         {"id": "golden_dataset_direct_wire", "status": "NOT_RUN", "message": "HDF5 direct replay has synthetic checks and separate genuine raw-sample roundtrip evidence; the device wire path remains unverified"},
         {"id": "eva_robot_runtime", "status": "NOT_RUN", "message": "EVA migration deferred by user; no EVA source was changed or imported"},
         {"id": "original_benchmark_regression", "status": "BLOCKED", "message": "the outer benchmark client/env_cfg and a verified compatible checkpoint/dataset pairing are not configured"},

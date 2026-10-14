@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from XPolicyLab.utils.state_precision import state_dtype
 
 
 _AUTO_VALUES = {None, "", "auto", "none", "null"}
@@ -86,6 +87,8 @@ def validate_server_runtime_contract(
     unnorm_key: str | None,
     expected_framework: str | None = None,
     expected_pi_v3_forward: str | None = None,
+    state_input_dtype: str = "float32",
+    model_state_dtype: str = "float32",
 ) -> dict[str, Any]:
     """Reject StarVLA servers that silently use a different inference contract.
 
@@ -145,6 +148,15 @@ def validate_server_runtime_contract(
 
     if include_state and contract.get("state_normalization") != "training_transform":
         raise ValueError("include_state=true requires server-side training-stat state normalization.")
+
+    state_dtype(state_input_dtype)
+    state_dtype(model_state_dtype, normalized=True)
+    if include_state:
+        for key, expected_dtype in (("state_input_dtype", state_input_dtype), ("model_state_dtype", model_state_dtype)):
+            # Servers predating precision metadata use the float32 path.
+            actual_dtype = contract.get(key, "float32")
+            if actual_dtype != expected_dtype:
+                raise ValueError(f"Incompatible StarVLA state precision: {key}={actual_dtype!r}, expected {expected_dtype!r}")
 
     available_keys = metadata.get("available_unnorm_keys", [])
     if unnorm_key is not None and unnorm_key not in available_keys:

@@ -4,7 +4,9 @@ The G2 exporter runs the local StarVLA training registry's actual
 `PaddingMaskG2Dataset` through a PyTorch `DataLoader`. It records raw RGB/state/action
 data at O1 and the packed training sample at O2: PIL-resized images, float16 normalized
 state/actions, language and action padding masks. O2 here is **before the VLM processor**;
-this does not establish final model tensor or checkpoint forward parity.
+this exporter does not establish final model tensor or checkpoint forward parity.
+The separate model-boundary diagnostic below executes those checks with the genuine
+checkpoint through an explicitly identified model-side composition.
 
 ## Export in the existing model environment
 
@@ -92,6 +94,66 @@ deployment normalization frequency or checkpoint inference.
 
 Source unit metadata is absent and is recorded as null. No G2 hardware RobotProfile
 or inner/outer gripper mapping is approved by this export. The existing arm/gripper
-adapter does not establish a full G2 head/waist mapping. Model processor/state parity,
-checkpoint forward, dataset wire, device mappings and on-site acceptance remain pending.
+adapter does not establish a full G2 head/waist mapping. Full runtime adapter construction,
+dataset wire, device mappings and on-site acceptance remain pending.
 EVA migration remains deferred.
+
+## Genuine model input and checkpoint comparison
+
+Run this in the existing Conda model environment after exporting the loader golden:
+
+```bash
+python tools/validate_g2_model_boundary.py \
+  --source /path/to/starVLA-RollFlow \
+  --dataset /path/to/AgiBotG2/white_carton_to_left_tan_carton_20261009 \
+  --checkpoint /path/to/g2-training-run \
+  --golden runs/g2-training-golden/baseline \
+  --output runs/g2-model-boundary/forward \
+  --state-input-dtype float64 --model-state-dtype float16 \
+  --forward --device cuda:0 --gpu-memory-gib 8
+```
+
+Omit `--forward` for packed-image/state comparison without model loading. The forward
+path requires CUDA because this framework explicitly uses CUDA autocast. The memory
+cap limits this diagnostic process's allocations; it does not reserve the GPU or
+modify other jobs. The tool rejects insufficient initial memory headroom, uses local
+model assets offline and copies dataset metadata before loader caches are generated.
+An output directory must be new; failures keep their own report and are never overwritten.
+
+This composes the actual G2 registry and supplied upstream RollingFlow framework with
+the actual XPL `PolicyNormProcessor` and `PolicyServerWrapper` methods. The complete
+wrapper/robot adapter constructor is not exercised: it does not claim a registered
+24D G2 policy, head/waist support, physical units, SDK mapping or task success. Original
+loader samples are recomputed and compared before the model checks. Hooks record
+actual VLM token/pixel/grid tensors and the state tensor received by the action head;
+bfloat16 values are stored exactly in float32 NPZ arrays with their original dtype
+declared separately. No replacement normalization formula is introduced.
+
+Each model call starts from a model reset and the checkpoint seed. The diagnostic
+counts the actual wrapper state normalization and action inverse calls. It verifies
+source, sample inputs, base VLM assets and checkpoint hashes before/after, and writes
+`MODEL_BOUNDARY_REPORT.json`, software inventory and per-boundary golden bundles/diffs.
+
+The recorded local `forward-final` run establishes the following scope:
+
+| Boundary | Finding |
+| --- | --- |
+| Current loader vs previous golden | All three selected samples match exactly |
+| Packed RGB/state | Float64 normalization followed by float16 packing matches exactly |
+| Actual VLM inputs and final action-head state | All three samples match exactly, including final bfloat16 state values |
+| Real checkpoint output | All three 16x24 normalized predictions and float32 inverse outputs match exactly under the same seed/reset |
+| Normalization ownership | One state transform and one action inverse per wrapper prediction; raw inputs unchanged |
+| Model call ownership | One framework prediction, VLM input build and action-head prediction per wrapper call |
+| Planning vs returned horizon | Planning horizon 64; actual public output is 16 steps, with no diagnostic padding |
+| Strict inverse dtype | FAIL retained: loader inverse returns float64, service returns float32; numeric values are equal |
+
+The float32 counterexamples are retained separately. Frame 0's final bfloat16 state
+first diverges at `idx66_arm_r_joint6`: expected `-0.064453125`, observed `-0.06396484375`.
+Frame 257's packed float16 state differs at `idx61_arm_r_joint1`. This is why raw
+normalization precision, packed precision and compute precision need separate checks.
+An already-rounded float32 observation cannot recover lost precision by casting to float64.
+
+The local checkpoint was loaded with `strict=True`; measured peak tensor allocation
+on an A100 was about 2.33 GiB. This is one diagnostic run, not a latency/memory benchmark
+or evidence of historical training-source identity. Strict comparison FAIL files remain
+alongside scoped PASS results; hardware and full-adapter requirements remain unverified.

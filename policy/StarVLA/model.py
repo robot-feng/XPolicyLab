@@ -8,6 +8,7 @@ import numpy as np
 
 from XPolicyLab.model_template import ModelTemplate
 from XPolicyLab.utils.contracts import ActionChunk, ActionType
+from XPolicyLab.utils.state_precision import cast_state, state_dtype
 from XPolicyLab.utils.process_data import (
     get_robot_action_dim_info,
     pack_robot_state,
@@ -76,6 +77,8 @@ def _extract_camera(observation: dict[str, Any], camera_names: list[str]) -> np.
 class Model(ModelTemplate):
     def __init__(self, model_cfg):
         self.model_cfg = dict(model_cfg)
+        state_dtype(self.model_cfg.get("state_input_dtype", "float32"))
+        state_dtype(self.model_cfg.get("model_state_dtype", "float32"), normalized=True)
         self.image_resize_backend = validate_resize_backend(self.model_cfg.get("image_resize_backend", "opencv_area"))
         self.action_type = self.model_cfg.get("action_type", "joint")
         if self.action_type != "joint":
@@ -139,6 +142,8 @@ class Model(ModelTemplate):
             validate_server_runtime_contract(
                 server_meta,
                 include_state=self.include_state,
+                state_input_dtype=self.model_cfg.get("state_input_dtype", "float32"),
+                model_state_dtype=self.model_cfg.get("model_state_dtype", "float32"),
                 action_dim=self.action_dim,
                 unnorm_key=self.unnorm_key,
                 expected_framework=expected_framework,
@@ -178,12 +183,12 @@ class Model(ModelTemplate):
             "image": images,
         }
         if self.include_state:
-            state = pack_robot_state(
+            state = cast_state(pack_robot_state(
                 observation,
                 self.action_type,
                 self.robot_action_dim_info,
                 source_type="obs",
-            ).astype(np.float32)
+            ), self.model_cfg.get("state_input_dtype", "float32"))
             if state.ndim == 1:
                 state = state[None, :]
             if state.ndim != 2 or state.shape[-1] != self.action_dim:

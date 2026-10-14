@@ -22,6 +22,8 @@ def main(args) -> None:
         ckpt_path=args.ckpt_path,
         device="cuda",
         use_bf16=args.use_bf16,
+        state_input_dtype=args.state_input_dtype,
+        model_state_dtype=args.model_state_dtype,
     )
 
     hostname = socket.gethostname()
@@ -45,6 +47,8 @@ def build_argparser():
     parser.add_argument("--ckpt_path", type=str, default="Qwen/Qwen2.5-VL-3B-Instruct")
     parser.add_argument("--port", type=int, default=10093)
     parser.add_argument("--use_bf16", action="store_true")
+    parser.add_argument("--state_input_dtype", choices=("float32", "float64"), default="float32")
+    parser.add_argument("--model_state_dtype", choices=("float16", "float32"), default="float32")
     parser.add_argument("--idle_timeout", type=int, default=1800, help="Idle timeout in seconds, -1 means never close")
     return parser
 
