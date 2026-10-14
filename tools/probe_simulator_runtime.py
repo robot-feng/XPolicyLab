@@ -17,7 +17,6 @@ import platform
 import re
 import signal
 import shutil
-import subprocess
 import sys
 import time
 
@@ -176,45 +175,15 @@ def child(mode, output, gpu):
 
 def run_child(command, cwd, environment, timeout_s, log_path):
     """Kill only this owned process group on timeout; retain native exits/logs."""
-    started = time.monotonic()
-    with log_path.open("x", encoding="utf-8") as log:
-        process = subprocess.Popen(command, cwd=cwd, env=environment, stdin=subprocess.DEVNULL,
-                                   stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-        timed_out = False
-        termination_signals = []
-        def terminate_owned_group():
-            for sig in (signal.SIGTERM, signal.SIGKILL):
-                try:
-                    os.killpg(process.pid, sig)
-                    termination_signals.append(sig.name)
-                except ProcessLookupError:
-                    return
-                try:
-                    process.wait(timeout=5)
-                except subprocess.TimeoutExpired:
-                    pass
-                # The root can exit on TERM while its worker ignores it.
-                # Still deliver KILL to the remaining owned group members.
-
-        try:
-            process.wait(timeout=timeout_s)
-        except subprocess.TimeoutExpired:
-            timed_out = True
-            terminate_owned_group()
-        except BaseException:
-            terminate_owned_group()
-            raise
-        if not timed_out:
-            # A native exit can leave SDK helper processes in the same group.
-            # The probe owns them; never leave them running after its root exits.
-            terminate_owned_group()
-    return {"command": command, "cwd": str(cwd), "pid": process.pid, "exit_code": process.poll(),
-            "root_reaped": process.returncode is not None, "termination_signals": termination_signals,
-            "timed_out": timed_out, "duration_s": time.monotonic() - started}
+    # Lazy import keeps the frozen child usable in an SDK interpreter without
+    # installing the public core or its incompatible WebSocket dependency.
+    from xpolicy.core.process import run_owned_process
+    return run_owned_process(command, cwd, environment, timeout_s, log_path)
 
 
 def probe(python, mode, output, *, timeout_s=120., gpu=0):
     from xpolicy.core.artifacts import file_sha256, source_revision, write_json
+    from xpolicy.core import process as process_module
 
     if mode not in MODES or not math.isfinite(timeout_s) or not 0 < timeout_s <= 3600 or isinstance(gpu, bool) or not isinstance(gpu, int) or gpu < 0:
         raise ValueError("a supported mode, finite timeout in (0, 3600], and nonnegative integer gpu index are required")
@@ -235,7 +204,8 @@ def probe(python, mode, output, *, timeout_s=120., gpu=0):
     # may still use their documented defaults, which the captured log exposes.
     environment["XDG_CACHE_HOME"] = str(output / "cache")
     report = {"schema_version": 1, "scope": "simulator_runtime_bringup", "mode": mode, "status": "RUNNING",
-              "provenance": {**source_revision(), "probe_source_sha256": file_sha256(Path(__file__))},
+              "provenance": {**source_revision(), "probe_source_sha256": file_sha256(Path(__file__)),
+                             "supervisor_source_sha256": file_sha256(Path(process_module.__file__))},
               "gpu_index_requested": gpu,
               "inherited_runtime_flags": {name: environment.get(name) for name in ("CUDA_VISIBLE_DEVICES", "OMNI_KIT_ACCEPT_EULA")},
               "not_verified": ["full_Runner_simulation_provider", "benchmark_task", "camera_contract", "trained_policy",
@@ -275,7 +245,8 @@ def probe(python, mode, output, *, timeout_s=120., gpu=0):
         report["status"] = "BLOCKED"
         report["error"] = {"type": "SupervisorInterrupted", "message": "probe interrupted; owned process termination attempted"}
     finally:
-        report["source_stable"] = report["provenance"]["probe_source_sha256"] == file_sha256(Path(__file__))
+        report["source_stable"] = (report["provenance"]["probe_source_sha256"] == file_sha256(Path(__file__)) and
+                                   report["provenance"]["supervisor_source_sha256"] == file_sha256(Path(process_module.__file__)))
         if not report["source_stable"]:
             report["status"] = "FAIL"
         report["evidence_sha256"] = {path.name: file_sha256(path) for path in sorted(output.iterdir()) if path.is_file() and path.name != "SIMULATOR_PROBE_REPORT.json"}

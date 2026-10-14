@@ -145,3 +145,11 @@ and explicit denominators are retained. Zero judged trials means null success ra
 FAULT/BLOCKED/STOPPED inputs keep those outcomes in the summary rather than becoming
 PASS because another run completed. Integrity checks do not independently validate
 the correctness of a human/heuristic/ground-truth judge or physical safety.
+
+## Configuration and seed suites
+
+`xpolicy eval suite --config <suite.yaml>` evaluates explicit configurations/base seeds
+in separate sequential Runner processes and retains their process/run evidence.
+`xpolicy results verify-suite --report <SUITE_REPORT.json>` verifies the plan, population,
+nested results and summary. Runnable examples, deadline/stop behavior and scope are in
+[Experiment suites](experiment-suites.md).

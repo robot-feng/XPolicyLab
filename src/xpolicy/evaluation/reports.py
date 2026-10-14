@@ -149,13 +149,18 @@ def _validate(path):
     return report
 
 
+def verify_report(path):
+    """Return a version 2 report only after its retained evidence is verified."""
+    return _validate(Path(path).expanduser().resolve())
+
+
 def summarize_reports(paths):
     """Keep failed inputs visible; pool raw latency samples only within conditions."""
     inputs, populations, seen_runs, seen_trials = [], [], set(), set()
     for value in paths:
         path = Path(value).expanduser().resolve()
         try:
-            report = _validate(path)
+            report = verify_report(path)
             if report["run_id"] in seen_runs:
                 raise ValueError("duplicate run_id would count the same experiment twice")
             identities = {trial["trial_id"] for trial in report["trials"] + report["not_started_trials"]}

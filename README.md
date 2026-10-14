@@ -228,6 +228,8 @@ Dataset replay supports synchronous and paced `async_latest_only` record-only ex
 
 Use optional `TaskSpec` constraints and `ExperimentRunner` for explicit trial states, timeouts, instruction sources and host stop requests. Version 2 results retain hashed evidence and unstarted trials; `xpolicy results summarize` verifies it and pools comparable raw metric samples. See [Tasks and report summaries](docs/experiments.md).
 
+Use `xpolicy eval suite --config <suite.yaml>` for sequential configuration/seed runs in separate Runner processes. `xpolicy results verify-suite` checks their plan, process outcomes, nested evidence and summary; see [Experiment suites](docs/experiment-suites.md) for a runnable example.
+
 `xpolicy assets inventory` records tracked vendor/license/resource evidence and explicit external assets without loading model code. Missing provenance, terms and review records remain visible; see [Asset evidence inventory](docs/assets.md).
 
 `xpolicy environments list` reports implemented and deferred providers. Use `xpolicy doctor --mode environment` to preflight the recorded-data provider without loading a policy. See [Environment providers](docs/environments.md) for ownership, reset/stop semantics and simulator scope.

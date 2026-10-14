@@ -231,6 +231,8 @@ G2 模型边界诊断还可核对显式 state 精度、记录最终 VLM/action-h
 
 可用可选的 `TaskSpec` 约束和 `ExperimentRunner` 明确试验状态、超时、指令来源与主机停止请求。版本 2 结果保留带哈希的证据和未开始的试验；`xpolicy results summarize` 校验证据，并合并条件一致的原始指标样本。详见 [Tasks and report summaries](docs/experiments.md)。
 
+可用 `xpolicy eval suite --config <suite.yaml>` 在独立 Runner 进程中顺序运行多份配置与种子。`xpolicy results verify-suite` 校验计划、进程结果、嵌套证据及汇总；可运行示例见 [Experiment suites](docs/experiment-suites.md)。
+
 `xpolicy assets inventory` 可记录已跟踪的第三方源码、许可证、资源证据和显式外部资源声明，无需加载模型代码。缺失的来源、条款和审阅记录会保留在结果中；详见 [Asset evidence inventory](docs/assets.md)。
 
 `xpolicy environments list` 会列出已实现和暂缓接入的 provider。可用 `xpolicy doctor --mode environment` 在不加载策略的情况下预检查录制数据 provider。职责、reset/stop 语义及仿真范围见 [Environment providers](docs/environments.md)。

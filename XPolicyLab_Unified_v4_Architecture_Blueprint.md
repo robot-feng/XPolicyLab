@@ -1,6 +1,6 @@
 # XPolicyLab Unified v4 — 通用机器人学习、部署与统一评估平台
 
-**版本**：v4.5 / 2026-10-14（依据实施证据持续修订）\
+**版本**：v4.6 / 2026-10-14（依据实施证据持续修订）\
 **定位**：全新开源工程架构蓝图（基于 XPolicyLab 与 EVA-CLIENT 的成熟实现融合升级）\
 **文档状态**：设计、验收规范及实施修订记录；**完整系统尚未验收**。目标目录和设计示例不等于已实现接口；实际可运行命令与证据范围以仓库 `docs/migration-status.md` 和对应运行报告为准。\
 **上游基础**：[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab)（Apache-2.0）、[EVA-CLIENT](https://github.com/Noietch/EVA-CLIENT)（Apache-2.0）。第三方模型、SDK、权重、URDF/网格资源需单独审查授权和再分发条款。\
@@ -59,6 +59,7 @@
 - **环境注册只声明真实能力**：`xpolicy environments list` 列出 implementation status、factory、可用 execution capability；没有实现的模式不暴露可调用 factory。`dataset_direct` 的 provider 已独立持有录制文件、record sink、episode context，Runner 负责生命周期与执行。`doctor --mode contract` 保留声明校验范围；`--mode environment` 只预检查真实 provider/data，并不执行模型或控制闭环。RoboDojo 迁移备份源码已只读定位，active simulator、渲染启动与原基准回归仍未验收，不能用 debug 固定观测或普通 synthetic plant 替代。
 - **以实际 SDK 约束选择进程边界**：RoboDojo/Isaac 环境已克隆，29 个 Conda build、52 个原生包版本及选定 Torch/CUDA 二进制哈希核对一致。Isaac kernel 固定 `websockets==12.0`、`coverage==7.4.4`，与公共核心 WebSocket 14–15 冲突；尝试安装的失败证据保留，SDK 包清单已恢复。因此核心与该 SDK 分解释器，不把冲突视为兼容。wheel 还要求 glibc 2.35，本机是 2.31；[Isaac Sim 5.1 官方要求](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/requirements.html)不支持当前 A100。SDK EULA 仅在用户明确确认后接受。
 - **启动探针不等于仿真验收**：`tools/probe_simulator_runtime.py` 使用指定解释器、冻结子脚本、超时进程组清理、原生失败栈和哈希报告。实际 SAPIEN CPU 两步物理已 PASS；渲染在创建 CUDA device 时 SIGSEGV，未产生相机帧，不推断崩溃原因。Isaac 仅观察到许可提示失败，未启动应用。完整 simulation provider 仍需要独立的场景 reset、真实仿真时间/反馈、任务终止/评分和原 benchmark 对照，不能复用 `record_only` 时间轴冒充因果闭环。命令、结果和范围见 `docs/environments.md`。
+- **批量实验共用同一个 trial owner**：`xpolicy eval suite` 按显式 experiment 配置和 base seed 顺序启动独立 Runner 进程，不复制动作执行/评分逻辑，不通过 checkpoint 路径列表绕过 manifest 和训练统计量身份。Suite 保留计划、配置/profile 快照、进程退出/超时、未启动项和嵌套结果；`xpolicy results verify-suite` 校验对应关系并重算原有分组汇总。进程超时和 host stop 不代表设备停止；合成 mock 的多配置/种子验证仅证明实验编排，不代表多模型、仿真或硬件已验收。当前示例与边界见 `docs/experiment-suites.md`。
 
 ---
 

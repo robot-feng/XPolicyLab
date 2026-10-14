@@ -8,7 +8,7 @@ from xpolicy.core.tasks import TaskSpec
 __all__ = [
     "ActionChunk", "ActionType", "DatasetProfile", "ModelManifest", "Observation",
     "RobotProfile",
-    "TaskSpec", "ExperimentRunner",
+    "TaskSpec", "ExperimentRunner", "ExperimentSuiteRunner",
 ]
 
 
@@ -16,4 +16,7 @@ def __getattr__(name):
     if name == "ExperimentRunner":
         from xpolicy.evaluation.runner import ExperimentRunner
         return ExperimentRunner
+    if name == "ExperimentSuiteRunner":
+        from xpolicy.evaluation.suite import ExperimentSuiteRunner
+        return ExperimentSuiteRunner
     raise AttributeError(name)

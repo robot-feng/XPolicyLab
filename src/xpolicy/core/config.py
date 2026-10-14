@@ -175,17 +175,25 @@ def load_service(path: str | Path) -> tuple[PolicyServiceConfig, LoadedContracts
     return config.model_copy(update={"policy": contracts.policy, "robot": contracts.robot_path}), contracts
 
 
+def resolve_experiment_paths(config: ExperimentConfig, source: Path, *, resolver=resolve_path) -> ExperimentConfig:
+    """Resolve declared paths without opening historical profile/checkpoint files."""
+    policy = config.policy.model_copy(update={
+        "manifest": resolver(config.policy.manifest, source.parent),
+        "checkpoint": resolver(config.policy.checkpoint, source.parent) if config.policy.checkpoint is not None else None,
+    })
+    environment = config.environment.model_copy(update={
+        "robot": resolver(config.environment.robot, source.parent),
+        "dataset_profile": resolver(config.environment.dataset_profile, source.parent) if config.environment.dataset_profile is not None else None,
+        "dataset_path": resolver(config.environment.dataset_path, source.parent) if config.environment.dataset_path is not None else None,
+    })
+    return config.model_copy(update={
+        "policy": policy, "environment": environment,
+        "artifacts": config.artifacts.model_copy(update={"root": resolver(config.artifacts.root, source.parent)}),
+    })
+
+
 def load_experiment(path: str | Path) -> tuple[ExperimentConfig, LoadedContracts]:
     source = Path(path).expanduser().resolve()
-    config = ExperimentConfig.model_validate(read_yaml(source))
+    config = resolve_experiment_paths(ExperimentConfig.model_validate(read_yaml(source)), source)
     contracts = _load_contracts(config.policy, config.environment.robot, source, config.environment.dataset_profile)
-    environment = config.environment.model_copy(update={
-        "robot": contracts.robot_path,
-        "dataset_profile": contracts.dataset_profile_path,
-        "dataset_path": resolve_path(config.environment.dataset_path, source.parent) if config.environment.dataset_path is not None else None,
-    })
-    config = config.model_copy(update={
-        "policy": contracts.policy, "environment": environment,
-        "artifacts": config.artifacts.model_copy(update={"root": resolve_path(config.artifacts.root, source.parent)}),
-    })
     return config, contracts

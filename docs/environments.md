@@ -112,7 +112,7 @@ license acceptance is inherited from an explicitly authorized environment, never
 the tool. An SDK license prompt with closed stdin remains a reported failure/blocker.
 
 The parent retains a frozen child script, stage receipts, log, actual interpreter identity,
-source hash, exit code/signal and file hashes in `SIMULATOR_PROBE_REPORT.json`.
+tool/shared-supervisor source hashes, exit code/signal and file hashes in `SIMULATOR_PROBE_REPORT.json`.
 Native failures retain a Python stack via `faulthandler`. Timeouts terminate only the
 owned process group, escalating TERM to KILL; an unreaped root is recorded explicitly.
 An SDK worker remaining after root exit also receives termination. Zero exit without

@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Add explicit configuration/base-seed suites using separate sequential Runner processes,
+  preserving blocked, failed, timed-out and unstarted cases without inventing trial scores.
+- Bind child results to their planned config/profile/seed identities; verify closed suite
+  snapshots, process receipts, nested evidence, source stability, denominators and summary.
+- Allow an explicitly selected compatible case interpreter, preserving venv executable
+  links, pinning its identity and checking shared Runner source; record actual runtime inventories.
+- Share owned process-group supervision with SDK probes; record native exits and bounded
+  host cleanup, with SIGINT/SIGTERM suite stopping and no physical stop claim.
+- Add supervised actual SDK startup probes and installed native-stack constraints; retain
+  measured Isaac package/platform/hardware blockers and restore its original SDK inventory.
+
 - Introduce lazy environment capability/status discovery and the recorded dataset
   provider, owning HDF5/record-only sink/context with generation-aware reset and stop.
 - Route Runner timeline access/submissions through provider receipts, trace provider
@@ -56,4 +67,4 @@
 - Add StarVLA complete predictions without advancing its legacy execution cursor.
 
 The architecture blueprint remains a design specification. EVA migration is deferred;
-dataset wire runtime, final model tensor/state parity and device acceptance remain outstanding.
+dataset wire runtime, complete registered G2 runtime and device acceptance remain outstanding.

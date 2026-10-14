@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 from pathlib import Path
 
@@ -17,7 +18,7 @@ from xpolicy.core.config import load_service
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def create_fixture(output: Path, frames=5, strategy="sync"):
+def create_fixture(output: Path, frames=5, strategy="sync", *, with_suite=False):
     if isinstance(frames, bool) or not isinstance(frames, int) or frames < 1:
         raise ValueError("frames must be a positive integer")
     if strategy not in {"sync", "async_latest_only"}:
@@ -63,6 +64,17 @@ def create_fixture(output: Path, frames=5, strategy="sync"):
                   "artifacts": {"root": "results"}}
     for name, value in (("dataset.yaml", profile), ("experiment.yaml", experiment)):
         (output / name).write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+    if with_suite:
+        alternate = copy.deepcopy(experiment)
+        other = "async_latest_only" if strategy == "sync" else "sync"
+        alternate["execution"]["strategy"] = other
+        alternate["execution"]["latency_trim"] = other == "async_latest_only"
+        (output / "alternate.yaml").write_text(yaml.safe_dump(alternate, sort_keys=False), encoding="utf-8")
+        suite = {"schema_version": 1, "name": "synthetic_strategy_seed_suite", "artifacts_root": "suite-results",
+                 "process_timeout_s": 30., "cleanup_grace_s": 2., "fail_fast": False,
+                 "cases": [{"case_id": strategy, "config": "experiment.yaml", "seeds": [3, 7], "repeats": 1},
+                           {"case_id": other, "config": "alternate.yaml", "seeds": [3, 7], "repeats": 1}]}
+        (output / "suite.yaml").write_text(yaml.safe_dump(suite, sort_keys=False), encoding="utf-8")
     return output / "experiment.yaml"
 
 
@@ -71,8 +83,9 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--frames", type=int, default=5)
     parser.add_argument("--strategy", choices=("sync", "async_latest_only"), default="sync")
+    parser.add_argument("--with-suite", action="store_true", help="also write a two-strategy, two-seed suite")
     args = parser.parse_args(argv)
-    print(create_fixture(args.output, args.frames, args.strategy))
+    print(create_fixture(args.output, args.frames, args.strategy, with_suite=args.with_suite))
 
 
 if __name__ == "__main__":

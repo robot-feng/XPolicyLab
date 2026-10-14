@@ -5,6 +5,8 @@ from __future__ import annotations
 import asyncio
 import importlib.metadata
 import json
+import platform
+import sys
 import time
 import threading
 from pathlib import Path
@@ -289,7 +291,9 @@ def _run_experiment(path: str | Path, *, stop_signal=None, lease=None, admission
         provenance["runtime_lock_sha256"] = file_sha256(lock) if lock.is_file() else None
         write_json(directory / "config.json", config.model_dump(mode="json"))
         write_json(directory / "profiles.json", {"model": contracts.manifest.model_dump(mode="json"), "robot": contracts.robot.model_dump(mode="json"), "dataset": contracts.dataset.model_dump(mode="json") if contracts.dataset else None})
-        write_json(directory / "software-inventory.json", {"packages": sorted([{"name": item.metadata.get("Name", "unknown"), "version": item.version} for item in importlib.metadata.distributions()], key=lambda item: item["name"].lower())})
+        write_json(directory / "software-inventory.json", {"python": sys.version, "executable": sys.executable, "prefix": sys.prefix,
+                   "platform": platform.platform(), "libc": list(platform.libc_ver()),
+                   "packages": sorted([{"name": item.metadata.get("Name", "unknown"), "version": item.version} for item in importlib.metadata.distributions()], key=lambda item: item["name"].lower())})
         if random_state is not None:
             np.random.seed(config.experiment.seed)
         with (directory / "trace.jsonl").open("x", encoding="utf-8") as trace:

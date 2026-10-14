@@ -148,3 +148,17 @@ def test_probe_never_sets_vendor_license_acceptance(tmp_path, monkeypatch):
     report = probe(Path(sys.executable), "isaac_app", tmp_path / "license")
     assert report["inherited_runtime_flags"]["OMNI_KIT_ACCEPT_EULA"] is None
     assert report["status"] == "FAIL"  # No successful SDK evidence was produced.
+
+
+def test_shared_supervisor_source_change_fails_probe_stability(tmp_path, monkeypatch):
+    from xpolicy.core import artifacts
+    original, reads = artifacts.file_sha256, []
+    def changed(path):
+        if Path(path).name == "process.py":
+            reads.append(path)
+            return original(path) if len(reads) == 1 else "0" * 64
+        return original(path)
+    monkeypatch.setattr(artifacts, "file_sha256", changed)
+    report = probe(Path(sys.executable), "packages", tmp_path / "changed-supervisor")
+    assert report["child"]["status"] == "PASS"
+    assert report["status"] == "FAIL" and not report["source_stable"]

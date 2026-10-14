@@ -45,6 +45,7 @@ are not attributed to the surrounding checkout's git SHA.
 | Phase 5 task/lifecycle/report foundation | Explicit TaskSpec constraints, native reset before offline READY, idempotent host stop and finalization, blocked/interrupted/unstarted evidence, version 2 hashed reports and raw-sample summaries | Actual multi-scene/environment providers, causal evaluators, scene/robot reset, physical stop ACK, full system metrics and original benchmark regression |
 | Environment registry / provider ownership | Lazy implementation/capability metadata, actual recorded timeline provider owning HDF5/record sink/context, provider doctor and traced reset/preparation receipts; separated trial evidence code | Genuine simulator/live feedback contracts and providers; original benchmark/device acceptance |
 | Simulator runtime bring-up | Supervised SDK probes, actual SAPIEN CPU steps, cloned Isaac environment with preserved native binary identities and restored vendor package inventory | SAPIEN device creation segfault, Isaac EULA prompt, host libc/GPU requirements, genuine camera/task/provider and original benchmark regression |
+| Config/seed experiment suites | Separate sequential Runner processes, explicit plans and snapshots, bounded host process deadlines/stop, nested result binding/verification and grouped summaries | Genuine multi-checkpoint model/benchmark acceptance, causal task/device comparisons and physical stop behavior |
 | Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
@@ -109,3 +110,7 @@ are retained separately from successful content-hash checks; A05 is not fully ac
 Environment registry/provider/preflight commands and genuine simulator inspection scope
 are documented in [Environment providers](environments.md). Recorded data provider tests
 do not establish simulator, EVA Fake G2 or hardware compatibility.
+
+Configuration/seed orchestration, retained process outcomes and closed-suite verification
+are documented in [Experiment suites](experiment-suites.md). They reuse the existing Runner
+and do not add a simulator, device executor or success judge.

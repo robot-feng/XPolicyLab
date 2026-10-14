@@ -19,13 +19,16 @@ def _parser():
     doctor.add_argument("--mode", choices=["contract", "environment"], default="contract")
     doctor.add_argument("--verify-artifacts", action="store_true")
     doctor.add_argument("--output", type=Path)
-    evaluation = commands.add_parser("eval", help="run dataset_direct replay with shared record-only execution")
+    evaluation = commands.add_parser("eval", help="run an experiment or a sequential suite through the shared Runner")
+    evaluation.add_argument("eval_action", nargs="?", choices=["suite"])
     evaluation.add_argument("--config", type=Path, required=True)
     results = commands.add_parser("results", help="verify and summarize version 2 run reports")
     result_actions = results.add_subparsers(dest="results_action", required=True)
     summary = result_actions.add_parser("summarize", help="retain outcomes and pool comparable raw metric samples")
     summary.add_argument("reports", type=Path, nargs="+")
     summary.add_argument("--output", type=Path)
+    suite_verification = result_actions.add_parser("verify-suite", help="verify a closed suite and its nested run evidence")
+    suite_verification.add_argument("--report", type=Path, required=True)
     assets = commands.add_parser("assets", help="inventory local source/asset attribution evidence without model imports")
     asset_actions = assets.add_subparsers(dest="assets_action", required=True)
     inventory = asset_actions.add_parser("inventory", help="scan tracked evidence and explicitly declared assets")
@@ -85,17 +88,23 @@ def main(argv=None) -> int:
             import threading
             from xpolicy.evaluation.runner import ExperimentRunner
 
-            runner = ExperimentRunner(args.config)
-            previous = None
+            if args.eval_action == "suite":
+                from xpolicy.evaluation.suite import ExperimentSuiteRunner
+                runner = ExperimentSuiteRunner(args.config)
+            else:
+                runner = ExperimentRunner(args.config)
+            previous = {}
             if threading.current_thread() is threading.main_thread():
-                previous = signal.signal(signal.SIGINT, lambda signum, frame: runner.stop("interrupted"))
+                handled = (signal.SIGINT, signal.SIGTERM) if args.eval_action == "suite" else (signal.SIGINT,)
+                for sig in handled:
+                    previous[sig] = signal.signal(sig, lambda signum, frame: runner.stop("interrupted"))
             try:
                 report = runner.evaluate()
             finally:
-                if previous is not None:
-                    signal.signal(signal.SIGINT, previous)
+                for sig, handler in previous.items():
+                    signal.signal(sig, handler)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
-            return 0 if report["status"] == "COMPLETED" else 2
+            return 0 if report["status"] in {"COMPLETED", "PASS"} else 2
         if args.command == "golden":
             from xpolicy.core.artifacts import write_json
             from xpolicy.diagnostics.golden import compare_bundles
@@ -106,6 +115,11 @@ def main(argv=None) -> int:
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "PASS" else 2
         if args.command == "results":
+            if args.results_action == "verify-suite":
+                from xpolicy.evaluation.suite import verify_suite
+                report = verify_suite(args.report)
+                print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
+                return 0 if report["status"] == "PASS" else 2
             from xpolicy.core.artifacts import write_json
             from xpolicy.evaluation.reports import summarize_reports
 
