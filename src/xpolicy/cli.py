@@ -21,6 +21,11 @@ def _parser():
     doctor.add_argument("--output", type=Path)
     evaluation = commands.add_parser("eval", help="run dataset_direct replay with shared record-only execution")
     evaluation.add_argument("--config", type=Path, required=True)
+    results = commands.add_parser("results", help="verify and summarize version 2 run reports")
+    result_actions = results.add_subparsers(dest="results_action", required=True)
+    summary = result_actions.add_parser("summarize", help="retain outcomes and pool comparable raw metric samples")
+    summary.add_argument("reports", type=Path, nargs="+")
+    summary.add_argument("--output", type=Path)
     golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
     golden_actions = golden.add_subparsers(dest="golden_action", required=True)
     comparison = golden_actions.add_parser("diff", help="locate the first divergent boundary")
@@ -66,9 +71,19 @@ def main(argv=None) -> int:
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "PASS" else 2
         if args.command == "eval":
-            from xpolicy.evaluation.runner import run_experiment
+            import signal
+            import threading
+            from xpolicy.evaluation.runner import ExperimentRunner
 
-            report = run_experiment(args.config)
+            runner = ExperimentRunner(args.config)
+            previous = None
+            if threading.current_thread() is threading.main_thread():
+                previous = signal.signal(signal.SIGINT, lambda signum, frame: runner.stop("interrupted"))
+            try:
+                report = runner.evaluate()
+            finally:
+                if previous is not None:
+                    signal.signal(signal.SIGINT, previous)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "COMPLETED" else 2
         if args.command == "golden":
@@ -76,6 +91,15 @@ def main(argv=None) -> int:
             from xpolicy.diagnostics.golden import compare_bundles
 
             report = compare_bundles(args.expected, args.observed, layers=args.layers, atol=args.atol, rtol=args.rtol)
+            if args.output is not None:
+                write_json(args.output, report)
+            print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
+            return 0 if report["status"] == "PASS" else 2
+        if args.command == "results":
+            from xpolicy.core.artifacts import write_json
+            from xpolicy.evaluation.reports import summarize_reports
+
+            report = summarize_reports(args.reports)
             if args.output is not None:
                 write_json(args.output, report)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))

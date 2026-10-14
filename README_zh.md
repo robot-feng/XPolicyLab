@@ -227,6 +227,8 @@ G2 模型边界诊断还可核对显式 state 精度、记录最终 VLM/action-h
 
 数据回放支持同步和按时钟采样的 `async_latest_only` 仅记录执行，包含 generation reset、显式延迟裁剪和可选的绝对关节位置重叠融合。运行示例、算法及 trace 范围见 [Chunk execution](docs/execution.md)。
 
+可用可选的 `TaskSpec` 约束和 `ExperimentRunner` 明确试验状态、超时、指令来源与主机停止请求。版本 2 结果保留带哈希的证据和未开始的试验；`xpolicy results summarize` 校验证据，并合并条件一致的原始指标样本。详见 [Tasks and report summaries](docs/experiments.md)。
+
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。
 
 下载一个小的 Hugging Face demo 包，并把数据放在 `XPolicyLab/` 旁：

@@ -13,6 +13,8 @@ from xpolicy.core.artifacts import file_sha256, source_revision, verify_artifact
 from xpolicy.core.config import load_experiment
 from xpolicy.core.contracts import ActionType, ContractValidator
 from xpolicy.core.registry import policy_registry
+from xpolicy.core.tasks import validate_task
+from xpolicy.core.errors import UnsupportedCapability
 
 
 def dependency_check() -> dict:
@@ -42,6 +44,13 @@ def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
     try:
         config, contracts = load_experiment(source)
         checks.append({"id": "configuration_schema", "status": "PASS"})
+        try:
+            task = validate_task(config, contracts.manifest)
+            checks.append({"id": "task_contract", "status": "PASS", "details": task.model_dump(mode="json")})
+        except UnsupportedCapability as exc:
+            checks.append({"id": "task_contract", "status": "BLOCKED", "message": str(exc)})
+        except ValueError as exc:
+            checks.append({"id": "task_contract", "status": "FAIL", "message": str(exc)})
         provenance["configuration_sha256"] = file_sha256(source)
         provenance["profile_sha256"] = {
             str(item): file_sha256(item)

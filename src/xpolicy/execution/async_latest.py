@@ -21,12 +21,26 @@ class LocalPolicyBackend:
     def __init__(self, policy):
         self.policy = policy
         self._executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="xpolicy-inference")
+        self._active_hook = None
 
     async def reset(self, episode_id):
-        await asyncio.wrap_future(self._executor.submit(self.policy.reset))
+        reset = getattr(self.policy, "reset_episode", None)
+        await asyncio.wrap_future(self._executor.submit(reset, episode_id) if callable(reset) else self._executor.submit(self.policy.reset))
 
     async def predict(self, observation, request):
         return await asyncio.wrap_future(self._executor.submit(self.policy.predict_action_chunk, observation))
+
+    async def prepare_case(self, case_meta):
+        self._active_hook = self._executor.submit(self.policy.prepare_case, case_meta)
+        return await asyncio.shield(asyncio.wrap_future(self._active_hook))
+
+    async def on_trial_end(self, result):
+        self._active_hook = self._executor.submit(self.policy.on_trial_end, result)
+        return await asyncio.shield(asyncio.wrap_future(self._active_hook))
+
+    @property
+    def hook_pending(self):
+        return self._active_hook is not None and not self._active_hook.done()
 
     def close(self):
         # Close is queued after running inference; it cannot race with it.
@@ -148,7 +162,12 @@ class AsyncLatestOnly:
                 self.refresh_clock()
                 request = self.buffer.issue(observation, control_tick=source_tick)
                 started = time.monotonic()
-                chunk = await self.backend.predict(observation, request)
+                try:
+                    chunk = await self.backend.predict(observation, request)
+                except Exception:
+                    self.buffer.event("inference_timing", request, duration_s=time.monotonic() - started, outcome="error")
+                    raise
+                self.buffer.event("inference_timing", request, duration_s=time.monotonic() - started, outcome="returned")
                 if generation != self.buffer.generation:
                     self.buffer.event("prediction_discard", request, reason="old_generation")
                     continue
@@ -156,6 +175,9 @@ class AsyncLatestOnly:
                     self.buffer.event("prediction_discard", request, reason="execution_stopped")
                     return
                 self.refresh_clock()
+                if self._stopped or self._closed:
+                    self.buffer.event("prediction_discard", request, reason="execution_stopped")
+                    return
                 self.predictions += 1
                 if not isinstance(chunk, ActionChunk):
                     raise TypeError("prediction must be an ActionChunk")

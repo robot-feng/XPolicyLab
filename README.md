@@ -224,6 +224,8 @@ The G2 model-boundary diagnostic also checks explicit state precision, captures 
 
 Dataset replay supports synchronous and paced `async_latest_only` record-only execution, with generation resets, explicit latency trimming and optional absolute-joint overlap. See [Chunk execution](docs/execution.md) for runnable examples, algorithms and trace scope.
 
+Use optional `TaskSpec` constraints and `ExperimentRunner` for explicit trial states, timeouts, instruction sources and host stop requests. Version 2 results retain hashed evidence and unstarted trials; `xpolicy results summarize` verifies it and pools comparable raw metric samples. See [Tasks and report summaries](docs/experiments.md).
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:

@@ -76,6 +76,22 @@ class ChunkPolicyRuntime:
     def infer(self, observation):
         raise UnsupportedCapability("chunk services require CALL predict_action_chunk; legacy INFER is disabled")
 
+    def reset_episode(self, episode_id: str):
+        if not isinstance(episode_id, str) or not episode_id.strip():
+            raise ValueError("reset_episode requires a nonempty episode ID")
+        self.reset()
+        if self.native:
+            self.model.reset(episode_id)
+        self._episode_id = episode_id
+
+    def prepare_case(self, case_meta=None):
+        hook = getattr(self.model, "prepare_case", None)
+        return hook(case_meta) if callable(hook) else None
+
+    def on_trial_end(self, result=None):
+        hook = getattr(self.model, "on_trial_end", None)
+        return hook(result) if callable(hook) else None
+
     def predict_action_chunk(self, observation) -> ActionChunk:
         obs = observation if isinstance(observation, Observation) else Observation.from_wire_dict(observation)
         ContractValidator.observation(obs, self.contracts.robot, self.contracts.manifest)

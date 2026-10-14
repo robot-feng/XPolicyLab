@@ -42,6 +42,7 @@ are not attributed to the surrounding checkout's git SHA.
 | Dataset direct / offline scoring | Explicit HDF5 mappings, shared sync/async record-only execution, linked trace and per-field behavior cloning error; synthetic fixture | Genuine calibrated 24D replay profiles and complete runtime adapter |
 | Training golden / first divergence | Actual G2 loader samples, raw roundtrips, named statistics, adapter image parity; actual XPL normalization wrapper composed with genuine checkpoint, final VLM/state tensors and float32 output actions compare exactly for three samples | Full adapter constructor/head/waist mapping, physical units, historical training revision and task success |
 | C05/C06 record-only execution | Immediate generation invalidation, latest-only pending observations, actual WS reset interleaving, fixed trim/overlap/tick-consumption checks and paced async replay | EVA strategy/physical SDK regression, device-local invalidation and failure behavior |
+| Phase 5 task/lifecycle/report foundation | Explicit TaskSpec constraints, native reset before offline READY, idempotent host stop and finalization, blocked/interrupted/unstarted evidence, version 2 hashed reports and raw-sample summaries | Actual multi-scene/environment providers, causal evaluators, scene/robot reset, physical stop ACK, full system metrics and original benchmark regression |
 | Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
@@ -88,3 +89,7 @@ and checkpoint output through an explicitly identified diagnostic composition.
 The pair is not configured as a complete 24D runtime adapter. Real benchmark regression is BLOCKED. Device tests
 and on-site acceptance are also BLOCKED. The project goal remains
 in progress while these requirements and the later blueprint phases remain outstanding.
+
+Task, lifecycle and report-summary commands are documented in [Tasks and report summaries](experiments.md).
+Version 2 reports distinguish execution completion from unmeasured task success;
+physical scene/device behavior is not established by offline readiness or host stop.

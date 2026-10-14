@@ -53,6 +53,9 @@ def create_fixture(output: Path, frames=5, strategy="sync"):
                         "action": {"arm_joint": {"key": "action/joint_states", "column": 0}, "gripper": {"key": "action/gripper_states", "column": 0}},
                         "timestamp_key": "timestamps", "frame_id_key": "frame_ids", "instruction_key": "instruction"}}
     experiment = {"schema_version": 1, "experiment": {"name": "synthetic_dataset_replay", "seed": 42, "repeats": 2, "max_duration_s": 10},
+                  "task": {"task_id": "synthetic_hold", "allowed_action_types": ["joint_position"],
+                           "instruction": {"source": "dataset"}, "reset": "recorded_episode_start",
+                           "evaluator": {"source": "not_measured"}},
                   "policy": {"name": "mock", "api": "chunk", "manifest": str(contracts.manifest_path)},
                   "environment": {"kind": "dataset_direct", "robot": str(contracts.robot_path), "dataset_profile": "dataset.yaml", "dataset_path": "trajectory.hdf5"},
                   "execution": {"mode": "record_only", "strategy": strategy, "control_hz": contracts.robot.control_hz, "execute_horizon": 2,

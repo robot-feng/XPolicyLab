@@ -1,6 +1,6 @@
 # XPolicyLab Unified v4 — 通用机器人学习、部署与统一评估平台
 
-**版本**：v4.1 / 2026-10-14（依据实施证据持续修订）\
+**版本**：v4.2 / 2026-10-14（依据实施证据持续修订）\
 **定位**：全新开源工程架构蓝图（基于 XPolicyLab 与 EVA-CLIENT 的成熟实现融合升级）\
 **文档状态**：设计、验收规范及实施修订记录；**完整系统尚未验收**。目标目录和设计示例不等于已实现接口；实际可运行命令与证据范围以仓库 `docs/migration-status.md` 和对应运行报告为准。\
 **上游基础**：[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab)（Apache-2.0）、[EVA-CLIENT](https://github.com/Noietch/EVA-CLIENT)（Apache-2.0）。第三方模型、SDK、权重、URDF/网格资源需单独审查授权和再分发条款。\
@@ -53,6 +53,8 @@
 - **精度需要显式配置**：当前 G2 loader 使用 float64 原始 state 进行归一化，再打包为 float16；直接走 float32 会在实际黄金样本中造成差异。`state_input_dtype` 与 `model_state_dtype` 必须从实际训练路径选择并通过握手核对，不从 action/state 维数猜测。
 - **声明实际返回的 chunk**：RollingFlow 样例 checkpoint 的规划 horizon 是 64，模型公开预测入口返回的 execution chunk 是 16。Policy contract 必须声明实际返回的完整 `[T,D]`，同时记录内部规划 horizon；禁止补零凑到 64，也禁止由两个消费端重复裁剪。
 - **模型诊断与设备支持分别验收**：使用真实 G2 registry、统计量、checkpoint 和 XPL 归一化 wrapper 的模型侧组合可证明数值边界；它仍不是完整的 24D G2 runtime 注册。head/waist、inner/outer gripper、单位、在线 measured feedback 和 SDK 映射必须另有证据。
+- **生命周期和任务结果分别记录**：当前实现共用 `ExperimentRunner`/trial 状态机，offline READY 表示录制数据游标与 model episode context 已就绪；不表示机器人/物体场景复位。host stop 不等于设备 ACK。`TaskSpec` 可约束 instruction、允许动作类型、有效超时和证据；dataset 仍拒绝将标签或回放完成判为当前 policy 的任务成功。
+- **汇总从证据与原始样本出发**：结果 schema 2 保留 trial transition、首次 stop reason、未开始 repeats 与文件哈希。`xpolicy results summarize` 校验结果与 trial_end trace，按条件/评判来源分组，合并原始延迟样本而非平均 p95；未评判时成功率为 null，FAIL/BLOCKED 不被健康运行覆盖。实际跨模式 provider、场景复位和现场分数仍待验收。
 
 ---
 
@@ -641,8 +643,10 @@ stateDiagram-v2
     PREFLIGHT --> BLOCKED: Contract/Safety failed
     PREFLIGHT --> PREPARED: OK
     PREPARED --> READY: Sensor/Robot/Task initialized
+    PREPARED --> BLOCKED: previous inference still owns runtime / cancelled before start
     READY --> RUNNING: explicit start
     RUNNING --> STOPPING: success / timeout / operator stop / fault
+    PREPARED --> STOPPING: setup fault / interrupt
     STOPPING --> FINALIZING
     FINALIZING --> COMPLETED
     FINALIZING --> FAILED: evidence invalid
@@ -655,6 +659,7 @@ stateDiagram-v2
 - `RUNNING` 状态只有 Runner 唯一分配，EVA Console 仅发出“请求动作/状态”而非私自建试验 ID。
 - `stop(reason)` 是幂等逻辑；真实设备的 stop 结果需要设备本地 ACK，超时未 ACK 必须升级为 FAULT，不能宣称安全。
 - `trial_end` 模型 hook 不能被用于替代机器人状态复位。
+- 实施结果的 `lifecycle.state` 记录上述状态；兼容 `status` 继续表达执行 outcome。operator stop 可以完成 FINALIZING 后保持 `status: STOPPED`，FAILED 对应 `status: FAULT`；这两个字段都不是 task success。未开始的 repeat 独立记为 NOT_RUN，不计作已执行样本。
 
 ### 9.2 一份 ExperimentPlan 配置（示意）
 
@@ -713,14 +718,16 @@ xpolicy report --run runs/<run-id>
 ```
 
 ```python
-from xpolicy import load_experiment
+from xpolicy import ExperimentRunner
 
-runner = load_experiment("configs/experiments/g2_replay.yaml")
+runner = ExperimentRunner("runs/mock-replay-fixture/experiment.yaml")
 report = runner.evaluate()
-assert report.mode == "dataset_wire"
+assert report["environment_kind"] == "dataset_direct"
 ```
 
 目标是一行命令切换环境但不换模型、数据映射、执行和记录逻辑。**对真实动作必须另设明确 `arm` 授权门禁**，禁止把 `--mode real` 解释为自动授权执行。
+
+当前已实现的 Python 示例对应 dataset_direct；其他 mode 的实际 provider 与物理准入仍待实现。配置预检查会保留 BLOCKED 报告再抛出原错误，不能把统一结果格式当作所有运行模式都已支持。
 
 ### 9.4 任务与评测指标
 

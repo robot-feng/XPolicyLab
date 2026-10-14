@@ -10,6 +10,7 @@ import yaml
 from pydantic import Field, StrictBool, field_validator, model_validator
 
 from xpolicy.core.contracts import DatasetProfile, ModelManifest, Name, Rate, RobotProfile, Schema
+from xpolicy.core.tasks import TaskSpec
 
 
 class ServerSettings(Schema):
@@ -91,6 +92,7 @@ class ExperimentConfig(Schema):
     policy: PolicyConfig
     environment: EnvironmentConfig
     execution: ExecutionConfig
+    task: TaskSpec | None = None
     validation: ValidationConfig = Field(default_factory=ValidationConfig)
     artifacts: ArtifactsConfig = Field(default_factory=ArtifactsConfig)
 

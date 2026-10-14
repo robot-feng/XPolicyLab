@@ -159,6 +159,7 @@ def test_large_label_errors_are_scored_without_square_overflow(experiment):
             assert metric["mae"] == 1e308
             assert metric["rmse"] == 1e308
             assert metric["metric_status"] == "COMPUTED"
+        trial = _Trial("synthetic-exceeds-range", 0, config, contracts, source, experiment.parent, io.StringIO())
         trial.errors = [np.full((2, 2), np.longdouble("1e400"), dtype=np.longdouble)]
         result = trial.finish()
         assert result["status"] == "COMPLETED"

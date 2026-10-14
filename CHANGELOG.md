@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add optional task constraints, explicit trial states, one-run ownership and
+  idempotent host stop requests; preserve blocked, interrupted and unstarted evidence.
+- Complete native episode reset before offline READY and capture inference timing,
+  control-tick queue delay, local receipt age and optional process CPU accounting.
+- Add results schema 2 with evidence hashes and verified summaries that preserve
+  failures, judge sources and denominators while pooling comparable raw samples.
+
 - Add explicit StarVLA raw/normalized state precision, handshake checks and
   launcher forwarding; keep float32 defaults and reject nonfinite/overflowing states.
 - Add a genuine G2 model-boundary diagnostic using the original loader, checkpoint,
