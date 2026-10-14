@@ -231,6 +231,8 @@ G2 模型边界诊断还可核对显式 state 精度、记录最终 VLM/action-h
 
 `xpolicy assets inventory` 可记录已跟踪的第三方源码、许可证、资源证据和显式外部资源声明，无需加载模型代码。缺失的来源、条款和审阅记录会保留在结果中；详见 [Asset evidence inventory](docs/assets.md)。
 
+`xpolicy environments list` 会列出已实现和暂缓接入的 provider。可用 `xpolicy doctor --mode environment` 在不加载策略的情况下预检查录制数据 provider。职责、reset/stop 语义及仿真范围见 [Environment providers](docs/environments.md)。
+
 开始模型侧开发不需要仿真器：自带下载脚本可拉取已准备好的 RoboDojo 数据 —— 多种仿真导出版本，以及 HDF5 `RoboDojo_real` 真机数据 —— 用于训练与离线调试。若把 `XPolicyLab/` 作为 RoboDojo 仓库内的子包使用，请改用 RoboDojo 自己的数据下载脚本。
 
 下载一个小的 Hugging Face demo 包，并把数据放在 `XPolicyLab/` 旁：

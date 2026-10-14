@@ -15,6 +15,7 @@ from xpolicy.core.contracts import ActionType, ContractValidator
 from xpolicy.core.registry import policy_registry
 from xpolicy.core.tasks import validate_task
 from xpolicy.core.errors import UnsupportedCapability
+from xpolicy.environment.registry import environment_registry
 
 
 def dependency_check() -> dict:
@@ -33,7 +34,9 @@ def dependency_check() -> dict:
     return {"id": "public_dependencies", "status": "FAIL" if errors else "PASS", "details": {"versions": versions, "errors": errors}}
 
 
-def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
+def doctor(path: str | Path, *, verify_artifacts: bool = False, mode: str = "contract") -> dict:
+    if mode not in {"contract", "environment"}:
+        raise ValueError("doctor mode must be contract or environment")
     source = Path(path).expanduser().resolve()
     checks = []
     provenance = source_revision()
@@ -44,6 +47,9 @@ def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
     try:
         config, contracts = load_experiment(source)
         checks.append({"id": "configuration_schema", "status": "PASS"})
+        environment = environment_registry().get(config.environment.kind)
+        checks.append({"id": "environment_provider", "status": "PASS" if environment.status == "IMPLEMENTED" else "BLOCKED" if mode == "environment" else "NOT_RUN",
+                       "details": asdict(environment)})
         try:
             task = validate_task(config, contracts.manifest)
             checks.append({"id": "task_contract", "status": "PASS", "details": task.model_dump(mode="json")})
@@ -91,7 +97,29 @@ def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
                     checks.append({"id": f"artifact_hash.{name}", "status": "BLOCKED", "message": str(exc)})
             else:
                 checks.append({"id": f"artifact_hash.{name}", "status": "NOT_RUN", "message": "identity declared; use --verify-artifacts to verify local bytes"})
-        checks.append({"id": "environment_runtime", "status": "NOT_RUN", "message": f"contract mode does not run {config.environment.kind} or measure task success"})
+        checks.append({"id": "environment_runtime", "status": "NOT_RUN", "message": f"provider preflight does not run the {config.environment.kind} control loop or measure task success"})
+        if mode == "environment" and environment.status == "IMPLEMENTED":
+            session = None
+            try:
+                from xpolicy.evaluation.runner import _preflight
+
+                path = _preflight(config, contracts)
+                session = environment_registry().create(config.environment.kind, config, contracts, path)
+                description = session.describe()
+                session.verify_evidence()
+                checks.append({"id": "environment_provider_preflight", "status": "PASS", "details": description,
+                               "message": "verified recorded source/profile identity and stream layout; no model, image tensor, actions or task scoring were run"})
+            except UnsupportedCapability as exc:
+                checks.append({"id": "environment_provider_preflight", "status": "BLOCKED", "message": str(exc)})
+            except (OSError, ValueError, RuntimeError) as exc:
+                checks.append({"id": "environment_provider_preflight", "status": "FAIL", "message": str(exc)})
+            finally:
+                if session is not None:
+                    try:
+                        session.close()
+                        checks.append({"id": "environment_provider_cleanup", "status": "PASS"})
+                    except (OSError, ValueError, RuntimeError) as exc:
+                        checks.append({"id": "environment_provider_cleanup", "status": "FAIL", "message": str(exc)})
         if config.environment.kind in {"shadow", "real"}:
             checks.append({"id": "hardware_admission", "status": "BLOCKED", "message": "no migrated device driver, calibration or on-site acceptance evidence is available"})
     except (OSError, ValueError, TypeError) as exc:
@@ -99,7 +127,7 @@ def doctor(path: str | Path, *, verify_artifacts: bool = False) -> dict:
     statuses = {item["status"] for item in checks}
     status = "FAIL" if "FAIL" in statuses else "BLOCKED" if "BLOCKED" in statuses else "PASS"
     return {
-        "schema_version": 1, "scope": "contract_preflight", "status": status,
+        "schema_version": 1, "scope": "contract_preflight" if mode == "contract" else "environment_provider_preflight", "status": status,
         "created_at": datetime.now(timezone.utc).isoformat(),
         "configuration": str(source), "provenance": provenance, "checks": checks,
     }

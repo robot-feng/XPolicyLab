@@ -69,19 +69,25 @@ def _validate(path):
         raise ValueError("report conditions or task differ from hashed config/profile snapshots")
     if (report["environment_kind"], report["execution_mode"], report["execution_strategy"], report["provenance"]["seed"], report["requested_repeats"]) != (config.environment.kind, config.execution.mode, config.execution.strategy, config.experiment.seed, config.experiment.repeats):
         raise ValueError("report population or mode differs from hashed configuration")
-    ends, transitions = {}, {}
+    ends, transitions, providers = {}, {}, []
     for line in (path.parent / "trace.jsonl").read_text(encoding="utf-8").splitlines():
         event = json.loads(line, object_pairs_hook=_unique, parse_constant=_constant)
         if event["run_id"] != report["run_id"]:
             raise ValueError("trace run identity differs from results")
         if event["stage"] == "trial_state":
             transitions.setdefault(event["trial_id"], []).append({key: event[key] for key in ("from_state", "state", "monotonic_s")})
+        if event["stage"] == "environment_prepared":
+            providers.append(event["provider"])
         if event["stage"] == "trial_end":
             identity = event["trial_id"]
             if identity in ends:
                 raise ValueError("duplicate trial_end evidence")
             ends[identity] = event["result"]
     trials, not_started = report["trials"], report["not_started_trials"]
+    if "environment_provider" in report:
+        expected_provider = report["environment_provider"]
+        if expected_provider is None and providers or expected_provider is not None and (not providers or any(item != expected_provider for item in providers)):
+            raise ValueError("environment provider differs from hashed preparation evidence")
     if not isinstance(trials, list) or not isinstance(not_started, list):
         raise ValueError("trial populations must be lists")
     if type(report["requested_repeats"]) is not int or report["requested_repeats"] < 1 or len(trials) + len(not_started) != report["requested_repeats"]:

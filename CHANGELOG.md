@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Introduce lazy environment capability/status discovery and the recorded dataset
+  provider, owning HDF5/record-only sink/context with generation-aware reset and stop.
+- Route Runner timeline access/submissions through provider receipts, trace provider
+  preparation/reset and verify descriptors in report summaries; separate trial evidence code.
+- Add `xpolicy environments list` and a provider preflight doctor mode; preserve the
+  default contract-only diagnosis and explicitly defer unavailable simulator/device modes.
+
 - Add `xpolicy assets inventory` for tracked vendor/license/resource discovery and
   pinned external asset declarations, with explicit scope and unresolved findings.
 - Record safe internal license-link bindings while refusing external/chained links;

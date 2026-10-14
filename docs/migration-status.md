@@ -43,6 +43,7 @@ are not attributed to the surrounding checkout's git SHA.
 | Training golden / first divergence | Actual G2 loader samples, raw roundtrips, named statistics, adapter image parity; actual XPL normalization wrapper composed with genuine checkpoint, final VLM/state tensors and float32 output actions compare exactly for three samples | Full adapter constructor/head/waist mapping, physical units, historical training revision and task success |
 | C05/C06 record-only execution | Immediate generation invalidation, latest-only pending observations, actual WS reset interleaving, fixed trim/overlap/tick-consumption checks and paced async replay | EVA strategy/physical SDK regression, device-local invalidation and failure behavior |
 | Phase 5 task/lifecycle/report foundation | Explicit TaskSpec constraints, native reset before offline READY, idempotent host stop and finalization, blocked/interrupted/unstarted evidence, version 2 hashed reports and raw-sample summaries | Actual multi-scene/environment providers, causal evaluators, scene/robot reset, physical stop ACK, full system metrics and original benchmark regression |
+| Environment registry / provider ownership | Lazy implementation/capability metadata, actual recorded timeline provider owning HDF5/record sink/context, provider doctor and traced reset/preparation receipts; separated trial evidence code | Genuine simulator/live feedback contracts and providers; original benchmark/device acceptance |
 | Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In
@@ -80,8 +81,10 @@ separate, explicitly limited scope. CI additionally checks WebSocket 14.2; the l
 15.0.1. CI definition does not prove a remote CI run succeeded: inspect its uploaded report.
 
 The original demo/StarVLA benchmark path needs an outer `env_cfg/`, benchmark client,
-dataset and checkpoint. The outer benchmark client/configuration is absent here; other
-host directories contain checkpoints and datasets. A G2 pair is now identified and its actual
+dataset and checkpoint. Those benchmark entry points are not configured in this active
+parent workspace. A genuine RoboDojo migration backup is now located and its API is
+inspected read-only; an active simulator runtime/render/task baseline is still unverified.
+Other host directories contain checkpoints and datasets. A G2 pair is identified and its actual
 training DataLoader is exported by `tools/export_g2_training_golden.py`; see
 [Training-source golden samples](training-golden.md) for commands, findings and scope.
 `tools/validate_g2_model_boundary.py` extends this evidence to the final model inputs
@@ -97,3 +100,7 @@ physical scene/device behavior is not established by offline readiness or host s
 Asset/license/source inventory commands and their recorded scope are documented in
 [Asset evidence inventory](assets.md). BLOCKED declarations and unknown permissions
 are retained separately from successful content-hash checks; A05 is not fully accepted.
+
+Environment registry/provider/preflight commands and genuine simulator inspection scope
+are documented in [Environment providers](environments.md). Recorded data provider tests
+do not establish simulator, EVA Fake G2 or hardware compatibility.

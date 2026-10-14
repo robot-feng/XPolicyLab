@@ -16,7 +16,7 @@ def _parser():
     commands = parser.add_subparsers(dest="command", required=True)
     doctor = commands.add_parser("doctor", help="validate declared policy/robot/dataset contracts")
     doctor.add_argument("--config", type=Path, required=True)
-    doctor.add_argument("--mode", choices=["contract"], default="contract")
+    doctor.add_argument("--mode", choices=["contract", "environment"], default="contract")
     doctor.add_argument("--verify-artifacts", action="store_true")
     doctor.add_argument("--output", type=Path)
     evaluation = commands.add_parser("eval", help="run dataset_direct replay with shared record-only execution")
@@ -32,6 +32,10 @@ def _parser():
     inventory.add_argument("--root", type=Path, required=True)
     inventory.add_argument("--catalog", type=Path)
     inventory.add_argument("--output", type=Path, required=True)
+    environments = commands.add_parser("environments", help="inspect environment implementation and execution capabilities")
+    environment_actions = environments.add_subparsers(dest="environment_action", required=True)
+    environment_list = environment_actions.add_parser("list", help="list providers and explicit deferred/unimplemented modes")
+    environment_list.add_argument("--json", action="store_true")
     golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
     golden_actions = golden.add_subparsers(dest="golden_action", required=True)
     comparison = golden_actions.add_parser("diff", help="locate the first divergent boundary")
@@ -71,7 +75,7 @@ def main(argv=None) -> int:
             from xpolicy.core.artifacts import write_json
             from xpolicy.diagnostics.doctor import doctor
 
-            report = doctor(args.config, verify_artifacts=args.verify_artifacts)
+            report = doctor(args.config, verify_artifacts=args.verify_artifacts, mode=args.mode)
             if args.output is not None:
                 write_json(args.output, report)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
@@ -124,6 +128,16 @@ def main(argv=None) -> int:
             write_json(args.output, report)
             print(json.dumps({"report": str(args.output.resolve()), "status": report["status"], "summary": report.get("summary")}, ensure_ascii=False))
             return 0 if report["status"] == "DOCUMENTED" else 2
+        if args.command == "environments":
+            from xpolicy.environment.registry import environment_registry
+
+            entries = environment_registry().entries()
+            if args.json:
+                print(json.dumps([asdict(entry) for entry in entries], indent=2))
+            else:
+                for entry in entries:
+                    print(f"{entry.name:20s} {entry.status:16s} {entry.reason or ','.join(entry.capabilities)}")
+            return 0
         if args.policy_action == "list":
             from xpolicy.core.registry import policy_registry
 

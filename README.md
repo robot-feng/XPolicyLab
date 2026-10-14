@@ -228,6 +228,8 @@ Use optional `TaskSpec` constraints and `ExperimentRunner` for explicit trial st
 
 `xpolicy assets inventory` records tracked vendor/license/resource evidence and explicit external assets without loading model code. Missing provenance, terms and review records remain visible; see [Asset evidence inventory](docs/assets.md).
 
+`xpolicy environments list` reports implemented and deferred providers. Use `xpolicy doctor --mode environment` to preflight the recorded-data provider without loading a policy. See [Environment providers](docs/environments.md) for ownership, reset/stop semantics and simulator scope.
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:

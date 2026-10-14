@@ -90,7 +90,7 @@ def test_missing_camera_or_timestamp_fault(experiment):
 def test_runner_rejects_unimplemented_modes_before_policy_import(experiment, kind):
     config, contracts = load_experiment(experiment)
     config = config.model_copy(update={"environment": config.environment.model_copy(update={"kind": kind})})
-    with pytest.raises(UnsupportedCapability, match="dataset_direct only"):
+    with pytest.raises(UnsupportedCapability, match="environment provider unavailable"):
         _preflight(config, contracts)
 
 
