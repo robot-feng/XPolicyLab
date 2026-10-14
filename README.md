@@ -198,6 +198,8 @@ uv pip install --python "$CONDA_PREFIX/bin/python" -e .
 
 Keep Python and the policy's existing PyTorch/CUDA stack in Conda; manage this project's Python dependencies in `pyproject.toml` with uv. Activate an existing compatible environment, or clone it first with `conda create --name XPolicyLab --clone <existing_env>`. The editable install keeps installed dependencies that satisfy the project requirements. Model dependencies remain in each policy's own environment and installation guide.
 
+For a cloned native stack, capture installed-version constraints and inspect a uv dry run before installing; see [Core development](docs/core-development.md#preserve-an-installed-native-stack-during-resolution). SDKs with incompatible package pins use a separate interpreter.
+
 The unified core has a CPU mock service and contract preflight:
 
 ```bash
@@ -229,6 +231,8 @@ Use optional `TaskSpec` constraints and `ExperimentRunner` for explicit trial st
 `xpolicy assets inventory` records tracked vendor/license/resource evidence and explicit external assets without loading model code. Missing provenance, terms and review records remain visible; see [Asset evidence inventory](docs/assets.md).
 
 `xpolicy environments list` reports implemented and deferred providers. Use `xpolicy doctor --mode environment` to preflight the recorded-data provider without loading a policy. See [Environment providers](docs/environments.md) for ownership, reset/stop semantics and simulator scope.
+
+`tools/probe_simulator_runtime.py` supervises actual SDK metadata, CPU physics, camera or application startup checks in a supplied interpreter. Logs, native failures and timeouts remain separate from benchmark/provider acceptance; see [Simulator runtime probes](docs/environments.md#simulator-runtime-probes).
 
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 

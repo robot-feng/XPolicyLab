@@ -29,6 +29,43 @@ The report records the whole environment's dependency check. A cloned model envi
 contain conflicts among model-specific packages even when core dependencies satisfy their
 requirements. Retain those failures in the report; handle them in that policy's environment.
 
+### Preserve an installed native stack during resolution
+
+The package probe can run another Conda interpreter without installing the public core
+there. It writes installed native versions as constraints, including NumPy, Torch,
+CUDA wheels and simulator packages. A constraint limits resolution; it does not request
+installation of that package. Dependencies continue to come from `pyproject.toml`.
+
+From the core environment, after cloning the intended environment:
+
+```bash
+python tools/probe_simulator_runtime.py \
+  --python /path/to/cloned/env/bin/python --mode packages \
+  --output runs/cloned-env-packages
+uv pip install --dry-run --python /path/to/cloned/env/bin/python \
+  --constraints runs/cloned-env-packages/native-stack-constraints.txt -e .
+uv pip install --python /path/to/cloned/env/bin/python \
+  --constraints runs/cloned-env-packages/native-stack-constraints.txt -e .
+uv pip check --python /path/to/cloned/env/bin/python
+```
+
+Inspect the dry run before installation. The constraint snapshot is a local environment
+input, not another project dependency declaration or the public lock. It cannot establish
+whole-environment compatibility or prevent every transitive change. Retain package inventories,
+the resolver plan, installation log and dependency-check failures. Use a new probe output
+directory for each attempt.
+
+An actual Isaac Sim 5.1 kernel inspection found exact `websockets==12.0` and
+`coverage==7.4.4` requirements. The public core requires WebSocket 14–15, so installing
+both in one interpreter creates an incompatible environment. Keep that SDK in its own
+interpreter and run the supervisor/core separately. A local installation attempt was
+recorded and reversed: all SDK package names and versions again match the pre-install
+inventory. This is evidence for process separation, not permission to ignore dependency
+errors. See [simulator runtime evidence](environments.md#local-runtime-evidence).
+
+Use exact `uv sync` only in the dedicated core environment: it removes undeclared packages
+by default. uv documents this behavior in [sync semantics](https://docs.astral.sh/uv/reference/cli/#uv-sync).
+
 ## Locked CPU installation
 
 `uv.lock` locks public core dependencies and the test extra. It does not replace a policy's

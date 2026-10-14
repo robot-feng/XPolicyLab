@@ -1,6 +1,6 @@
 # XPolicyLab Unified v4 — 通用机器人学习、部署与统一评估平台
 
-**版本**：v4.4 / 2026-10-14（依据实施证据持续修订）\
+**版本**：v4.5 / 2026-10-14（依据实施证据持续修订）\
 **定位**：全新开源工程架构蓝图（基于 XPolicyLab 与 EVA-CLIENT 的成熟实现融合升级）\
 **文档状态**：设计、验收规范及实施修订记录；**完整系统尚未验收**。目标目录和设计示例不等于已实现接口；实际可运行命令与证据范围以仓库 `docs/migration-status.md` 和对应运行报告为准。\
 **上游基础**：[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab)（Apache-2.0）、[EVA-CLIENT](https://github.com/Noietch/EVA-CLIENT)（Apache-2.0）。第三方模型、SDK、权重、URDF/网格资源需单独审查授权和再分发条款。\
@@ -57,6 +57,8 @@
 - **汇总从证据与原始样本出发**：结果 schema 2 保留 trial transition、首次 stop reason、未开始 repeats 与文件哈希。`xpolicy results summarize` 校验结果与 trial_end trace，按条件/评判来源分组，合并原始延迟样本而非平均 p95；未评判时成功率为 null，FAIL/BLOCKED 不被健康运行覆盖。实际跨模式 provider、场景复位和现场分数仍待验收。
 - **资源身份与授权证据分别记录**：`xpolicy assets inventory` 盘点 Git 已跟踪的源码/许可证/资源候选，以及显式声明的外部资源。哈希一致仅证明指定内容身份；根 Apache、基础 VLM 的本地许可证声明、README 来源 URL 均不能自动授权第三方 checkpoint、数据集或嵌套代码。metadata subset 不代表完整视频/数据集；DOCUMENTED 表示具备指定范围的声明与文件证据，法律权限和审阅适用性仍需单独确认。当前 A05 保留 BLOCKED。
 - **环境注册只声明真实能力**：`xpolicy environments list` 列出 implementation status、factory、可用 execution capability；没有实现的模式不暴露可调用 factory。`dataset_direct` 的 provider 已独立持有录制文件、record sink、episode context，Runner 负责生命周期与执行。`doctor --mode contract` 保留声明校验范围；`--mode environment` 只预检查真实 provider/data，并不执行模型或控制闭环。RoboDojo 迁移备份源码已只读定位，active simulator、渲染启动与原基准回归仍未验收，不能用 debug 固定观测或普通 synthetic plant 替代。
+- **以实际 SDK 约束选择进程边界**：RoboDojo/Isaac 环境已克隆，29 个 Conda build、52 个原生包版本及选定 Torch/CUDA 二进制哈希核对一致。Isaac kernel 固定 `websockets==12.0`、`coverage==7.4.4`，与公共核心 WebSocket 14–15 冲突；尝试安装的失败证据保留，SDK 包清单已恢复。因此核心与该 SDK 分解释器，不把冲突视为兼容。wheel 还要求 glibc 2.35，本机是 2.31；[Isaac Sim 5.1 官方要求](https://docs.isaacsim.omniverse.nvidia.com/5.1.0/installation/requirements.html)不支持当前 A100。SDK EULA 仅在用户明确确认后接受。
+- **启动探针不等于仿真验收**：`tools/probe_simulator_runtime.py` 使用指定解释器、冻结子脚本、超时进程组清理、原生失败栈和哈希报告。实际 SAPIEN CPU 两步物理已 PASS；渲染在创建 CUDA device 时 SIGSEGV，未产生相机帧，不推断崩溃原因。Isaac 仅观察到许可提示失败，未启动应用。完整 simulation provider 仍需要独立的场景 reset、真实仿真时间/反馈、任务终止/评分和原 benchmark 对照，不能复用 `record_only` 时间轴冒充因果闭环。命令、结果和范围见 `docs/environments.md`。
 
 ---
 
