@@ -226,6 +226,8 @@ Dataset replay supports synchronous and paced `async_latest_only` record-only ex
 
 Use optional `TaskSpec` constraints and `ExperimentRunner` for explicit trial states, timeouts, instruction sources and host stop requests. Version 2 results retain hashed evidence and unstarted trials; `xpolicy results summarize` verifies it and pools comparable raw metric samples. See [Tasks and report summaries](docs/experiments.md).
 
+`xpolicy assets inventory` records tracked vendor/license/resource evidence and explicit external assets without loading model code. Missing provenance, terms and review records remain visible; see [Asset evidence inventory](docs/assets.md).
+
 You do not need a simulator to start model-side development: the bundled downloader fetches prepared RoboDojo data — several simulator export versions plus HDF5 `RoboDojo_real` real-world data — for training and offline debugging. If you use `XPolicyLab/` as a subpackage inside the RoboDojo repository, follow RoboDojo's own data download scripts instead.
 
 Download a small Hugging Face demo bundle and keep the data next to `XPolicyLab/`:

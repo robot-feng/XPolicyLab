@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `xpolicy assets inventory` for tracked vendor/license/resource discovery and
+  pinned external asset declarations, with explicit scope and unresolved findings.
+- Record safe internal license-link bindings while refusing external/chained links;
+  distinguish identity verification and documented evidence from licensing permission.
+
 - Add optional task constraints, explicit trial states, one-run ownership and
   idempotent host stop requests; preserve blocked, interrupted and unstarted evidence.
 - Complete native episode reset before offline READY and capture inference timing,

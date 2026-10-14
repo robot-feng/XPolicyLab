@@ -1,0 +1,15 @@
+schema_version: 1
+assets:
+  - asset_id: starvla_runtime_license_evidence
+    kind: source
+    path: ../../policy/StarVLA/source_starvla
+    # This catalog pins the LICENSE evidence only. It does not identify or
+    # approve the complete modified vendor tree or its nested components.
+    include: [LICENSE]
+    source:
+      uri: https://github.com/starVLA/starVLA
+    declared_license: Local MIT-labelled LICENSE with project-specific additions; scope review pending
+    license_evidence:
+      - uri: ../../policy/StarVLA/source_starvla/LICENSE
+        sha256: 6ca01970c4e66d2d5bebd0a00b55de5b4081017e0f0c97ddb415cda28e3e8ffa
+    notes: Origin is the adapter README claim. No historical training revision or redistribution permission is established.

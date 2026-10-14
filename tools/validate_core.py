@@ -72,7 +72,7 @@ def main(argv=None):
         {"id": "eva_robot_runtime", "status": "NOT_RUN", "message": "EVA migration deferred by user; no EVA source was changed or imported"},
         {"id": "original_benchmark_regression", "status": "BLOCKED", "message": "the outer benchmark client/env_cfg and a verified compatible checkpoint/dataset pairing are not configured"},
         {"id": "device_shadow_safety", "status": "BLOCKED", "message": "no device driver migration, verified SDK mapping or on-site acceptance evidence"},
-        {"id": "external_asset_license_audit", "status": "NOT_RUN", "message": "core attribution is recorded; per-policy models, SDKs and robot assets still require separate audits"},
+        {"id": "external_asset_license_audit", "status": "NOT_RUN", "message": "core tests do not audit the actual policy/resource population; xpolicy assets inventory separately records tracked scopes and explicit external assets, retaining provenance/terms/review blockers without granting redistribution permission"},
     ])
     implemented = [item for item in checks if "command" in item or item["id"] in {"environment_dependencies", "source_stability"}]
     statuses = {item["status"] for item in implemented}

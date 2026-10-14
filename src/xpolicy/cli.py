@@ -26,6 +26,12 @@ def _parser():
     summary = result_actions.add_parser("summarize", help="retain outcomes and pool comparable raw metric samples")
     summary.add_argument("reports", type=Path, nargs="+")
     summary.add_argument("--output", type=Path)
+    assets = commands.add_parser("assets", help="inventory local source/asset attribution evidence without model imports")
+    asset_actions = assets.add_subparsers(dest="assets_action", required=True)
+    inventory = asset_actions.add_parser("inventory", help="scan tracked evidence and explicitly declared assets")
+    inventory.add_argument("--root", type=Path, required=True)
+    inventory.add_argument("--catalog", type=Path)
+    inventory.add_argument("--output", type=Path, required=True)
     golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
     golden_actions = golden.add_subparsers(dest="golden_action", required=True)
     comparison = golden_actions.add_parser("diff", help="locate the first divergent boundary")
@@ -104,6 +110,20 @@ def main(argv=None) -> int:
                 write_json(args.output, report)
             print(json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False))
             return 0 if report["status"] == "PASS" else 2
+        if args.command == "assets":
+            from xpolicy.core.artifacts import write_json
+            from xpolicy.diagnostics.assets import inventory_assets
+
+            if args.output.exists() or args.output.is_symlink():
+                raise ValueError("asset inventory output must be a new file; retain previous audit reports")
+            try:
+                report = inventory_assets(args.root, args.catalog)
+            except (OSError, ValueError) as exc:
+                report = {"schema_version": 1, "scope": "local_asset_evidence_inventory", "status": "FAIL",
+                          "root": str(args.root.resolve()), "error": {"type": type(exc).__name__, "message": str(exc)}}
+            write_json(args.output, report)
+            print(json.dumps({"report": str(args.output.resolve()), "status": report["status"], "summary": report.get("summary")}, ensure_ascii=False))
+            return 0 if report["status"] == "DOCUMENTED" else 2
         if args.policy_action == "list":
             from xpolicy.core.registry import policy_registry
 

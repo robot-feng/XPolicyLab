@@ -34,7 +34,7 @@ are not attributed to the surrounding checkout's git SHA.
 | A02 XPL RPC | Actual loopback sockets; HELLO, INFER, CALL, RESET, TRIAL_END; reconnect replay, timeout and restart cases | Production network / checkpoint process behavior |
 | A03 EVA legacy client | No EVA default client path is introduced | EVA compatibility is deferred |
 | A04 dependencies | Separate clean CPU and cloned Conda inventories/reports | Conda model environment retains pre-existing conflicts; G2 SDK environment absent |
-| A05 attribution | Original LICENSE retained, NOTICE and file provenance documented | External asset and vendor license inventory |
+| A05 attribution | Original LICENSE/NOTICE retained; tracked source/license/resource inventory and explicit local G2 asset identities, per-scope blockers and pinned license evidence | Original asset/revision provenance, asset-specific terms, scope review and any required permission/review evidence; no blanket redistribution claim |
 | B04/B05 boundary validation | Missing cameras, swapped names/order, incompatible robots and unit mismatch rejected | Genuine robot/dataset golden frames |
 | C01 full chunk | Counted mock/StarVLA adapter calls; genuine RollingFlow diagnostic returns 16x24 while its planning horizon is 64 | Complete registered G2 runtime constructor/profile and device path |
 | C02 API ownership | Separate chunk and legacy services; original legacy result preserved | Original benchmark task baseline |
@@ -93,3 +93,7 @@ in progress while these requirements and the later blueprint phases remain outst
 Task, lifecycle and report-summary commands are documented in [Tasks and report summaries](experiments.md).
 Version 2 reports distinguish execution completion from unmeasured task success;
 physical scene/device behavior is not established by offline readiness or host stop.
+
+Asset/license/source inventory commands and their recorded scope are documented in
+[Asset evidence inventory](assets.md). BLOCKED declarations and unknown permissions
+are retained separately from successful content-hash checks; A05 is not fully accepted.
