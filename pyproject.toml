@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest>=8,<10", "pytest-cov>=5,<8", "pillow>=10,<13"]
+eva-g2 = ["openpi-client==0.1.2", "pyzmq>=25,<28"]
 
 [project.scripts]
 xpolicy = "xpolicy.cli:main"

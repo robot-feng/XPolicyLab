@@ -39,6 +39,16 @@ def _parser():
     environment_actions = environments.add_subparsers(dest="environment_action", required=True)
     environment_list = environment_actions.add_parser("list", help="list providers and explicit deferred/unimplemented modes")
     environment_list.add_argument("--json", action="store_true")
+    integrations = commands.add_parser("integration", help="run an isolated external-backend integration check")
+    integration_actions = integrations.add_subparsers(dest="integration_action", required=True)
+    eva_g2_fake = integration_actions.add_parser("eva-g2-fake", help="bridge XPL policy RPC to EVA's loopback Fake G2 only")
+    eva_g2_fake.add_argument("--service-config", type=Path)
+    eva_g2_fake.add_argument("--eva-root", type=Path, required=True)
+    eva_g2_fake.add_argument("--eva-python", type=Path, required=True)
+    eva_g2_fake.add_argument("--frames", type=int, default=30)
+    eva_g2_fake.add_argument("--output", type=Path)
+    eva_g2_fake.add_argument("--startup-timeout-s", type=float, default=20.0)
+    eva_g2_fake.add_argument("--observation-timeout-s", type=float, default=3.0)
     golden = commands.add_parser("golden", help="compare hash-verified diagnostic boundary samples")
     golden_actions = golden.add_subparsers(dest="golden_action", required=True)
     comparison = golden_actions.add_parser("diff", help="locate the first divergent boundary")
@@ -152,6 +162,22 @@ def main(argv=None) -> int:
                 for entry in entries:
                     print(f"{entry.name:20s} {entry.status:16s} {entry.reason or ','.join(entry.capabilities)}")
             return 0
+        if args.command == "integration":
+            from xpolicy.integrations.eva_g2 import run_fake_smoke
+
+            project_root = Path(__file__).resolve().parents[2]
+            service_config = args.service_config or project_root / "configs/integrations/eva_g2_fake/service.yaml"
+            report = asyncio.run(run_fake_smoke(
+                service_config=service_config,
+                eva_root=args.eva_root,
+                eva_python=args.eva_python,
+                frames=args.frames,
+                output=args.output,
+                startup_timeout_s=args.startup_timeout_s,
+                observation_timeout_s=args.observation_timeout_s,
+            ))
+            print(json.dumps({"status": report["status"], "report": report["artifacts"]["directory"]}, ensure_ascii=False))
+            return 0 if report["status"] == "PASS" else 2
         if args.policy_action == "list":
             from xpolicy.core.registry import policy_registry
 

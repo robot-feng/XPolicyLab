@@ -1,0 +1,64 @@
+schema_version: 1
+profile_id: agibot_g2_eva_fake_v1
+robot_id: agibot_g2
+control_hz: 30
+cameras:
+  - {name: front, color_space: RGB, shape: [64, 64, 3], source_key: top_head}
+  - {name: left_wrist, color_space: RGB, shape: [64, 64, 3], source_key: hand_left}
+  - {name: right_wrist, color_space: RGB, shape: [64, 64, 3], source_key: hand_right}
+state_fields:
+  - {name: idx21_arm_l_joint1, unit: rad}
+  - {name: idx22_arm_l_joint2, unit: rad}
+  - {name: idx23_arm_l_joint3, unit: rad}
+  - {name: idx24_arm_l_joint4, unit: rad}
+  - {name: idx25_arm_l_joint5, unit: rad}
+  - {name: idx26_arm_l_joint6, unit: rad}
+  - {name: idx27_arm_l_joint7, unit: rad}
+  - {name: idx41_gripper_l_outer_joint1, unit: rad}
+  - {name: idx61_arm_r_joint1, unit: rad}
+  - {name: idx62_arm_r_joint2, unit: rad}
+  - {name: idx63_arm_r_joint3, unit: rad}
+  - {name: idx64_arm_r_joint4, unit: rad}
+  - {name: idx65_arm_r_joint5, unit: rad}
+  - {name: idx66_arm_r_joint6, unit: rad}
+  - {name: idx67_arm_r_joint7, unit: rad}
+  - {name: idx81_gripper_r_outer_joint1, unit: rad}
+  - {name: idx11_head_joint1, unit: rad}
+  - {name: idx12_head_joint2, unit: rad}
+  - {name: idx13_head_joint3, unit: rad}
+  - {name: idx01_body_joint1, unit: rad}
+  - {name: idx02_body_joint2, unit: rad}
+  - {name: idx03_body_joint3, unit: rad}
+  - {name: idx04_body_joint4, unit: rad}
+  - {name: idx05_body_joint5, unit: rad}
+action_fields:
+  - {name: idx21_arm_l_joint1, unit: rad}
+  - {name: idx22_arm_l_joint2, unit: rad}
+  - {name: idx23_arm_l_joint3, unit: rad}
+  - {name: idx24_arm_l_joint4, unit: rad}
+  - {name: idx25_arm_l_joint5, unit: rad}
+  - {name: idx26_arm_l_joint6, unit: rad}
+  - {name: idx27_arm_l_joint7, unit: rad}
+  - {name: idx41_gripper_l_outer_joint1, unit: rad}
+  - {name: idx61_arm_r_joint1, unit: rad}
+  - {name: idx62_arm_r_joint2, unit: rad}
+  - {name: idx63_arm_r_joint3, unit: rad}
+  - {name: idx64_arm_r_joint4, unit: rad}
+  - {name: idx65_arm_r_joint5, unit: rad}
+  - {name: idx66_arm_r_joint6, unit: rad}
+  - {name: idx67_arm_r_joint7, unit: rad}
+  - {name: idx81_gripper_r_outer_joint1, unit: rad}
+  - {name: idx11_head_joint1, unit: rad}
+  - {name: idx12_head_joint2, unit: rad}
+  - {name: idx13_head_joint3, unit: rad}
+  - {name: idx01_body_joint1, unit: rad}
+  - {name: idx02_body_joint2, unit: rad}
+  - {name: idx03_body_joint3, unit: rad}
+  - {name: idx04_body_joint4, unit: rad}
+  - {name: idx05_body_joint5, unit: rad}
+action_type: joint_position
+legacy_state_groups:
+  left_arm: [idx21_arm_l_joint1, idx22_arm_l_joint2, idx23_arm_l_joint3, idx24_arm_l_joint4, idx25_arm_l_joint5, idx26_arm_l_joint6, idx27_arm_l_joint7, idx41_gripper_l_outer_joint1]
+  right_arm: [idx61_arm_r_joint1, idx62_arm_r_joint2, idx63_arm_r_joint3, idx64_arm_r_joint4, idx65_arm_r_joint5, idx66_arm_r_joint6, idx67_arm_r_joint7, idx81_gripper_r_outer_joint1]
+  head: [idx11_head_joint1, idx12_head_joint2, idx13_head_joint3]
+  body: [idx01_body_joint1, idx02_body_joint2, idx03_body_joint3, idx04_body_joint4, idx05_body_joint5]

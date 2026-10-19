@@ -1,0 +1,9 @@
+schema_version: 1
+policy:
+  name: mock
+  api: chunk
+  manifest: manifest.yaml
+robot: robot.yaml
+server:
+  host: 127.0.0.1
+  port: 0

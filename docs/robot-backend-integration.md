@@ -1,6 +1,7 @@
 # Robot Backend 接入与验收计划
+备注：方案不一定是最好方案需要实时更新完善
 
-**状态：计划，尚未执行 EVA 接入或真机验收。**本文定义如何评估并接入一个现有环境 client 或设备 backend。EVA 源仓库保持只读；任何实现变更放在 XPolicyLab，且只针对已确认的能力缺口。
+**状态：EVA G2 Fake ↔ XPL 策略 RPC 首轮 smoke 已 PASS；真实 G2 尚未接入或验收。**本文定义如何评估并接入一个现有 environment client 或 device backend。EVA 源仓库保持只读；实现变更放在 XPolicyLab，并只针对已确认的能力缺口。
 
 ## 目标边界
 
@@ -117,4 +118,25 @@ flowchart LR
 
 ## 当前状态
 
-XPL 已有的策略/RPC、Runner 记录回放、Fault/Report 基础分别见 [环境 provider 状态](environments.md) 与[迁移验收状态](migration-status.md)。目前没有可调用的 EVA backend、Fake G2、SDK Mock、Shadow 或 Real provider；本文所有 P/O/A/F/S 用例均是待实现计划，没有宣称通过。
+XPL 已有的策略/RPC、Runner 记录回放、Fault/Report 基础分别见 [环境 provider 状态](environments.md) 与[迁移验收状态](migration-status.md)。通用 EVA environment provider、SDK Mock、Shadow 和 Real provider 仍未实现；下面仅记录一个范围受限的 G2 Fake loopback harness，不将其注册成可供通用 Runner 使用的 environment provider。
+
+### 首轮 G2 Fake ↔ XPL 对齐证据（2026-10-19）
+
+- EVA 源目录 `/data/tzq/EVA-CLIENT-main` 是无 `.git` 元数据的本地源码快照；报告保存了关键源码 SHA256。源目录没有被修改。
+- 通过 `conda create -n XPolicyLab-EVA-G2 --clone sam2_measure` 保留 Python 3.11、Torch 2.5.1+cu124 与 NumPy 1.26.4；用 `uv pip install --python <cloned-python> -e '.[dev]'` 从 EVA `pyproject.toml` 安装，未安装 GDK。XPL policy service / bridge 留在原 XPL 环境，使用 `uv pip install --python <xpl-python> -e '.[eva-g2]'` 安装其可选 RPC/ZMQ bridge 依赖。
+- 纯 Fake 回归：`conda run -n XPolicyLab-EVA-G2 python -m pytest -q tests/hardware/test_fake_common.py` → **18 passed**。
+- XPL 合约、RPC、provider 与 G2 wire 回归：`conda run -n XPolicyLab python -m pytest -q tests/test_eva_g2_integration.py tests/test_environment_provider.py tests/test_policy_rpc.py tests/test_core_contracts.py` → **71 passed**。
+- 三进程 loopback 命令（XPL 策略服务、XPL bridge、EVA Fake G2）通过 30 个观察、30 次策略推理、29 个 fake 动作。具名 24D mock hold action 与其来源 Observation 的状态逐元素相同；相机按声明源键映射，RGB 数据原样传递。`report.json` 和逐帧 trace 位于忽略目录 `runs/eva-g2-fake/<run_id>/`。
+
+复现命令：
+
+```bash
+conda run -n XPolicyLab python -m xpolicy integration eva-g2-fake \
+  --eva-root /path/to/EVA-CLIENT-main \
+  --eva-python /path/to/conda/envs/XPolicyLab-EVA-G2/bin/python \
+  --frames 30
+```
+
+此 PASS 只覆盖本机 Fake 进程、loopback ZMQ、XPL WebSocket policy RPC、Observation 映射与 mock hold action 线缆映射，不代表动作产生了因果移动或任务成功。Fake profile `agibot_g2_eva_fake_v1` 使用 EVA Robot Zoo 的外侧夹爪关节名；真实 `node.py` 使用内侧夹爪关节名。真实 node 还通过 OpenCV 解码相机数据为 BGR，而 XPL 边界要求 RGB。两项都未得到可用于实机的映射/色序证据，因此 real GDK、physical units/calibration、device-local watchdog、stop acknowledgement、Shadow 与任务成功均为 **NOT_RUN**，不得把此 profile 或 harness 指向设备。
+
+P/O/A/F/S 逐项验收仍按前面的阶段门执行；本次 loopback 没有跳过真机前置条件，也没有把 Fake 结果升级成硬件通过。
