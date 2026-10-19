@@ -15,6 +15,8 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
+from XPolicyLab.utils.process_data import decode_image_bit
+
 
 CAMERAS = ("head_camera", "left_camera", "right_camera")
 ACTION_OFFSETS = tuple(range(3, 49, 3))
@@ -114,13 +116,10 @@ class Clean50Dataset(Dataset):
     @staticmethod
     def _decode_frame(dataset: h5py.Dataset, index: int) -> np.ndarray:
         value = dataset[index]
-        if isinstance(value, (bytes, np.bytes_)):
-            encoded = np.frombuffer(value, dtype=np.uint8)
-            frame = cv2.imdecode(encoded, cv2.IMREAD_COLOR)
-            if frame is None:
-                raise ValueError("Invalid camera frame")
-            return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = np.asarray(value)
+        try:
+            frame = np.asarray(decode_image_bit(value))
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"Invalid camera frame at index {index}: {exc}") from exc
         if frame.ndim != 3 or frame.shape[-1] != 3 or frame.dtype != np.uint8:
             raise ValueError(f"Unsupported camera frame: {frame.shape}/{frame.dtype}")
         return frame

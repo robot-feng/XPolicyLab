@@ -49,6 +49,10 @@ Use `ROBOTWIN_TASK_CONFIG=demo_clean` for Clean evaluation. The checkpoint expec
 `input_color_order: bgr`. RoboTwin has no tactile observations, so the current tactile
 frame is set to zero while preserving the sensor support mask.
 
+The Clean50 training loader returns canonical RGB for raw arrays and both legacy and
+marked JPEGs. Checkpoints trained with this loader should use
+`input_color_order: rgb`; the `bgr` setting above is specific to the released checkpoint.
+
 ## Training
 
 The reference Clean50 training code is in `training/`. It includes the data loader,

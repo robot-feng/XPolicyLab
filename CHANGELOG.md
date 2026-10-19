@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Clarify that `EVAL_ENV_TYPE=real` selects an environment-side client and does not imply
+  a bundled generic hardware driver; revise the v4 roadmap to reuse existing clients and
+  consider EVA only for a verified capability gap.
+- Route ME-Dex Clean50 HDF5 camera frames through the shared RGB decoder so raw arrays,
+  legacy RoboTwin JPEGs and marked JPEGs have one channel contract; add layout-specific
+  regression checks and document the released checkpoint's separate BGR inference setting.
 - Fix TinyVLA's two HDF5 loaders inspecting/resizing encoded buffers before decoding
   and swapping RGB channels after decode; use one shared-codec image boundary.
 - Preserve raw-image resize behavior and add real Torch/HDF5 method checks plus a

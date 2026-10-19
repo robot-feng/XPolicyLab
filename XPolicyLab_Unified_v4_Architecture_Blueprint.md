@@ -1,10 +1,10 @@
 # XPolicyLab Unified v4 — 通用机器人学习、部署与统一评估平台
 
-**版本**：v4.7 / 2026-10-14（依据实施证据持续修订）\
-**定位**：全新开源工程架构蓝图（基于 XPolicyLab 与 EVA-CLIENT 的成熟实现融合升级）\
+**版本**：v4.8 / 2026-10-19（依据实施证据持续修订）\
+**定位**：以 XPolicyLab 策略服务为基础，按已验证的能力缺口选择性复用 benchmark、机器人 client 与 EVA-CLIENT 能力\
 **文档状态**：设计、验收规范及实施修订记录；**完整系统尚未验收**。目标目录和设计示例不等于已实现接口；实际可运行命令与证据范围以仓库 `docs/migration-status.md` 和对应运行报告为准。\
 **上游基础**：[XPolicyLab](https://github.com/XPolicyLab/XPolicyLab)（Apache-2.0）、[EVA-CLIENT](https://github.com/Noietch/EVA-CLIENT)（Apache-2.0）。第三方模型、SDK、权重、URDF/网格资源需单独审查授权和再分发条款。\
-**演进关系**：v1/v2/v3 偏向“以 XPolicyLab 调用独立 EVA”；**v4 正式取消两套框架长期并行的目标**，建立**一个代码仓库、一套公共数据语义、一套评估生命周期、一套实验结果、一套诊断体系**；保留按实际任务拆分进程和依赖环境的能力。
+**演进关系**：v1/v2/v3 偏向“以 XPolicyLab 调用独立 EVA”；**v4 取消两套策略/评估框架长期并行的目标**，建立**一个代码仓库、一套公共数据语义、一套评估生命周期、一套实验结果、一套诊断体系**。机器人执行能力由现有环境 client 优先提供；只有确认具体缺口后，才评估吸收 EVA 的对应模块。保留按实际任务拆分进程和依赖环境的能力。
 
 ---
 
@@ -14,10 +14,10 @@
 
 1. **在当前仓库演进公共核心**：当前实现继续使用 `robot-feng/XPolicyLab`，保留原项目署名和兼容入口，Python distribution 为 `xpolicylab`，新导入路径与 CLI 为 `xpolicy`。不为统一设计额外建立一个长期并行仓库；公开发布前仍需核对命名和授权。与上游没有官方隶属关系时，不应冒称官方升级版。
 2. **Policy 以 XPolicyLab 为底座**：政策注册、模型加载、服务端、已有 RoboTwin/RoboDojo 集成优先迁入/保留，避免 63 个策略逐个重做。
-3. **Robot/Transport/Execution 以 EVA 为底座**：迁入 Robot Zoo、ROS/ZMQ、IK/FK、动作缓存、异步控制、录制、硬件节点和真机调试能力；重用已测试行为，逐步理顺其大型 `core.app` 运行流程。
+3. **Robot/Transport/Execution 按缺口接入**：先复用现有 benchmark 或机器人 environment client。XPL 的策略服务和 `EVAL_ENV_TYPE=real` 入口不等于仓库内置通用硬件驱动。若目标 client 缺少已验证的驱动、执行、反馈或安全能力，再评估从 EVA 或其他来源引入最小模块；不把 EVA 设为部署前置依赖。
 4. **Environment 同一抽象，运行模式不同**：`dataset`, `sim`, `fake`, `sdk_mock`, `shadow`, `real` 统一交给一个 Runner；但不假设这些环境有完全相同的实时能力与因果反馈。
 5. **以训练时实际模型输入与动作含义为准**：`Training Runtime Contract` 由 checkpoint 配置、真实 DataLoader 样本、训练统计量和 Robot Profile 共同形成。数据集、仿真、真机在**进入 policy 的公共边界**对齐；模型专属 resize/crop/normalization 仍归模型模块。
-6. **Action Chunk 只有一个消费端**：Policy 负责预测与必要的模型空间反归一化，Execution 负责 chunk 消费、调度、融合和控制；禁止模型适配器和 EVA 同时裁剪/滚动同一个 chunk。
+6. **Action Chunk 只有一个消费端**：Policy 负责预测与必要的模型空间反归一化，Execution 负责 chunk 消费、调度、融合和控制；禁止模型适配器和机器人执行端同时裁剪/滚动同一个 chunk。
 7. **明确统一依赖，不制造人为隔离**：公共运行库合并依赖（包括 WebSocket 版本）；硬件厂商 SDK、Isaac/ROS、各 VLA 的 CUDA/深度学习环境按确实存在的二进制/系统兼容性进行可选隔离。*单一项目 != 所有进程强制共用一个 Python 解释器*。
 8. **诊断与验收作为一等功能**：任何支持真机的 Robot Profile，必须能运行数据集对照、SDK Mock、Shadow，以及动作—设备—反馈追踪；不能只把“模型能给出动作”定义为部署成功。
 
@@ -28,8 +28,8 @@
 | 源码 | XPL 和 EVA 独立仓库、单独发布 shared contracts | **一个主仓库**，一个公共核心实现，按 `extras`/进程进行功能划分 |
 | 协议 | EVA 额外实现 XPL PolicyClient 并长期桥接 | XPL WebSocket 是**唯一内部 Policy RPC**；旧 EVA/OpenPI 直连客户端转 legacy 可选兼容层，不再占主流程 |
 | 配置 | 两套配置兼容、跨仓库转换 | 单一配置系统 `policy/robot/environment/execution/evaluation`，一次校验 |
-| 实验生命周期 | Runner 通过 EVA Control Channel 间接驱动 EVA EVAL | 单一 `ExperimentRunner` 驱动统一 Runtime；真机命令仍由本地 Robot Service 安全执行 |
-| Recorder | EVA 记录、XPL 再汇总 | 单一 Episode/Trace 元数据模型；复用 EVA 的原始数据写入能力 |
+| 实验生命周期 | Runner 通过 EVA Control Channel 间接驱动 EVA EVAL | 单一 `ExperimentRunner` 驱动统一 Runtime；真机命令由所选 client/backend 在本地安全执行 |
+| Recorder | EVA 记录、XPL 再汇总 | 单一 Episode/Trace 元数据模型；仅在格式或现场工作流需要时复用现有写入器 |
 | 数据集模式 | 单独 DatasetWireNode + Bridge | 同一 Environment Registry 内 `DatasetEnvironment`，需要“硬件仿真”时复用统一 Wire Adapter |
 | 安全 | 远端 Guard + 设备 Guard | **设备安全域为唯一最后防线**，拥有独立权限，不能因软件合并被绕过 |
 | 版本冲突 | 视为分环境动机 | 迁入时统一改代码与依赖，跑 compatibility test，只有客观必要的运行环境才隔离 |
@@ -47,7 +47,7 @@
 ### 0.4 实施修订原则（2026-10-14）
 
 - **按实测修订设计**：蓝图允许在实现过程中调整；保留原始目标、差异原因、实现路径和验收证据。当前实施记录见 `docs/migration-status.md`，模型黄金样本见 `docs/training-golden.md`。
-- **当前授权边界**：EVA 部分暂缓更新。因此实际 EVA WireObservation/ZMQ、Fake G2、GDK/ROS/SDK 与现场验收仍保留为后续工作，不能用新写的普通 ZMQ 编解码器或无关 FakePlant 替代其验收。
+- **当前授权边界**：EVA 部分暂缓更新。当前不改 EVA 源码，也不把 EVA WireObservation/ZMQ、Fake G2、GDK/ROS/SDK 或现场行为设为 XPL 的先决条件。若后续确认具体设备能力缺口，先比较现有 client，再对候选来源与单个能力做审查和独立验收。
 - **Conda + uv 混合管理**：复用已有 Conda Python/PyTorch/CUDA，使用 `pyproject.toml` 管理 Python 包依赖；清洁 CPU 核心环境另用公共 `uv.lock` 验证。已有模型环境的依赖冲突必须保留证据，不能将核心 CPU PASS 宣称为全环境兼容。
 - **O2 分层取证**：真实 loader 打包的图片和 state、VLM 的 token/pixel/grid 输入、action head 最终接收的 state tensor 分别记录。图片 resize 一致不等于最终模型输入一致；原始 state 的 dtype、归一化运算 dtype、loader 打包 dtype、模型计算 dtype 均影响结果。
 - **精度需要显式配置**：当前 G2 loader 使用 float64 原始 state 进行归一化，再打包为 float16；直接走 float32 会在实际黄金样本中造成差异。`state_input_dtype` 与 `model_state_dtype` 必须从实际训练路径选择并通过握手核对，不从 action/state 维数猜测。
@@ -61,6 +61,7 @@
 - **启动探针不等于仿真验收**：`tools/probe_simulator_runtime.py` 使用指定解释器、冻结子脚本、超时进程组清理、原生失败栈和哈希报告。实际 SAPIEN CPU 两步物理已 PASS；渲染在创建 CUDA device 时 SIGSEGV，未产生相机帧，不推断崩溃原因。Isaac 仅观察到许可提示失败，未启动应用。完整 simulation provider 仍需要独立的场景 reset、真实仿真时间/反馈、任务终止/评分和原 benchmark 对照，不能复用 `record_only` 时间轴冒充因果闭环。命令、结果和范围见 `docs/environments.md`。
 - **批量实验共用同一个 trial owner**：`xpolicy eval suite` 按显式 experiment 配置和 base seed 顺序启动独立 Runner 进程，不复制动作执行/评分逻辑，不通过 checkpoint 路径列表绕过 manifest 和训练统计量身份。Suite 保留计划、配置/profile 快照、进程退出/超时、未启动项和嵌套结果；`xpolicy results verify-suite` 校验对应关系并重算原有分组汇总。进程超时和 host stop 不代表设备停止；合成 mock 的多配置/种子验证仅证明实验编排，不代表多模型、仿真或硬件已验收。当前示例与边界见 `docs/experiment-suites.md`。
 - **既有 adapter 的图片边界逐条验证**：TinyVLA 两份训练 loader 原先在解码前访问压缩 buffer 的宽度并 resize，随后固定交换通道；已合并为共享 RGB 解码后再按既有规则 resize。实际 Torch/HDF5 方法对照保留旧版本的 shape 失败和 legacy 红蓝反转，新路径逐像素对齐共享 codec，未改原始 RGB 路径的 resize/归一化。该证据不覆盖完整 TinyVLA 构造、训练权重或原仿真；其他上游原生数据/视频 decoder 仍需逐条判别，不机械替换不同格式入口。
+- **ME-Dex Clean50 图片输入统一为 RGB**：其训练 loader 原先只对压缩 JPEG 固定交换通道，raw RGB 数组则原样通过；现改为共享 decoder，覆盖旧 RoboTwin JPEG、带标记 JPEG 和 raw HDF5 数组。新训练样本统一 RGB，已发布 checkpoint 在 `deploy.yml` 中仍显式使用 BGR；完整训练和基准回归仍待验收。
 
 ---
 
@@ -86,7 +87,7 @@
 ### 1.3 可检验的完成定义（Definition of Done）
 
 1. 原 XPL 的一个基线策略可在原 RoboDojo 环境跑出与迁移前**相同输入/seed 条件**下可解释、回归可接受的结果。
-2. 同一统一 CLI 能进行 dataset direct、dataset wire、EVA Fake G2、指定仿真基准、G2 shadow，并统一生成 evidence。
+2. 同一统一 CLI 能进行 dataset direct、dataset wire、mock/fake backend、指定仿真基准以及目标机器人 shadow，并统一生成 evidence；其中设备能力只在选定目标后验收。
 3. 一段黄金训练样本通过 dataset direct 与 dataset wire 得到**同一 policy 边界数值（按明确容差）**及同一动作解释。
 4. 给定一个冻结的 raw action，设备适配器输出与机器人厂商 API 期望的关节/单位顺序一致，并具备静态/动态不变量检查。
 5. 能在 G2 SDK Mock 看到同一个 trace ID 的 input、prediction、buffer、wire、SDK 命令、反馈。
@@ -108,7 +109,7 @@ flowchart TB
   REG --> ENV
   ENV --> DS["Dataset Replay"]
   ENV --> SIM["RoboTwin / RoboDojo / Other Sim"]
-  ENV --> REAL["Robot Runtime: EVA-derived"]
+  ENV --> REAL["Robot Client / Optional Device Backend"]
   REAL --> SRC["Robot / Transport / Observation"]
   REAL --> EXEC["Execution / Action Buffer / IK / Guard"]
   SRC --> FAKE["Fake Plant / SDK Mock"]
@@ -196,23 +197,23 @@ XPolicyLab-Unified/
 │   │   ├── base.py                    # lifecycle / status / capabilities
 │   │   ├── dataset.py                 # direct and wire playback
 │   │   ├── simulation/                # 原 XPL benchmark adapters
-│   │   └── robots.py                  # EVA Robot Runtime adapter
+│   │   └── robots.py                  # robot-client / device-backend boundary
 │   ├── robots/
-│   │   ├── base.py                    # EVA Robot / ActuatorGroup
+│   │   ├── base.py                    # Robot / ActuatorGroup contract
 │   │   ├── profiles/                  # robot profiles + strict mapping
-│   │   ├── kinematics/                # EVA PyRoki and other IK/FK
-│   │   ├── drivers/                   # G2/Franka/UR5e/... adapters
+│   │   ├── kinematics/                # optional, selected robot IK/FK
+│   │   ├── drivers/                   # optional target robot adapters
 │   │   └── assets/                    # 审计后允许再分发的 URDF/mesh
 │   ├── transport/
 │   │   ├── base.py
-│   │   ├── zmq.py                     # EVA legacy wire compatibility
+│   │   ├── zmq.py                     # optional, source-specific wire compatibility
 │   │   ├── ros1.py
 │   │   ├── ros2.py
 │   │   ├── dataset.py                 # dataset decoder (not a second runner)
 │   │   └── protocol_v2.py            # versioned ACK/seq/episode/TTL metadata
 │   ├── execution/
 │   │   ├── runtime.py                 # one owner of action execution
-│   │   ├── strategy.py                # EVA async/sync/RTC
+│   │   ├── strategy.py                # selected sync/async execution strategies
 │   │   ├── action_buffer.py
 │   │   ├── action_mapper.py
 │   │   └── watchdog.py
@@ -221,7 +222,7 @@ XPolicyLab-Unified/
 │   │   ├── admission.py
 │   │   └── interlocks.py
 │   ├── recording/
-│   │   ├── episode.py                 # EVA recorder (迁移/复用)
+│   │   ├── episode.py                 # unified recorder and format adapters
 │   │   ├── dataset_format.py
 │   │   ├── evidence.py
 │   │   └── trace.py
@@ -237,7 +238,7 @@ XPolicyLab-Unified/
 │   │   ├── diff.py
 │   │   ├── injector.py
 │   │   └── html_report.py
-│   └── ui/                          # 初期复用 EVA Console，后续统一
+│   └── ui/                            # optional operator UI, based on workflow needs
 ├── configs/
 │   ├── policies/
 │   ├── robots/
@@ -284,13 +285,13 @@ XPolicyLab-Unified/
 | XPL `client_server/ws/*` | `policy/serving/*` | 直接移植+必要的 import 修复 | RPC handshake/reset/infer/call/reconnect 一致 |
 | XPL `policy/*` | `policy/adapters` / legacy 目录 | **逐个分批**，先 StarVLA、demo，再其它 | 已迁策略 checkpoint/输出回归 |
 | XPL RoboDojo/RoboTwin 环境脚本 | `environments/simulation` | 以 wrapper 承载旧环境入口 | 原 benchmark 回归 |
-| EVA `src/robots/*` | `robots/*` | 复用类和 kinematics | Robot Zoo 单测、G2 joint mapping |
-| EVA `src/transport/*` | `transport/*` | 复用消息编码/ROS/ZMQ；补版本化元数据 | 同帧/同动作 wire roundtrip |
-| EVA `src/strategy/*` | `execution/*` | 保留算法；唯一执行控制权 | async/generation/buffer 单测 |
-| EVA `src/core/recorder/*` | `recording/*` | 保留数据写入逻辑 | LeRobot 文件有效与回放可读 |
-| EVA `examples/hardware/*` | `examples/real_robots/*` | 引用上游保留版权信息，逐机器人迁移 | Fake/SDK Mock/只读真机 |
-| EVA `core.app` 和 Console | `evaluation`/`ui` | 只迁必要部分，不整体复制两个 Runner | 一个 Episode ID、一份状态机 |
-| EVA `policy_client/*` | 兼容层 `policy/legacy_clients` | 非必要接口暂留；主流程改统一 RPC | 默认不会绕过新策略路径 |
+| EVA `src/robots/*` | optional `robots/*` adapter | 仅在目标 client 缺少经验证的 robot/kinematics 能力时评估 | 所选 robot 的具名 mapping 回归 |
+| EVA `src/transport/*` | optional `transport/*` adapter | 仅在需要兼容对应 wire/ROS/ZMQ client 时评估 | 同帧/同动作 wire roundtrip |
+| EVA `src/strategy/*` | optional `execution/*` adapter | 仅在目标执行端缺少所需调度行为时评估 | async/generation/buffer 单测 |
+| EVA `src/core/recorder/*` | optional `recording/*` adapter | 对照现有记录格式后按需复用 | LeRobot 文件有效与回放可读 |
+| EVA `examples/hardware/*` | optional target-robot backend | 仅对选定且授权的目标机器人评估；不默认逐机器人迁移 | Fake/SDK Mock/只读真机 |
+| EVA `core.app` 和 Console | existing Runner / optional UI client | 不复制第二个 Runner；只有现场工作流需要时接入 UI | 一个 Episode ID、一份状态机 |
+| EVA `policy_client/*` | optional `policy/legacy_clients` | 仅为仍在使用的旧 client 提供兼容，不进入默认策略路径 | 默认不会绕过新策略路径 |
 
 **迁移验收优先级**：行为回归 > 目录整洁 > 代码去重。对于 XPL 的大量 adapter，采用“保留原适配器 API + 新统一 runtime 外层包装”成本远低于重写。
 
@@ -464,12 +465,12 @@ class ActionChunk:
 |---|---|---|---|---|
 | `dataset_direct` | Dataset decoder | RecordOnly | 否 | Dataset/Policy 数据契约与模型回归 |
 | `dataset_wire` | Dataset → ZMQ fake hardware | RecordOnly | 否 | 实机同款 wire/Robot/Execution 代码路径 |
-| `fake_plant` | EVA 二阶状态模拟器、合成相机 | Fake actuator | 部分：关节因果，图像不依动作 | 控制、关节跟踪、缓存和 reset |
+| `fake_plant` | 可审查的二阶状态模拟器、合成相机 | Fake actuator | 部分：关节因果，图像不依动作 | 控制、关节跟踪、缓存和 reset |
 | `sdk_mock` | 真实 `node.py` + mock GDK | mock servo | 关节回显或伪动力学 | 设备调用结构、关节名、SDK线程/频率 |
 | `physics_sim` | MuJoCo/Isaac（可选） | Physics actuator | 是：取决于场景/模型 | 视觉—动作—物理交互 |
 | `shadow` / `real` | 真机器人传感器 | Shadow: no servo / Real: hardware | Shadow 否；Real 是 | 真实相机/状态、驱动/控制与安全 |
 
-`DatasetEnvironment` 为一个环境类但可选择 `source=direct|wire`；`RealRobotEnvironment` 使用同一 Robot Runtime，但 `armed` 属性受独立安全状态约束。`SimEnvironment` 对接现有 RoboTwin/RoboDojo，**不必让原仿真控制循环都迁成 EVA 的连续执行**；只统一契约、生命期、结果与可观测性，保留物理引擎适合的同步步进。这是高价值抽象而非强行同实现。
+`DatasetEnvironment` 为一个环境类但可选择 `source=direct|wire`；目标真机环境使用其 RobotClient/DeviceBackend，`armed` 属性受独立安全状态约束。`SimEnvironment` 对接现有 RoboTwin/RoboDojo，只统一契约、生命期、结果与可观测性，保留物理引擎适合的同步步进，不要求将仿真控制循环迁成某个机器人框架的连续执行。
 
 ### 6.1 建议 Environment API：区分生命周期和采样语义
 
@@ -505,13 +506,13 @@ flowchart LR
   EX --> DIFF
 ```
 
-**非常重要**：不使用现有 EVA `DatasetTransport.publish_action()` 把 action 当作反馈 qpos 来验证动力学。该方法把输出记下来并推进录制帧，属于非因果轨迹回放。`DatasetWireNode` 在新仓库中作为 `dataset_wire` 的轻薄 **source + record-only sink**，从行为上完整模拟同一硬件接口，但不会伪造动作导致的物理变化。
+**非常重要**：不使用任何 record-only `publish_action()` 把 action 当作反馈 qpos 来验证动力学。已审查的 EVA `DatasetTransport.publish_action()` 会记录输出并推进录制帧，属于非因果轨迹回放。若实现 `DatasetWireNode`，它只作为轻薄 **source + record-only sink**，模拟已选定的消息边界，不伪造动作导致的物理变化。
 
 功能要求：暂停/逐帧/固定真实采样频率/加速回放/精确 seek/无损状态/视频帧编号/相机有效性、可配置 jitter/dropout/延迟、与原样本索引对应。测试可以对同一 `episode, frame_id` 定位一次策略与动作，不必完整执行任务。
 
 ### 6.3 因果测试的第二步
 
-- `Fake Plant`：使用 EVA 已有的关节二阶动力学，测试 `action -> qpos`；不以其合成图片验证视觉任务能力。
+- `Fake Plant`：使用经审查的关节二阶动力学模型测试 `action -> qpos`；不以合成图片验证视觉任务能力。EVA Fake G2 是候选来源，不是当前实现前置条件。
 - `SDK Mock`：运行尽可能相同的 G2 node code，将 `agibot_gdk` 通过依赖注入替换为 Mock。避免每次人工修改源码 import；Mock 须明确反映调用成功、失败和命令语义。
 - `Physics Sim`：需要 URDF/MJCF 物理属性、驱动器、接触/夹爪、物体/相机配置，优先使用现成官方可用仿真，不为了一份管线立刻造大型物理平台。
 - `Shadow`：真实 camera + qpos feed，策略输出只记录至 `NoActuationSink`；Driver 在进程级/接口级拒绝真实伺服，具备可审计零下发断言。
@@ -522,7 +523,7 @@ flowchart LR
 
 ### 7.1 原源码核查及问题
 
-XPolicyLab 的 `model_template.py` 约定 `update_obs`, `get_action`, `reset`。XPL WebSocket 已有 `INFER`（优先 `update_obs + get_action`）和通用 `CALL`。当前 `policy/StarVLA/model.py` 把完整 chunk 缓存在适配器内部，通过 `_next_action_vector()` 根据 `execute_horizon` 逐步返回 `get_action()`。EVA 的 Strategy 又期望自己接收到 `[T,D]` 整块并做重叠融合。
+XPolicyLab 的 `model_template.py` 约定 `update_obs`, `get_action`, `reset`。XPL WebSocket 已有 `INFER`（优先 `update_obs + get_action`）和通用 `CALL`。当前 `policy/StarVLA/model.py` 把完整 chunk 缓存在适配器内部，通过 `_next_action_vector()` 根据 `execute_horizon` 逐步返回 `get_action()`。若选用接收 `[T,D]` 的外部执行策略，必须明确 chunk 的唯一消费端及重叠融合责任。
 
 **不能将这两个已有行为直接连接**：结果可能是每个模型调用只拿到一个 action、执行端在错误的采样频率上重新推理，甚至双重裁剪。
 
@@ -573,18 +574,22 @@ device ack (accepted / rejected) + measured feedback
 
 ---
 
-## 8. Robot Runtime：直接融合 EVA 成熟能力
+## 8. Robot Runtime：先复用环境 client，按缺口选择能力
 
-### 8.1 推荐保留的 EVA 核心
+XPL 提供策略 adapter、WebSocket policy service，以及由外部 environment client 发起评测的接线方式。README 中的 `EVAL_ENV_TYPE=real` 是环境侧后端选择入口；它不证明当前 checkout 已包含某个机器人的驱动、实时控制、安全门控或实机反馈闭环。
 
-- `Robot`/`ActuatorGroup`/`ObservationSchema` 与 Robot Zoo；
-- `TransportBridge` 与 ROS1、ROS2、ZMQ、Dataset decoder；
-- `BaseInferStrategy`/`BackgroundLoopInferStrategy`、`StreamActionBuffer` 等；
-- EEF/FK/IK、夹爪控制逻辑；
-- 录像器、事件注释、执行动作追溯、Web 可视化；
-- G2、ARX、Franka、UR 等相应机器人节点（逐项许可与驱动依赖审查）。
+### 8.1 先判断是否需要新增 Robot Runtime
 
-### 8.2 推荐移除的重复上层
+- 若目标机器人已有可用的 benchmark/environment client，且其状态读取、动作映射、执行反馈和现场安全流程满足验收要求，XPL policy server 可直接服务该 client，EVA 不构成必需依赖。
+- 若要在 XPL 内统一管理机器人连接、动作执行、反馈、watchdog、急停和人工介入，当前 record-only Runner 尚不具备这些硬件能力；需要实现或复用一个明确的设备侧 backend。
+- 对每个目标 client 建能力与验收清单。只有某项能力确实缺失且 EVA 对应实现经过源码、依赖、许可和行为审查时，才将该项包在 XPL 的 backend 接口后。
+- 未选定目标机器人、client 或现场工作流时，不迁移 Robot Zoo、ROS/ZMQ、IK/FK、动作缓存、Recorder 或 EVA Console。
+
+### 8.2 选择性复用 EVA 的候选能力
+
+候选模块包括 `Robot`/`ActuatorGroup`、ROS/ZMQ bridge、实时 action buffer、IK/FK、夹爪控制、设备节点、Recorder 与调试界面。每项分别验证数据语义、动作时序、反馈来源、停止行为、外部依赖与许可证；一个候选模块通过不代表 EVA 全栈可用。适配器必须保留 XPL 的 policy RPC 和 Runner trial 所有权，不另建并行 policy/evaluation 生命周期。
+
+### 8.3 避免重复上层
 
 - EVA 作为独立产品的 Policy Zoo 入口与新的 XPL Policy Runtime 并列存在（旧客户端留 legacy 测试兼容层）。
 - EVA EVAL 独立生成 checkpoint sweep / `clip_id` 与 XPL `trial_id` 的双状态机。
@@ -592,7 +597,7 @@ device ack (accepted / rejected) + measured feedback
 
 不是简单删源码，而是通过迁移用例覆盖后，将重复调用切换为统一包里的实现。
 
-### 8.3 G2 的必须核查项
+### 8.4 G2 的必须核查项（仅在目标确认为 G2 时）
 
 上游 G2 `examples/hardware/agibot_g2/node.py` 使用 GDK 对 G2 24D 关节下发控制，状态/动作布局为左臂8、右臂8、头3、躯干5。G2 Robot Zoo 对逻辑夹爪使用 `outer_joint1`，设备节点使用 `inner_joint1`；不能只校验向量维度。
 
@@ -935,9 +940,9 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 
 **PR-00 `baseline-and-audit`**
 
-- 冻结两仓库 commit SHA、公共依赖版本、可运行的原始安装命令和测试结果；
+- 冻结 XPL 基线、公共依赖版本、可运行的原始安装命令和测试结果；若评估外部 backend，再记录其来源 revision 与运行条件；
 - 记录 G2 `node.py`、Robot Zoo、TrainingLoader、checkpoint 当前语义与已知不一致；
-- 对原 XPL demo/StarVLA 与 EVA Fake G2 建立 golden 行为样本；
+- 对原 XPL demo/StarVLA 与所选 mock/fake backend 建立 golden 行为样本；
 - 创建许可、依赖与外部资产审计清单。
 
 **完成条件**：原始运行路径能复现或明确 BLOCKED；不得在基线不明时同时重构两侧。
@@ -953,15 +958,16 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 
 **完成条件**：无需 EVA 环境即可 `xpolicy policy serve`（mock 模型）与 `xpolicy doctor --mode contract`；无双 websocket 版本冲突。
 
-### Phase 2：迁入 Robot Runtime，保留原本行为
+### Phase 2：明确 Robot Runtime 缺口与 backend 边界
 
-**PR-02 `robot-runtime-port`**
+**PR-02 `robot-client-capability-boundary`**
 
-- 迁入 EVA Robot、Transport、Strategy、Recorder 和 G2 Fake；
-- 增加 unified config，以 wrapper 转配旧 EVA config，短期保留旧逻辑可运行；
-- 保留原 G2 Fake Node/二阶系统测试，改为统一包环境。
+- 盘点 XPL 已有环境 client 和目标现场工作流，写明观测、动作、反馈、stop 与安全责任的归属；
+- 定义最小 RobotClient/DeviceBackend 接口，避免把 benchmark 接线误认为硬件驱动；
+- 用 mock backend 验证配置、状态回传、命令回执和 stop 生命周期；
+- 只有能力矩阵发现缺口时，才从 EVA 或其他来源移植对应模块，并附来源、依赖与许可证据。
 
-**完成条件**：Fake G2 动作—状态反馈、reset、夹爪消息、录制，与迁移前行为一致；控制器不发生隐式 action 变化。
+**完成条件**：现有 client 与缺失能力边界有证据；backend contract 不伪造物理反馈或硬件停止；若移植某个模块，其目标行为和来源可独立复核。无需 EVA 即可完成策略部署与 contract doctor。
 
 ### Phase 3：Golden Training Contract 和 Dataset Wire
 
@@ -983,7 +989,7 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 - Sync 基线、Async generation、latest-only；
 - 将 A0-A3 trace 全部落盘。
 
-**完成条件**：C01-C06 通过、原模拟器策略返回不回归；Fake G2 中预测 action 与设备 command 各阶段可 diff。
+**完成条件**：C01-C06 通过、原模拟器策略返回不回归；所选 fake backend 中预测 action 与设备 command 各阶段可 diff。
 
 ### Phase 5：统一实验与评测
 
@@ -991,16 +997,16 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 
 - 单一 Runner/Trial state machine；
 - sim、dataset、robot 环境注册和 `TaskSpec`；
-- EVA Console 作为 UI 客户端连接同一 Runner，数据回放/手动调试保留；
+- 只有现场工作流需要 UI 时，才接入现有 Console 或开发轻量客户端；UI 连接同一 Runner，不另建状态机；
 - 统一 Report 与数据采集格式。
 
 **完成条件**：同一配置主结构切换 dataset/fake/sim 并生成同一格式报告；原 RoboDojo/RoboTwin regression 不下降超过预先定义的基准容差（需确认随机性）。
 
-### Phase 6：G2 驱动级安全、Shadow 与现场验证
+### Phase 6：目标机器人驱动级安全、Shadow 与现场验证（选定目标后）
 
 **PR-06 `g2-driver-guard-and-shadow`**
 
-- G2 node 通过依赖注入支持真 SDK、Mock、NoActuation；
+- 选定 robot node 通过依赖注入支持真 SDK、Mock、NoActuation；
 - 完成设备命令 v2（seq/generation/TTL/ACK）；
 - hardware watchdog、joint mapping、gripper calibration；
 - A4-A6 端到端 trace；
@@ -1013,7 +1019,7 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 **PR-07+ `multi-policy-multi-robot`**
 
 - 按 adapter 兼容矩阵增加 π0/GR00T/ACT/ResWAM/RollFlow；
-- 分批迁移 XPL 其它策略、EVA 其它机器人；
+- 按实际目标与能力缺口增加环境 client / robot backend；不默认迁移 EVA 的其它机器人；
 - 增加数据采集 / HIL / 介入标注 / 多任务、多种子、多 checkpoint 评估；
 - 统一 dashboard、调试截图、对比图、性能诊断。
 
@@ -1048,7 +1054,7 @@ G2 dataset episode
                                       ▼
                               Full ActionChunk
                                       ▼
-                           EVA-derived Execution
+                      Robot Execution Backend
                                       ▼
                               RecordOnlySink
                                       ▼
@@ -1113,7 +1119,7 @@ xpolicy eval --config configs/experiments/g2_shadow.yaml
 
 ### 15.3 Web UI / 可视化的阶段性安排
 
-1. 初期直接复用 EVA Console 的相机、URDF/关节状态、录像、手动调试和评测浏览功能。
+1. 先复用目标 benchmark/deployment setup 的现有工具；只有现场操作存在明确缺口时，才评估接入 EVA Console 的相机、URDF/关节状态、录像和手动调试能力。
 2. 新增统一 Runner 状态、Policy/Robot/Environment/Task 选择、契约诊断、ActionTrace 对照。
 3. UI 指令在统一 API 上报操作请求，不绕过现场 safety；`accepted`、`executed`、`scored` 等状态明确标示。
 4. 后期可换前端技术栈，但不为了整合平台先重写 GUI。
@@ -1129,7 +1135,7 @@ xpolicy eval --config configs/experiments/g2_shadow.yaml
 | PolicyAdapter 内继续消费 chunk，Execution 再消费 | 高 | 完整 chunk API + legacy shims 分路径回归 |
 | 数据集缺相机/禁用关节被静默填充 | 高 | strict validator + 数据集能力声明 |
 | websocket 13/14 代码兼容性 | 中 | 统一版本、所有保留客户端/服务端握手回归 |
-| EVA 大型 `run.py` 一次重写风险 | 高 | adapter 迁移、可执行 smoke、逐功能移除重复代码 |
+| 若选择复用 EVA 时其大型 `run.py` 一次重写风险 | 高 | 只适配已验证能力、可执行 smoke、逐功能验收 |
 | GPU/ROS/GDK 依赖直接并入公共 lock | 高 | 公共 lock + optional role lock/env，单 CLI 编排 |
 | 时钟不同步导致 latency 误判 | 中 | clock domain + offset/RTT 诊断，不直接跨机相减 |
 | 缺少设备 watchdog、命令新鲜度 | 安全阻断 | hardware node guard、真实现场故障注入 |
@@ -1154,7 +1160,7 @@ xpolicy eval --config configs/experiments/g2_shadow.yaml
 
 ### 推荐保留
 
-**XPolicyLab 的模型生态、WS 服务端、基准集成** + **EVA 的 Robot Zoo、Transport、Execution、Recorder、硬件节点、可视化**。
+**XPolicyLab 的模型生态、WS 服务端、基准集成** + **目标环境已有的执行能力；经缺口验证后，可选择性复用 EVA 的 Robot Zoo、Transport、Execution、Recorder、硬件节点或可视化。**
 
 ### 推荐合并
 
@@ -1190,8 +1196,8 @@ xpolicy eval --config configs/experiments/g2_shadow.yaml
 ```mermaid
 flowchart LR
   BASE["Baseline"] --> CORE["Unified Core & WS"]
-  CORE --> EVA["Robot Runtime"]
-  EVA --> DATA["Dataset Golden / Wire"]
+  CORE --> ROBOT["Optional Robot Backend"]
+  ROBOT --> DATA["Dataset Golden / Wire"]
   DATA --> ACTION["Full Chunk + Trace"]
   ACTION --> RUNNER["Evaluation Runner"]
   RUNNER --> SHADOW["G2 Shadow"]
@@ -1206,7 +1212,7 @@ flowchart LR
 
 ## 19. 真实问题优先级：第一天先做什么
 
-对于当前“EVA 上真机动作一直不对”的现象，开发 v4 同时建议把首个实验聚焦在一个冻结的 G2 训练 episode 和真实 checkpoint（若有）。
+对于当前 G2 真机动作异常，先冻结真实训练 episode、checkpoint 和设备侧记录定位输入与动作语义；该诊断可以先通过现有 client 完成，不要求先迁移 EVA。
 
 1. 收集**真实使用的**训练 dataset schema、训练 loader / checkpoint stats、G2 Node 实时读出的具名 24D qpos 和三相机帧。不以 ARX X5 的公开训练合同推断 G2。
 2. 以 dataset direct 导出 `O1` 和模型输入 `O2` 的 golden 样本；固定模型配置与模型预测基线。
@@ -1245,4 +1251,4 @@ flowchart LR
 
 ### 一句话项目定义
 
-> **XPolicyLab Unified 是一个基于 XPolicyLab 模型生态与 EVA 真机执行系统构建的统一机器人学习基础设施：一个代码库贯通数据集、仿真、真实机器人，模型只接入一次，训练与部署在可验证的数据契约上对齐，并能自动追踪每一步动作直到真实设备反馈。**
+> **XPolicyLab Unified 以 XPolicyLab 模型生态为策略侧基础，通过现有或按需接入的 RobotClient/DeviceBackend 贯通数据集、仿真与真实机器人，让模型只接入一次，并在可验证的数据契约上追踪动作到设备反馈。**

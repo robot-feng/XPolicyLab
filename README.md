@@ -363,6 +363,10 @@ bash setup_eval_env_client.sh \
 - `debug`: offline wiring check — no Isaac, no robot, just shapes and IO.
 - `real`: real-robot client path, where the hardware integration exists.
 
+The real-robot client and its hardware/safety integration come from the selected
+benchmark or deployment setup. This checkout provides the policy-side adapter and
+service boundary; it does not ship a generic robot driver or safety controller.
+
 
 
 ## 📐 Standard Data Formats

@@ -366,6 +366,9 @@ bash setup_eval_env_client.sh \
 - `debug`：离线接线检查 —— 无 Isaac、无真机，只验 shape 与 IO。
 - `real`：真机 client 路径（硬件集成存在时）。
 
+真机 client 及其硬件/安全集成由所选 benchmark 或部署环境提供。本仓库提供策略侧
+adapter 和服务边界，不包含通用机器人驱动或安全控制器。
+
 
 
 ## 📐 标准数据格式
