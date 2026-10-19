@@ -587,7 +587,7 @@ XPL 提供策略 adapter、WebSocket policy service，以及由外部 environmen
 
 ### 8.2 选择性复用 EVA 的候选能力
 
-候选模块包括 `Robot`/`ActuatorGroup`、ROS/ZMQ bridge、实时 action buffer、IK/FK、夹爪控制、设备节点、Recorder 与调试界面。每项分别验证数据语义、动作时序、反馈来源、停止行为、外部依赖与许可证；一个候选模块通过不代表 EVA 全栈可用。适配器必须保留 XPL 的 policy RPC 和 Runner trial 所有权，不另建并行 policy/evaluation 生命周期。
+候选模块包括 `Robot`/`ActuatorGroup`、ROS/ZMQ bridge、实时 action buffer、IK/FK、夹爪控制、设备节点、Recorder 与调试界面。每项分别验证数据语义、动作时序、反馈来源、停止行为、外部依赖与许可证；一个候选模块通过不代表 EVA 全栈可用。适配器必须保留 XPL 的 policy RPC 和 Runner trial 所有权，不另建并行 policy/evaluation 生命周期。逐阶段接入顺序和 P/O/A/F/S 回归用例见[Robot Backend 接入与验收计划](docs/robot-backend-integration.md)。
 
 ### 8.3 避免重复上层
 
@@ -622,7 +622,7 @@ inactive_groups:
 
 这份配置只是表达约束，不是可直接执行的真实夹爪映射。`REQUIRED_EXPLICIT_MAPPING` 必须被 preflight 判定为错误，直到具备 SDK 依据、测量结果和签核。对于带夹爪的全身机器人，不允许只拿相同长度的 numpy array 默认排列。
 
-### 8.4 禁止未经验证的跨本体映射
+### 8.5 禁止未经验证的跨本体映射
 
 若 checkpoint 是 ARX X5 14D：
 
@@ -630,7 +630,7 @@ inactive_groups:
 - G2 的 24D 控制可以声明某个 14D arm subset，其他关节使用 **hold measured**，但这仅解决*命令格式适配*，不保证模型策略在 G2 上有效。
 - 更不能用 ARX X5 的统计直接对 G2 的观测做状态归一化；不兼容时 preflight 拒绝。
 
-### 8.5 实机节点安全改造
+### 8.6 实机节点安全改造
 
 原 G2 Node 持续使用 `target_qpos` 进行伺服，下位机设备状态、过期命令、关节顺序、动作速度限制均需要明确的防护。建议本地：
 
@@ -847,6 +847,8 @@ Trace 必须携带 `run_id`, `trial_id`, `episode_generation`, `frame_id`, `requ
 ## 12. 故障注入与测试矩阵：每个模块能独立验收
 
 ### 12.1 测试层级
+
+EVA 或其它设备 backend 按[Robot Backend 接入与验收计划](docs/robot-backend-integration.md)逐阶段推进；下表是整个平台共用的测试分层和故障注入要求。
 
 | 层级 | 环境 | 可在无真机 CI 运行？ | 核心目标 |
 |---|---|---|---|

@@ -366,6 +366,8 @@ bash setup_eval_env_client.sh \
 The real-robot client and its hardware/safety integration come from the selected
 benchmark or deployment setup. This checkout provides the policy-side adapter and
 service boundary; it does not ship a generic robot driver or safety controller.
+For a staged device-backend integration and verification plan, see
+[Robot Backend integration](docs/robot-backend-integration.md).
 
 
 

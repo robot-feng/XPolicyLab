@@ -13,6 +13,9 @@ The README's `EVAL_ENV_TYPE=real` selects an environment-side client when its ha
 integration exists. The policy adapter and RPC do not constitute a generic hardware
 driver or safety controller; an existing client may be sufficient, so EVA is considered
 only against a concrete, measured capability gap.
+The staged integration gates and fault-injection plan are documented in
+[Robot Backend integration](robot-backend-integration.md); those planned checks are not
+current runtime evidence.
 
 ## Source provenance
 
@@ -53,6 +56,7 @@ are not attributed to the surrounding checkout's git SHA.
 | Config/seed experiment suites | Separate sequential Runner processes, explicit plans and snapshots, bounded host process deadlines/stop, nested result binding/verification and grouped summaries | Genuine multi-checkpoint model/benchmark acceptance, causal task/device comparisons and physical stop behavior |
 | TinyVLA RGB image boundary | Shared decode before resize in both HDF5 loaders; raw RGB behavior preserved; actual method checks with real Torch and retained before/after shape/color counterexamples | Full loader constructor, augmentation/language backbone, checkpoint training/debug evaluation and original benchmark regression |
 | ME-Dex Clean50 image boundary | HDF5 raw arrays and legacy/marked JPEGs decode through the shared RGB helper; regression checks cover fixed bytes, vlen bytes and padded buffers; released checkpoint BGR setting remains explicit | Full distributed training, checkpoint-specific model parity and RoboTwin benchmark regression |
+| Robot backend / EVA | Staged source, process, RPC, observation, action, fault, shadow and controlled-motion acceptance plan | No EVA backend, Fake G2, SDK Mock, Shadow or Real provider implemented or accepted |
 | Device | Contract schemas and truthful unexecuted report entries | Dataset wire, SDK mappings and on-site safety |
 
 These rows define scope, not blanket PASS for an entire blueprint acceptance item. In

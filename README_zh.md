@@ -368,6 +368,8 @@ bash setup_eval_env_client.sh \
 
 真机 client 及其硬件/安全集成由所选 benchmark 或部署环境提供。本仓库提供策略侧
 adapter 和服务边界，不包含通用机器人驱动或安全控制器。
+分阶段的设备 backend 接入与验证计划见
+[Robot Backend 接入计划](docs/robot-backend-integration.md)。
 
 
 

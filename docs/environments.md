@@ -24,6 +24,10 @@ IMPLEMENTED identifies code, not a guarantee that a particular dataset/configura
 is valid. Deferred/unimplemented entries have no callable factory. The Runner refuses
 them before importing a policy; it does not switch to a different environment.
 Metadata discovery does not import h5py, Torch, Isaac, ROS or a policy adapter.
+The staged plan for selecting a device client, preserving its native environment and
+validating a future hardware backend is documented in
+[Robot Backend integration](robot-backend-integration.md). It does not change the
+provider statuses above.
 
 ## Provider preflight
 
