@@ -27,7 +27,7 @@ XPolicyLab is the shared layer between policy code and evaluation environments. 
 
 Start here for repo-level concepts and integration steps. For install commands, checkpoint layout, and training details, jump to that policy's README — it is the source of truth for its model.
 
-The [G05 / π0.5 staged setup log](docs/g05-pi05-robomme.md) (Chinese) records local environment checks, native-model validation, and the planned RoboMME integration with separate acceptance criteria.
+The [G05 / π0.5 staged setup log](docs/g05-pi05-robomme.md) (Chinese) records local environment checks, native-model validation, and RoboMME integration with separate acceptance criteria.
 
 ## 📚 Contents
 
@@ -73,6 +73,7 @@ XPolicyLab is benchmark-agnostic: any benchmark, simulator, or real-robot setup 
 - **[RoboDojo](https://github.com/RoboDojo-Benchmark/RoboDojo)**: simulator-backed evaluation and RoboDojo-format data exports. The [RoboDojo Leaderboard](https://robodojo-benchmark.com/LeaderBoard) covers 42 simulation tasks across five capability dimensions (Generalization, Precision, Long-Horizon, Memory, Open) plus 18 real-robot tasks on three bimanual embodiments.
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**: benchmark and data source through policy-specific adapters and conversion scripts. The [RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) covers bimanual manipulation across 50 tasks under clean and randomized settings.
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**: memory-dependent manipulation benchmark built on RoboTwin 2.0, with nine dual-arm tasks spanning levels of task memory complexity ([paper](https://arxiv.org/abs/2603.01229), [website](https://rmbench.github.io/)). Its reference policy is integrated as [Mem-0](policy/Mem_0/README.md).
+- **[RoboMME](https://github.com/RoboMME/robomme_benchmark)**: Panda joint-control evaluation through a shared WebSocket client. The [Pi_05 adapter](policy/Pi_05/README.md#robomme-evaluation) supports the official RoboMME π0.5 baseline; other checkpoints need matching robot and observation contracts.
 
 **Infrastructure**
 
@@ -332,9 +333,10 @@ bash setup_eval_env_client.sh \
 
 - unset or `sim`: real simulator-backed evaluation, when the integration is installed.
 - `debug`: offline wiring check — no Isaac, no robot, just shapes and IO.
+- `robomme`: native RoboMME episodes with Panda joint control; also selected automatically for `bench_name=RoboMME` in `sim` mode.
 - `real`: real-robot client path, where the hardware integration exists.
 
-For `debug`, argument 10 may also be a venv prefix or Python executable. Set `DEBUG_EVAL_EPISODE_NUM` to shorten the offline check (default: 10 episodes).
+For `debug` and `robomme`, argument 10 may also be a venv prefix or Python executable. Set `DEBUG_EVAL_EPISODE_NUM` to shorten the offline check (default: 10 episodes). RoboMME split, episode range and step budgets are documented in the [staged setup log](docs/g05-pi05-robomme.md).
 
 
 

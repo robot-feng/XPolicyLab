@@ -19,6 +19,9 @@ protocol_override="${14:-}"
 # shellcheck source=resolve_eval_env_type.sh
 source "${UTILS_DIR}/resolve_eval_env_type.sh"
 eval_env_mode="$(resolve_eval_env_type)" || exit 1
+if [[ "${eval_env_mode}" == sim && "${bench_name,,}" == robomme ]]; then
+    eval_env_mode=robomme
+fi
 
 # Read deploy.yml with the eval env's interpreter. This runs before any of
 # the run_*_env_client.sh scripts activate that env, so otherwise the read
@@ -76,6 +79,8 @@ if [[ "${eval_env_mode}" == "debug" ]]; then
     bash "${UTILS_DIR}/run_debug_env_client.sh" "${COMMON_ARGS[@]}" "${protocol}"
 elif [[ "${eval_env_mode}" == "sim" ]]; then
     bash "${UTILS_DIR}/run_sim_env_client.sh" "${COMMON_ARGS[@]}" "${protocol}"
+elif [[ "${eval_env_mode}" == "robomme" ]]; then
+    bash "${UTILS_DIR}/run_robomme_env_client.sh" "${COMMON_ARGS[@]}" "${protocol}"
 elif [[ "${eval_env_mode}" == "real_world" ]]; then
     echo -e "\033[31m[WARN] EVAL_ENV_TYPE=real: real-world evaluation is not supported in the open-source release; continuing to real env client.\033[0m" >&2
     bash "${UTILS_DIR}/run_real_env_client.sh" "${COMMON_ARGS[@]}" "${protocol}"

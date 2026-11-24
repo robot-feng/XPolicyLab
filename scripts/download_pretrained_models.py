@@ -215,9 +215,21 @@ def pi05_entries(destination):
     return entries, {"source": "gs://openpi-assets/checkpoints/pi05_libero"}
 
 
+def robomme_pi05_entries(destination):
+    repo = "Yinpei/pi05_baseline"
+    revision = "80caa59a4933804b6521e72981b107ae0051d32a"
+    name = "pi05_baseline/79999.zip"
+    return [{
+        "path": str(destination / "79999.zip"), "size": 11551742488,
+        "url": f"https://huggingface.co/{repo}/resolve/{revision}/{name}",
+        "algorithm": "sha256",
+        "digest": "b8a9e9d78e4336e04582a01767a59ee132ea1e17295c7cf98b4952500de178e5",
+    }], {"repo": repo, "revision": revision}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("model", choices=["g05", "g05-assets", "pi05"])
+    parser.add_argument("model", choices=["g05", "g05-assets", "pi05", "pi05-robomme"])
     parser.add_argument("--destination", type=Path)
     parser.add_argument("--workers", type=int, default=3)
     parser.add_argument("--parts", type=int, default=1, help="Parallel byte ranges for files larger than 1 GB")
@@ -228,8 +240,10 @@ def main():
         "g05": ROOT / "policy/G05/checkpoints/g05_robodojo_sim",
         "g05-assets": ROOT / "policy/G05/checkpoints/g05_robodojo_train_assets",
         "pi05": ROOT / "policy/Pi_05/checkpoints/pi05_libero",
+        "pi05-robomme": ROOT / "policy/Pi_05/checkpoints/robomme",
     }
-    factories = {"g05": g05_entries, "g05-assets": g05_asset_entries, "pi05": pi05_entries}
+    factories = {"g05": g05_entries, "g05-assets": g05_asset_entries, "pi05": pi05_entries,
+                 "pi05-robomme": robomme_pi05_entries}
     destination = args.destination or defaults[args.model]
     entries, provenance = factories[args.model](destination.resolve())
     destination.mkdir(parents=True, exist_ok=True)

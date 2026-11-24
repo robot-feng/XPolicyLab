@@ -1,0 +1,44 @@
+{
+  "scope": "environment smoke with hold actions; no trained policy; not a benchmark score",
+  "episodes": [
+    {
+      "task": "PickXtimes",
+      "episode": 0,
+      "split": "test",
+      "status": "timeout",
+      "success": false,
+      "steps": 3,
+      "chunks": 1,
+      "initial_frames": 1,
+      "observation_frames": 4,
+      "reward": 0.0,
+      "terminated": false,
+      "truncated": true,
+      "task_goal": [
+        "pick up the green cube and place it on the target, repeating this action three times, then press the button to stop",
+        "pick up the green cube and place it on the target, repeating this pick-and-place action three times, then press the button to stop"
+      ],
+      "duration_s": 0.6763577433302999
+    },
+    {
+      "task": "VideoRepick",
+      "episode": 0,
+      "split": "test",
+      "status": "timeout",
+      "success": false,
+      "steps": 3,
+      "chunks": 1,
+      "initial_frames": 258,
+      "observation_frames": 261,
+      "reward": 0.0,
+      "terminated": false,
+      "truncated": true,
+      "task_goal": [
+        "watch the video carefully, then repeatedly pick up and put down the same block that was previously picked up for three times, finally put it down and press the button to stop",
+        "watch the video carefully, then pick up the same cube that was previously picked up three times, and finally press the button to stop",
+        "watch the video carefully, identify the cube that was picked up, then pick up and place down the same cube three times, finally press the button to stop"
+      ],
+      "duration_s": 4.542012172751129
+    }
+  ]
+}

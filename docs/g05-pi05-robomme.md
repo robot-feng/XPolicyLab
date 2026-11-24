@@ -14,8 +14,8 @@
 | 0 | 理解项目与主机检查 | 梳理模型/通信/评估边界；检查 GPU、现有环境及 GitHub 访问 | 已完成 |
 | 1 | 原生模型测试 | 两套隔离依赖；官方权重校验；直接调用上游推理，输出非空、有限、形状正确的动作；保存机器可读记录 | 已完成，两个模型均 PASS |
 | 2 | 已有 XPolicyLab 适配验证 | G05 真实权重加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 已完成；π0.5 的新环境接口随阶段 3 单独验证 |
-| 3 | RoboMME 环境接入 | Panda 双处注册；观测与动作转换；真实任务 reset/step/终止；自动化回归 | 待阶段 2 通过 |
-| 4 | RoboMME 模型评估 | 相同任务、split、episode、动作与时间预算下运行；输出逐 episode 结果及视频 | 待阶段 3 通过 |
+| 3 | RoboMME 环境接入 | Panda 双处注册；观测与动作转换；真实任务 reset/step/终止；自动化回归 | 已完成；44 项测试通过，两个真实环境 smoke 通过 |
+| 4 | RoboMME 模型评估 | 固定任务、split、episode、动作与时间预算；输出逐 episode 结果及视频 | π0.5 官方 baseline 接口验证中；G05 缺少 Panda 权重 |
 
 “依赖能 import”“原生推理通过”“通信闭环通过”“仿真任务成功”是不同验收条件。
 没有执行的项目不记为通过；缩短步数的 smoke 测试不作为正式基准成绩。
@@ -44,9 +44,9 @@
 现有 shell 入口统一接收 benchmark、task、checkpoint、robot、action、seed、
 两个 GPU ID、策略环境和评估环境十项参数。
 
-当前公共环境路由只有 `sim`、`debug` 和 `real_world`；`sim` 调用父工作区的
-`scripts/eval_policy.sh`，不能在当前独立 checkout 中直接启动 RoboMME。
-RoboMME 应新增共享环境客户端，而不是为每个策略重复实现整套模拟器接口。
+原有公共环境路由为 `sim`、`debug` 和 `real_world`；普通 `sim` 调用父工作区的
+`scripts/eval_policy.sh`。阶段 3 新增 `robomme` 共享环境客户端；`sim` 模式遇到
+`bench_name=RoboMME` 也会转入该客户端。各策略继续共用服务、协议和图像处理。
 
 必须遵守的共享约定：
 
@@ -108,7 +108,7 @@ RoboMME 返回的观测字段是列表；reset 可能附带条件演示视频，
 
 - G05 代码：<https://github.com/OpenGalaxea/GalaxeaVLA>，当前源码已 vendored。
 - G05 主权重：<https://huggingface.co/OpenGalaxea/G05>，本次下载检查发现需授权。
-- G05 RoboDojo FM 权重：<https://huggingface.co/OpenGalaxea/g05-robodojo>，未设 gate，正在验证下载。
+- G05 RoboDojo FM 权重：<https://huggingface.co/OpenGalaxea/g05-robodojo>，未设 gate，已校验并完成原生推理。
 - OpenPI：<https://github.com/Physical-Intelligence/openpi>。
 - RoboMME：<https://github.com/RoboMME/robomme_benchmark>。
 - RoboMME 官方 π0.5 baseline：<https://huggingface.co/Yinpei/pi05_baseline>，
@@ -398,3 +398,99 @@ metadata 保留/冲突、含空格环境路径、带引号 YAML 文件名及原�
 
 后续 RoboMME 只新增该环境所需的观测/动作桥接，沿用现有服务端、协议和共享图像处理。
 G05 当前公开 FM checkpoint 是双臂 ARX 模型；不能将其动作补零或裁切成 Panda 成绩。
+
+## 阶段 3：RoboMME 共享客户端与环境验收
+
+本阶段新增 `utils/robomme_env_client.py` 和薄 shell 入口，复用已有 WebSocket RPC、
+环境激活、checkpoint 解析、状态打包与服务端 RGB 解码。未修改 G05、OpenPI 或
+RoboMME 的上游模型实现。Panda 在仓库训练维度表注册为 `arm_dim: [7]`、`ee_dim: [1]`，
+并通过以下命令在父工作区生成相同运行时元数据：
+
+```bash
+python scripts/setup_local_eval_metadata.py panda
+```
+
+### 环境与数据约定
+
+沿用本机 `<workspace>/robomme_benchmark/.venv` 的 RoboMME 安装及现有资产。
+Python 3.11.5、Torch 2.9.1+cu128、ManiSkill 3.0.0b21、SAPIEN 3.0.2、NumPy 1.26.4
+保持原版本。仅补充客户端缺失的依赖：
+
+```bash
+uv pip install --python ../robomme_benchmark/.venv/bin/python \
+  'pydantic==2.12.5' 'msgpack-numpy==0.4.8'
+```
+
+其他机器先按 [RoboMME 官方安装说明](https://github.com/RoboMME/robomme_benchmark)
+安装模拟器、ManiSkill 分支及资产，再补齐本项目 `pyproject.toml` 的通信依赖。
+本机源码是既有目录而非 Git checkout；关键 episode resolver 与官方
+`45efbf21036b40af201b24a6d5d37f0d1b088c64` 文件的 SHA256 一致：
+`33257072f6e5c0a3c702c3b7ff5018949a015ad8ac42f5450b0f816d580295f9`。
+正式运行记录还保存 wrapper 源码哈希、包版本、原生 episode seed/difficulty。
+
+转换只涉及以下字段，无坐标系或图像颜色变化：
+
+| RoboMME | XPolicyLab / 策略 |
+| --- | --- |
+| `front_rgb_list` | `vision.cam_head.color`，HWC uint8 RGB |
+| `wrist_rgb_list` | `vision.cam_wrist.color`，HWC uint8 RGB |
+| `joint_state_list` | `state.arm_joint_state`，7 个绝对关节位置 |
+| `gripper_state_list` | `state.ee_joint_state`，两个物理指关节中的第一个，保持原单位 |
+| `info.task_goal[0]` | `instruction`，与官方 baseline 一致 |
+| 动作 | 7 个绝对关节位置 + 夹爪 `[-1,+1]`，不再重复缩放或转换 |
+
+首次 reset 的所有演示帧按顺序发送，列表长度不一致时报错；策略是否使用历史由
+其模型决定。客户端不读取 oracle/subgoal，不覆盖 benchmark 内置 seed。当前仅实现
+`panda + joint`，不提供未经验证的末端姿态模式。episode 串行运行，单环境调用也支持
+`eval_batch=true` 的 singleton batch RPC。
+
+每次推理默认执行前 16 个动作，再重新规划；每个控制步更新观测。是否结束以
+RoboMME 原生 `terminated` / `truncated` 为准。当前 wrapper 将 `max_steps` 内部加 2，
+所以请求 2 步的环境在执行 3 次动作后 timeout；记录实际步数，不手动伪造结果。
+
+### 已执行验证
+
+新增测试检查 RGB 顺序、物理夹爪状态单位、历史列表对齐、动作维度和非有限值、
+原有双臂三相机接口、批次子集/顺序/空列表、模型 reset、演示帧传递、动作 chunk 截断、
+原生终止和单/批 RPC。共 **44 项测试通过**：
+
+```bash
+policy/G05/G05/.venv/bin/python -m unittest discover -s tests
+```
+
+另外直接用新客户端的 `run_episode` 跑了两个真实 `test/episode 0`，保持当前关节位置、
+张开夹爪、`max_steps=2`，均触发原生 timeout 并正常关闭：
+
+| 任务 | reset 帧数 | 实际动作步数 | 终止状态 |
+| --- | --- | --- | --- |
+| PickXtimes | 1 | 3 | timeout |
+| VideoRepick | 258 | 3 | timeout |
+
+这里的保持动作仅验证真实模拟器与转换函数，**没有加载策略，不属于模型成绩**。
+258 帧条件演示完整传递到客户端接口。证据：
+[环境 smoke JSON](validation/stage3-environment-smoke.json)、
+[回归日志](validation/stage3-regression.txt)。
+
+### π0.5 官方 RoboMME baseline 准备
+
+通用 `pi05_libero` 不能替代 RoboMME 权重。新增后端使用
+`RoboMME/robomme_policy_learning@ac846a9a4aec841e483b1dc5d620dfe426bde853`
+的 `pi05_baseline`：`HistoryPi0Config(pi05=True, action_horizon=20, use_history=False,
+discrete_state_input=False)`，两路相机、64 个文本 token，沿用 checkpoint 的
+`assets/robomme/norm_stats.json` 与官方 normalization/delta/absolute transforms。
+该 baseline 不使用历史记忆，最终推理使用最新帧。
+
+后端下载在忽略的 `policy/Pi_05/robomme_runtime/`，不修改或覆盖原 `openpi/`。
+只在新的 RoboMME 模型服务进程中先选择该源码，再导入 OpenPI；已导入原版 OpenPI
+的进程会明确拒绝混用。复用原生 π0.5 venv 中的 JAX 0.5.3 / Flax 0.10.2，新增
+`hydra-core==1.3.2`；未执行新版 upstream 的全量依赖同步或训练安装。
+
+权重 `Yinpei/pi05_baseline@80caa59a4933804b6521e72981b107ae0051d32a`：
+
+- 文件 `pi05_baseline/79999.zip`，11,551,742,488 字节。
+- SHA256 `b8a9e9d78e4336e04582a01767a59ee132ea1e17295c7cf98b4952500de178e5`，已完整校验。
+- 解压 27 个条目；保留 `params` 结构和随附归一化统计。zip 带作者原目录树，需按
+  [Pi_05 README](../policy/Pi_05/README.md#robomme-evaluation) 的命令移动 `79999` 目录。
+- installer 已执行并通过幂等检查；官方配置 import 成功。GPU 接口与真实模型评估单列为阶段 4。
+
+以上新增训练支持范围仅为**评估**；没有将 RoboMME baseline 的训练声明为可用。

@@ -1,0 +1,22 @@
+.....................[part complete] 1/4
+[part complete] 2/4
+[part complete] 4/4
+[part complete] 3/4
+..[verified] /tmp/tmpzcqsp6so/weights
+.[part complete] 3/4
+[part complete] 4/4
+[verified] /tmp/tmpn2ksm4t3/weights
+.[part complete] 1/4
+[part complete] 3/4
+[part complete] 2/4
+[part complete] 4/4
+[verified] /tmp/tmpujkh7dfl/weights
+..[CONNECTING] websocket policy server ws://127.0.0.1:38485 (attempt 1/180, timeout=30s)
+[CONNECTED] websocket policy server connected: ws://127.0.0.1:38485
+......response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+...........
+----------------------------------------------------------------------
+Ran 44 tests in 6.228s
+
+OK

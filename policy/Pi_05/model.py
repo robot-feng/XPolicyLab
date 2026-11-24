@@ -10,10 +10,6 @@ from typing import Any
 
 import numpy as np
 
-from openpi.policies import policy_config as _policy_config
-from openpi.shared import normalize as _normalize
-from openpi.training import config as _config
-
 from XPolicyLab.model_template import ModelTemplate
 from XPolicyLab.utils.checkpoint_resolver import candidate_checkpoint_roots
 from XPolicyLab.utils.process_data import (
@@ -90,16 +86,27 @@ class Model(ModelTemplate):
     def __init__(self, model_cfg: dict[str, Any]):
         self.task_name = model_cfg["task_name"]
         self.action_type = model_cfg.get("action_type", "joint")
+        self._robomme = str(model_cfg.get("bench_name", "")).lower() == "robomme"
+        if self._robomme and (model_cfg.get("env_cfg_type") != "panda" or self.action_type != "joint"):
+            raise ValueError("RoboMME pi05_baseline requires env_cfg_type=panda and action_type=joint")
         self.robot_action_dim_info = (
             get_robot_action_dim_info(model_cfg["env_cfg_type"]) if model_cfg.get("env_cfg_type") is not None else None
         )
-        self.observation_window: dict[str, Any] | None = None
+        self.observation_window = None
         self._latest_env_idx_list: list[int] = [0]
 
         self.policy = self.get_model(model_cfg=model_cfg)
         self.model = self.policy
 
     def get_model(self, model_cfg: dict[str, Any]):
+        if self._robomme:
+            from .robomme import load_policy
+            return load_policy(_resolve_pi05_model_root(model_cfg), seed=int(model_cfg.get("seed") or 0))
+
+        from openpi.policies import policy_config as _policy_config
+        from openpi.shared import normalize as _normalize
+        from openpi.training import config as _config
+
         train_config_name = model_cfg.get("train_config_name", "pi05_aloha")
         repo_id = model_cfg.get("repo_id", "1118")
         model_root = _resolve_pi05_model_root(model_cfg)
@@ -116,6 +123,9 @@ class Model(ModelTemplate):
 
     def update_obs_batch(self, obs_list):
         self._latest_env_idx_list = [obs.get("env_idx", index) for index, obs in enumerate(obs_list)]
+        if self._robomme:
+            self.observation_window = [encode_robomme_obs(obs, self.robot_action_dim_info) for obs in obs_list]
+            return
         encoded_obs_list = [
             encode_obs(obs, self.action_type, self.robot_action_dim_info) for obs in obs_list
         ]
@@ -129,12 +139,14 @@ class Model(ModelTemplate):
         if self.observation_window is None:
             raise AssertionError("update_obs or update_obs_batch first!")
 
-        env_idx_list = env_idx_list or self._latest_env_idx_list
-        # actions = self.policy.infer(self.observation_window, **kwargs)["actions"]
+        if env_idx_list is None:
+            env_idx_list = self._latest_env_idx_list
         action_list = []
 
-        for batch_index, _ in enumerate(env_idx_list):
-            single_observation = slice_stacked_obs(self.observation_window, batch_index)
+        for env_idx in env_idx_list:
+            batch_index = self._latest_env_idx_list.index(env_idx)
+            single_observation = (self.observation_window[batch_index] if self._robomme else
+                                  slice_stacked_obs(self.observation_window, batch_index))
             actions = self.policy.infer(single_observation, **kwargs)["actions"]
             if self.robot_action_dim_info is None:
                 action_list.append(actions)
@@ -153,9 +165,26 @@ class Model(ModelTemplate):
     def reset(self):
         self.observation_window = None
         self._latest_env_idx_list = [0]
+        if self._robomme:
+            self.policy.reset()
 
     def reset_obsrvationwindows(self):
         self.reset()
+
+
+def encode_robomme_obs(observation, robot_action_dim_info):
+    prompt = observation.get("instruction", "")
+    if isinstance(prompt, (list, tuple)):
+        prompt = prompt[0] if prompt else ""
+    state = pack_robot_state(observation, "joint", robot_action_dim_info, source_type="obs")
+    if state.shape != (8,) or not np.isfinite(state).all():
+        raise ValueError(f"Expected finite Panda state (8,), got {state.shape}")
+    return {
+        "observation/state": state.astype(np.float32),
+        "observation/image": ensure_chw_uint8(extract_image(observation, ["cam_head", "cam_high"])),
+        "observation/wrist_image": ensure_chw_uint8(extract_image(observation, ["cam_wrist", "cam_left_wrist"])),
+        "prompt": prompt,
+    }
 
 
 def encode_obs(observation, action_type, robot_action_dim_info):

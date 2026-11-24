@@ -29,7 +29,7 @@ XPolicyLab 是策略代码与评测环境之间的共享层。每个模型的依
 
 仓库级概念与接入步骤从本文开始。安装命令、权重布局与训练细节以各策略自己的 README 为准。
 
-[G05 / π0.5 分阶段配置记录](docs/g05-pi05-robomme.md)记录本机环境检查、原生模型验证，以及计划中的 RoboMME 接入，各阶段分别验收。
+[G05 / π0.5 分阶段配置记录](docs/g05-pi05-robomme.md)记录本机环境检查、原生模型验证及 RoboMME 接入，各阶段分别验收。
 
 ## 📚 目录
 
@@ -75,6 +75,7 @@ XPolicyLab 与具体 benchmark 解耦：任意 benchmark、仿真器或真机方
 - **[RoboDojo](https://github.com/RoboDojo-Benchmark/RoboDojo)**：基于仿真器的评测，以及 RoboDojo 格式数据导出。[RoboDojo Leaderboard](https://robodojo-benchmark.com/LeaderBoard) 覆盖五个能力维度（Generalization、Precision、Long-Horizon、Memory、Open）上的 42 个仿真任务，以及三套双臂本体上的 18 个真机任务。
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**：通过策略专用 adapter 与转换脚本作为 benchmark 与数据源。[RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) 覆盖干净与随机设置下 50 个双臂操作任务。
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**：基于 RoboTwin 2.0 的记忆依赖操作 benchmark，九个双臂任务覆盖不同任务记忆复杂度（[论文](https://arxiv.org/abs/2603.01229)，[网站](https://rmbench.github.io/)）。其参考策略已接入为 [Mem-0](policy/Mem_0/README.md)。
+- **[RoboMME](https://github.com/RoboMME/robomme_benchmark)**：通过共享 WebSocket 客户端运行 Panda 关节控制评估。[Pi_05 适配器](policy/Pi_05/README.md#robomme-evaluation)支持 RoboMME 官方 π0.5 baseline；其他 checkpoint 需要匹配机器人及观测接口。
 
 **基础设施**
 
@@ -333,9 +334,10 @@ bash setup_eval_env_client.sh \
 
 - 未设置或 `sim`：真实仿真 backed 评测（集成已安装时）。
 - `debug`：离线接线检查 —— 无 Isaac、无真机，只验 shape 与 IO。
+- `robomme`：原生 RoboMME episode，使用 Panda 关节控制；`sim` 模式下 `bench_name=RoboMME` 也会自动选用此后端。
 - `real`：真机 client 路径（硬件集成存在时）。
 
-`debug` 模式下，第 10 个参数也可以是 venv 目录或 Python 可执行文件。设置 `DEBUG_EVAL_EPISODE_NUM` 可缩短离线检查（默认 10 个 episode）。
+`debug` 和 `robomme` 模式下，第 10 个参数也可以是 venv 目录或 Python 可执行文件。设置 `DEBUG_EVAL_EPISODE_NUM` 可缩短离线检查（默认 10 个 episode）。RoboMME 的 split、episode 范围与步数预算见[分阶段配置记录](docs/g05-pi05-robomme.md)。
 
 
 

@@ -61,6 +61,59 @@ bash eval.sh RoboDojo stack_bowls RoboDojo-cotrain-arx_x5-joint-0 arx_x5 joint 0
 
 `EVAL_ENV_TYPE=debug` runs the offline wiring check (no simulator); leave it unset or set `EVAL_ENV_TYPE=sim` for RoboDojo simulation. For split-machine deployment via `setup_eval_policy_server.sh` / `setup_eval_env_client.sh`, follow the [Deployment Flow](../../README.md#-deployment-flow).
 
+## RoboMME Evaluation
+
+This evaluation backend uses the [official RoboMME policy code](https://github.com/RoboMME/robomme_policy_learning)
+at `ac846a9a4aec841e483b1dc5d620dfe426bde853` and the
+[RoboMME π0.5 baseline checkpoint](https://huggingface.co/Yinpei/pi05_baseline),
+rather than the native ALOHA or LIBERO configuration. It accepts Panda joint control only:
+front/wrist RGB, seven joint positions and the first physical finger position; it returns
+20 absolute joint/gripper actions and executes 16 before replanning by default. Gripper action
+units are `-1` closed / `+1` open. The official transforms handle normalization and delta-to-absolute
+conversion. No adapter-side color conversion, dummy third camera, or gripper rescaling is applied.
+
+From the repository root, after the native installation:
+
+```bash
+bash policy/Pi_05/install_robomme.sh
+python scripts/download_pretrained_models.py pi05-robomme --parts 8
+policy/Pi_05/openpi/.venv/bin/python -m zipfile -e \
+  policy/Pi_05/checkpoints/robomme/79999.zip policy/Pi_05/checkpoints/robomme
+# The archive includes the author's original directory tree.
+mv policy/Pi_05/checkpoints/robomme/home/daiyp/MME-VLA-Suite/runs/ckpts/pi05_baseline/pi05/79999 \
+  policy/Pi_05/checkpoints/robomme/79999
+python scripts/setup_local_eval_metadata.py panda
+```
+
+Install RoboMME and its assets in a separate environment following its official guide. The
+evaluation environment additionally needs XPolicyLab's dependencies (notably `pydantic>=2.5`
+and `msgpack-numpy>=0.4.8`); no policy Torch/JAX dependencies need to be copied into it.
+The local verified environment is `<workspace>/robomme_benchmark/.venv`.
+
+```bash
+cd policy/Pi_05
+# Existing native venv `uv` hosts the policy; the final argument hosts the simulator.
+ROBOMME_EPISODES=1 ROBOMME_MAX_STEPS=1300 bash eval.sh \
+  RoboMME PickXtimes ./checkpoints/robomme/79999 panda joint 0 1 3 uv \
+  "$(cd ../../../robomme_benchmark/.venv && pwd)"
+```
+
+Use `EVAL_ENV_TYPE=debug DEBUG_EVAL_EPISODE_NUM=1` for the same checkpoint's offline
+contract check; repeat with `DEBUG_OBS_ENCODED=1`. Real RoboMME evaluation uses uncompressed RGB.
+`ROBOMME_SPLIT` defaults to `test` (`train`, `val`, `ood_test` also supported),
+`ROBOMME_START_EPISODE=0`, `ROBOMME_EPISODES=1` (or `all`),
+`ROBOMME_MAX_STEPS=1300`, `ROBOMME_ACTION_STEPS=16`. Task names may be comma-separated or `all`.
+`ROBOMME_OUTPUT_DIR` selects a **new** output directory; by default results go to
+`runs/robomme/<timestamp-id>/` with per-episode JSON, aggregate JSON and front/wrist MP4.
+Benchmark-owned seeds are preserved; the eval seed controls the policy RNG. Reset/demo frames
+are forwarded in order. This baseline has no history memory and uses the latest frame.
+
+This backend is evaluation-only: the existing data conversion and training scripts continue
+to target the native OpenPI recipe. The pinned runtime is downloaded into the ignored
+`robomme_runtime/` directory and never overwrites `openpi/`. Starting a fresh policy server
+is required when switching backend. See the [detailed validation log](../../docs/g05-pi05-robomme.md)
+for exact local versions and the distinction between interface smoke tests and task success.
+
 ## Configuration
 
 `deploy.yml` keys to check before evaluation: `checkpoint_num`, `result_dir`, `obs_transform_pipeline`, `policy_uv_env_path`, `train_config_name` (must match the config used by `train.sh`), `repo_id`.

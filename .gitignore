@@ -12,6 +12,7 @@ checkpoints/
 runs/
 Log/
 logs/
+policy/Pi_05/robomme_runtime/
 
 # H_RDT local artifacts and large model assets
 policy/H_RDT/.cache/
