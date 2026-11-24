@@ -12,8 +12,8 @@
 | 阶段 | 内容 | 验收条件 | 当前状态 |
 | --- | --- | --- | --- |
 | 0 | 理解项目与主机检查 | 梳理模型/通信/评估边界；检查 GPU、现有环境及 GitHub 访问 | 已完成 |
-| 1 | 原生模型测试 | 两套隔离依赖；官方权重校验；直接调用上游推理，输出非空、有限、形状正确的动作；保存机器可读记录 | 进行中 |
-| 2 | XPolicyLab 适配验证 | 真实模型加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 待阶段 1 通过 |
+| 1 | 原生模型测试 | 两套隔离依赖；官方权重校验；直接调用上游推理，输出非空、有限、形状正确的动作；保存机器可读记录 | 已完成，两个模型均 PASS |
+| 2 | 已有 XPolicyLab 适配验证 | G05 真实权重加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 待开始；π0.5 的新环境接口随阶段 3 单独验证 |
 | 3 | RoboMME 环境接入 | Panda 双处注册；观测与动作转换；真实任务 reset/step/终止；自动化回归 | 待阶段 2 通过 |
 | 4 | RoboMME 模型评估 | 相同任务、split、episode、动作与时间预算下运行；输出逐 episode 结果及视频 | 待阶段 3 通过 |
 
@@ -220,7 +220,7 @@ policy/G05/G05/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 
 ## 阶段 1B：原生权重推理验收
 
-此阶段仍在进行：π0.5 原生推理已通过，G05 等待完整 FM 权重校验。
+此阶段已完成：π0.5 与 G05 均已使用完整官方权重通过连续两次原生推理。
 完整权重校验、必要 sidecar 提取完成后，用各自模型解释器运行：
 
 ```bash
@@ -273,3 +273,41 @@ processor schema 构造输入。π0.5 直接调用 OpenPI `create_trained_policy
 本地动作数组在 `runs/native-pi05-01/actions_0.npz` 和 `actions_1.npz`。
 报告记录实际启动时的 source commit 与入口脚本 SHA-256；测试是在开发分支工作区执行，
 以脚本 SHA-256 标识该次入口版本。本机当时有其他权重下载，这些耗时仅作为运行记录。
+
+### G05 原生推理实际结果
+
+2026-11-24 21:20（Asia/Shanghai）完成，进程退出码 0：
+
+| 项目 | 结果 |
+| --- | --- |
+| checkpoint | `OpenGalaxea/g05-robodojo` 官方 FM-only 发布包 |
+| checkpoint 完整性 | archive 34,425,477,120 bytes，官方 SHA-256 校验通过 |
+| processor 完整性 | 官方训练资产 archive 13,699,174,400 bytes，SHA-256 校验通过；只提取匹配 HF processor |
+| GPU | 物理 GPU 0，RTX 4090 |
+| 权重/模型加载 | 404.54 秒，包含本机机械盘上的冷启动依赖读取与初始化 |
+| 第 1 次推理 | 5.593 秒 |
+| 第 2 次推理 | 0.792 秒 |
+| 动作输出 | 左右臂各 32×6，左右夹爪各 32×1，两次输出全部有限 |
+| 总耗时 | 410.94 秒 |
+| 模式 | FM、3 cameras、obs_steps=1、action_steps=32；上游 SDPA fallback，关闭 torch.compile |
+| 任务成功率 | 未测量；使用合成输入，未启动 RoboDojo 或 RoboMME |
+
+原始报告：[stage1b-g05-native.json](validation/stage1b-g05-native.json)。
+权重与 processor 的来源和校验值分别见
+[stage1b-g05-assets.json](validation/stage1b-g05-assets.json)、
+[stage1b-g05-processor-assets.json](validation/stage1b-g05-processor-assets.json)。
+本地动作数组在 `runs/native-g05-01/actions_0.npz` 和 `actions_1.npz`。
+
+G05 checkpoint 的上游配置会提前解析仅供训练使用的数据集环境变量。
+原生验证入口在该变量未设置时给出空值，实际没有打开或使用训练数据；
+模型、normalizer、tokenizer 和输入 schema 均来自官方 checkpoint 与配套 processor。
+配置中的缺失 `tokenizer_meta` 使用上游 YAML key_dims fallback，未自行修改解码器。
+
+阶段 1 最终 [33 项回归测试输出](validation/stage1-final-regression.txt) 全部通过，
+包括 27 项原有回归和 6 项资源下载/中断恢复回归。
+阶段 1A 的 32 项记录保留为当时的历史证据。
+
+π0.5 原生测试使用的 LIBERO checkpoint 输出 7 维末端增量动作；现有 Pi_05 adapter
+默认配置为 RoboDojo 双臂 14 维关节动作，不能直接裁切、补零后当作接口通过。
+下一步先验证已有匹配 checkpoint 的 G05 adapter，再为 RoboMME 使用其官方
+π0.5 baseline 权重与 Panda 单臂接口单独验证。

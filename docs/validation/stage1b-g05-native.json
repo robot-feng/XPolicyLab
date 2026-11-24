@@ -1,0 +1,120 @@
+{
+  "status": "PASS",
+  "model": "g05",
+  "checkpoint": "/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint",
+  "scope": "native inference on synthetic RGB/state; task success not measured",
+  "started_at_utc": "2026-11-24T13:13:46.660616+00:00",
+  "python": "3.10.20 (main, Apr 14 2026, 14:28:08) [Clang 22.1.3 ]",
+  "executable": "/home/haichao/feng/XPolicyLab/policy/G05/G05/.venv/bin/python",
+  "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+  "seed": 0,
+  "cuda_visible_devices": "0",
+  "source_commit": "7ac3db5e255b49994fa182af2c348cd7a764362b",
+  "smoke_script_sha256": "bf064855f679eeead40aec2b69218908ba3dbf0ba55b70c9402da661a3218677",
+  "packages": {
+    "torch": "2.7.1+cu128",
+    "torchvision": "0.22.1+cu128",
+    "transformers": "4.57.1",
+    "numpy": "1.26.4",
+    "g05": "0.0.1"
+  },
+  "iterations": [
+    {
+      "seconds": 5.592882893048227,
+      "actions": {
+        "left_arm": {
+          "shape": [
+            32,
+            6
+          ],
+          "min": -0.09245789051055908,
+          "max": 0.045453961938619614,
+          "finite": true
+        },
+        "left_gripper": {
+          "shape": [
+            32,
+            1
+          ],
+          "min": 0.020039916038513184,
+          "max": 1.003440260887146,
+          "finite": true
+        },
+        "right_arm": {
+          "shape": [
+            32,
+            6
+          ],
+          "min": -0.024824896827340126,
+          "max": 0.04427371174097061,
+          "finite": true
+        },
+        "right_gripper": {
+          "shape": [
+            32,
+            1
+          ],
+          "min": 0.04357725381851196,
+          "max": 0.9962738156318665,
+          "finite": true
+        }
+      }
+    },
+    {
+      "seconds": 0.7915898570790887,
+      "actions": {
+        "left_arm": {
+          "shape": [
+            32,
+            6
+          ],
+          "min": -0.036471493542194366,
+          "max": 0.04323321580886841,
+          "finite": true
+        },
+        "left_gripper": {
+          "shape": [
+            32,
+            1
+          ],
+          "min": 0.010512471199035645,
+          "max": 1.0004677772521973,
+          "finite": true
+        },
+        "right_arm": {
+          "shape": [
+            32,
+            6
+          ],
+          "min": -0.028793321922421455,
+          "max": 0.0378069169819355,
+          "finite": true
+        },
+        "right_gripper": {
+          "shape": [
+            32,
+            1
+          ],
+          "min": 0.046363770961761475,
+          "max": 0.996347188949585,
+          "finite": true
+        }
+      }
+    }
+  ],
+  "backend": "upstream g05 PolicyInferencer",
+  "embodiment": "robodojo",
+  "device": "NVIDIA GeForce RTX 4090",
+  "hydra_overrides": [
+    "eval_embodiment=robodojo",
+    "model.model_arch.discrete_action=false",
+    "model.model_arch.continuous_action=true",
+    "model.model_arch.return_continuous_action=true",
+    "model.processor.discrete_action=false",
+    "model.use_torch_compile=false"
+  ],
+  "processor_path": "/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_train_assets/g05_robodojo_train_base_assets/pretrained/hf_processor",
+  "training_dataset_used": false,
+  "load_seconds": 404.5414611790329,
+  "elapsed_seconds": 410.94410616066307
+}

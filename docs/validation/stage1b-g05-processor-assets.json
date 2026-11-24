@@ -1,0 +1,13 @@
+{
+  "repo": "OpenGalaxea/g05-robodojo",
+  "revision": "bb6cf7e45d0b2e8bd71c16c52961a93cc6125283",
+  "files": [
+    {
+      "path": "/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_train_assets/g05_robodojo_train_base_assets.tar",
+      "size": 13699174400,
+      "url": "https://huggingface.co/OpenGalaxea/g05-robodojo/resolve/bb6cf7e45d0b2e8bd71c16c52961a93cc6125283/g05_robodojo_train_base_assets.tar",
+      "algorithm": "sha256",
+      "digest": "188fc8f092aa3ed2f67fcdb4a3e94ddbb44d4e0c41309e9f672a5a8594291218"
+    }
+  ]
+}
