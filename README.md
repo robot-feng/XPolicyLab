@@ -334,11 +334,15 @@ bash setup_eval_env_client.sh \
 - `debug`: offline wiring check — no Isaac, no robot, just shapes and IO.
 - `real`: real-robot client path, where the hardware integration exists.
 
+For `debug`, argument 10 may also be a venv prefix or Python executable. Set `DEBUG_EVAL_EPISODE_NUM` to shorten the offline check (default: 10 episodes).
+
 
 
 ## 📐 Standard Data Formats
 
 XPolicyLab standardizes the observation and trajectory dictionaries passed between adapters, converters, and environment clients. Individual policies may convert this standard format into their upstream-native format.
+
+The policy server also decodes observations nested in history, batch, or custom-RPC wrappers. Only camera color fields are decoded; depth and calibration values are preserved.
 
 ### Decode only through `decode_image_bit`
 

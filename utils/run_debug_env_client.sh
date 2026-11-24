@@ -25,17 +25,16 @@ for entry in "${overrides[@]}"; do
     fi
 done
 
-source "$(conda info --base)/etc/profile.d/conda.sh"
-conda deactivate || true
-conda activate "${eval_env_conda_env}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/activate_eval_env.sh"
+activate_eval_env "${eval_env_conda_env}"
 
-echo -e "\033[34m[CLIENT] Activating Conda environment: ${eval_env_conda_env}\033[0m"
+echo -e "\033[34m[CLIENT] Evaluator Python: ${XPL_EVAL_PYTHON}\033[0m"
 echo -e "\033[34m[CLIENT] Connecting to server ${policy_server_ip}:${free_port}...\033[0m"
 echo -e "\033[34m[CLIENT] Watch for green [CONNECTED]; yellow [RECONNECT] means the client is retrying.\033[0m"
 
 export PYTHONPATH="${root_dir}/XPolicyLab:${root_dir}${PYTHONPATH:+:${PYTHONPATH}}"
 
-python "${root_dir}/XPolicyLab/utils/debug_env_client.py" \
+"${XPL_EVAL_PYTHON}" "${root_dir}/XPolicyLab/utils/debug_env_client.py" \
     --bench_name "${bench_name}" \
     --task_name "${task_name}" \
     --env_cfg_type "${env_cfg_type}" \
@@ -44,4 +43,5 @@ python "${root_dir}/XPolicyLab/utils/debug_env_client.py" \
     --protocol "${protocol}" \
     --host "${policy_server_ip}" \
     --port "${free_port}" \
-    --eval_batch "${eval_batch}"
+    --eval_batch "${eval_batch}" \
+    --eval_episode_num "${DEBUG_EVAL_EPISODE_NUM:-10}"

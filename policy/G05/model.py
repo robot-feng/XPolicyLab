@@ -11,8 +11,8 @@ import numpy as np
 import torch
 
 from XPolicyLab.model_template import ModelTemplate
+from XPolicyLab.utils.checkpoint_resolver import resolve_checkpoint_root
 from XPolicyLab.utils.process_data import (
-    decode_image_bit,
     get_batch_size,
     get_robot_action_dim_info,
     pack_robot_state,
@@ -50,6 +50,8 @@ class Model(ModelTemplate):
         )
 
         self.robot_action_dim_info = self._resolve_robot_action_dim_info()
+        if len(self.robot_action_dim_info["arm_dim"]) != 2:
+            raise ValueError("This G05 RoboDojo adapter requires a matching dual-arm checkpoint and robot.")
         self.batch_size = self._resolve_batch_size()
         self._obs: dict[str, Any] | None = None
         self._obs_batch: list[dict[str, Any]] = []
@@ -154,13 +156,7 @@ class Model(ModelTemplate):
         )
 
     def _resolve_robot_action_dim_info(self) -> dict[str, list[int]]:
-        try:
-            return get_robot_action_dim_info(self.env_cfg_type)
-        except Exception as exc:
-            if self.env_cfg_type == "arx_x5":
-                print(f"[G05] using built-in arx_x5 dims because env_cfg lookup failed: {exc}")
-                return {"arm_dim": [6, 6], "ee_dim": [1, 1]}
-            raise
+        return get_robot_action_dim_info(self.env_cfg_type)
 
     def _resolve_batch_size(self) -> int:
         try:
@@ -169,21 +165,18 @@ class Model(ModelTemplate):
             return 1
 
     def _resolve_ckpt_path(self, model_cfg) -> Path:
-        raw = model_cfg.get("ckpt_path") or os.environ.get("G05_CKPT_PATH")
-        if not raw:
-            raise FileNotFoundError("Set ckpt_path in deploy.yml/overrides or export G05_CKPT_PATH")
-
-        path = Path(str(raw)).expanduser()
-        if not path.is_absolute():
-            path = Path(__file__).resolve().parent / path
-        path = path.resolve()
+        config = dict(model_cfg)
+        if not config.get("ckpt_path") and os.environ.get("G05_CKPT_PATH"):
+            config["ckpt_path"] = os.environ["G05_CKPT_PATH"]
+        policy_dir = Path(__file__).resolve().parent
+        path = resolve_checkpoint_root(config, policy_dir / "checkpoints", policy_dir=policy_dir)
 
         if path.is_file():
             return path
         if not path.is_dir():
             raise FileNotFoundError(f"G0.5 checkpoint path not found: {path}")
 
-        candidates = [path / "last.pt"]
+        candidates = [path / "last.pt", path / "checkpoint", path / "checkpoints/checkpoint"]
         candidates.extend(sorted((path / "checkpoints").glob("step_*.pt"), key=_step_sort_key))
         candidates.extend(sorted(path.glob("**/step_*.pt"), key=_step_sort_key))
         candidates.extend(path.glob("model_state_dict.pt"))
@@ -466,18 +459,21 @@ class Model(ModelTemplate):
         """Map RoboDojo joint-state names to the state keys expected by the active G05 processor."""
         shape_meta = getattr(self.processor, "shape_meta", {}) or {}
         expected = {m.get("key") for m in shape_meta.get("state", []) if isinstance(m, dict)}
+        state = unpack_robot_state(
+            packed_state, self.action_type, self.robot_action_dim_info, source_type="obs"
+        )
         if {"left_control", "left_gripper", "right_control", "right_gripper"}.issubset(expected):
             return {
-                "left_control": packed_state[0:6],
-                "left_gripper": packed_state[6:7],
-                "right_control": packed_state[7:13],
-                "right_gripper": packed_state[13:14],
+                "left_control": state["left_arm_joint_state"],
+                "left_gripper": state["left_ee_joint_state"],
+                "right_control": state["right_arm_joint_state"],
+                "right_gripper": state["right_ee_joint_state"],
             }
         return {
-            "left_arm": packed_state[0:6],
-            "left_gripper": packed_state[6:7],
-            "right_arm": packed_state[7:13],
-            "right_gripper": packed_state[13:14],
+            "left_arm": state["left_arm_joint_state"],
+            "left_gripper": state["left_ee_joint_state"],
+            "right_arm": state["right_arm_joint_state"],
+            "right_gripper": state["right_ee_joint_state"],
         }
 
     def _build_raw_images(self, obs: dict[str, Any]) -> dict[str, np.ndarray]:
@@ -538,14 +534,7 @@ def _call_accepts_history_buffers(fn) -> bool:
 
 
 def _as_chw_uint8(value) -> np.ndarray:
-    # Load-bearing exception to "model.py never decodes": history frames that
-    # deploy.py nests under G05_HISTORY_OBSERVATIONS_KEY reach the model still
-    # encoded, because the server's decode_obs_images only walks the top-level
-    # obs["vision"]. decode_image_bit returns already-decoded arrays unchanged,
-    # so the unconditional call covers bytes and 1-D uint8 buffers alike; an
-    # isinstance(np.ndarray) guard would skip encoded buffers that arrive as
-    # 1-D uint8 arrays and fail below with "image must be 3D".
-    value = decode_image_bit(value)
+    # The server decodes current, batched and nested history observations.
     arr = np.asarray(value)
     if arr.ndim == 4:
         arr = arr[0]

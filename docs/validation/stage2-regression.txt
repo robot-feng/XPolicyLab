@@ -1,0 +1,61 @@
+test_aha_boundary_preserves_legacy_input_and_action_chunks (test_action_contracts.ActionContractTests) ... ok
+test_aha_debug_requires_complete_finite_joint_actions (test_action_contracts.ActionContractTests) ... ok
+test_aha_debug_uses_unique_evaluations_and_preserves_explicit_id (test_action_contracts.ActionContractTests) ... ok
+test_ambiguous_aliases_are_rejected (test_action_contracts.ActionContractTests) ... ok
+test_complete_actions_match_both_robot_and_action_types (test_action_contracts.ActionContractTests) ... ok
+test_failed_single_or_batch_actions_do_not_advance_debug_steps (test_action_contracts.ActionContractTests) ... ok
+test_invalid_actions_cannot_pass_debug_validation (test_action_contracts.ActionContractTests) ... ok
+test_python_shell_and_packed_widths_agree (test_action_contracts.ActionContractTests) ... ok
+test_single_arm_aliases_pack_identically_without_mutating_input (test_action_contracts.ActionContractTests) ... ok
+test_ckpt_name_path_is_exclusive (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_first_explicit_key_is_exclusive_even_if_second_exists (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_me_brain_default_config_does_not_mask_named_checkpoint (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_missing_explicit_path_cannot_load_existing_named_run (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_named_runs_keep_training_name_and_verbatim_fallback (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_relative_and_absolute_explicit_paths (test_checkpoint_resolver.CheckpointResolverTests) ... ok
+test_single_dual_joint_ee_plain_encoded_single_batch (test_debug_closed_loop.DebugClosedLoopTests) ... ok
+test_client_setup_reads_quoted_yaml_path_with_requested_python (test_eval_metadata.EvaluationMetadataTests) ... ok
+test_conflicting_robot_metadata_is_not_overwritten (test_eval_metadata.EvaluationMetadataTests) ... ok
+test_evaluator_prefix_with_spaces_and_explicit_interpreter (test_eval_metadata.EvaluationMetadataTests) ... ok
+test_registration_preserves_existing_environment_and_other_robots (test_eval_metadata.EvaluationMetadataTests) ... ok
+test_changed_part_count_is_rejected_before_network_access (test_model_assets.ModelAssetTests) ... ok
+test_corrupted_range_is_not_accepted_as_checkpoint (test_model_assets.ModelAssetTests) ... [part complete] 1/4
+[part complete] 3/4
+[part complete] 2/4
+[part complete] 4/4
+ok
+test_invalid_existing_checkpoint_is_preserved (test_model_assets.ModelAssetTests) ... ok
+test_rebuild_after_interrupted_assembly (test_model_assets.ModelAssetTests) ... [verified] /tmp/tmpohbah9a5/weights
+ok
+test_resume_prefix_spanning_multiple_ranges (test_model_assets.ModelAssetTests) ... [part complete] 3/4
+[part complete] 4/4
+[verified] /tmp/tmp7q37tmwo/weights
+ok
+test_resume_ranges_and_verify_assembled_bytes (test_model_assets.ModelAssetTests) ... [part complete] 1/4
+[part complete] 3/4
+[part complete] 2/4
+[part complete] 4/4
+[verified] /tmp/tmpe2wjuufc/weights
+ok
+test_aliases_and_cycles_do_not_redecode_images (test_nested_observations.NestedImageTests) ... ok
+test_custom_rpc_decodes_nested_batch_and_history (test_nested_observations.NestedImageTests) ... [34m[1m[CONNECTING][0m websocket policy server ws://127.0.0.1:45639 (attempt 1/180, timeout=30s)
+[32m[1m[CONNECTED][0m websocket policy server connected: ws://127.0.0.1:45639
+ok
+test_closed_connection_releases_owner_during_backpressure (test_ws_sessions.ConnectionTests) ... response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+ok
+test_conflicting_connection_retries_after_owner_disconnect (test_ws_sessions.ConnectionTests) ... ok
+test_foreign_evaluation_fails_without_retry_even_after_disconnect (test_ws_sessions.ConnectionTests) ... ok
+test_reconnected_client_replays_cached_result (test_ws_sessions.ConnectionTests) ... ok
+test_cached_request_id_binds_content_and_trial_context (test_ws_sessions.ReplayTests) ... ok
+test_cached_result_survives_model_buffer_reuse (test_ws_sessions.ReplayTests) ... ok
+test_empty_or_foreign_evaluation_never_calls_model (test_ws_sessions.ReplayTests) ... ok
+test_infer_snapshot_survives_buffer_reuse (test_ws_sessions.ReplayTests) ... ok
+test_inflight_request_id_cannot_change_payload (test_ws_sessions.ReplayTests) ... ok
+test_same_request_inflight_and_cancelled_waiter_execute_once (test_ws_sessions.ReplayTests) ... ok
+test_unserializable_result_is_cached_error (test_ws_sessions.ReplayTests) ... ok
+
+----------------------------------------------------------------------
+Ran 39 tests in 5.104s
+
+OK

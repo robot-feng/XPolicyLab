@@ -335,11 +335,15 @@ bash setup_eval_env_client.sh \
 - `debug`：离线接线检查 —— 无 Isaac、无真机，只验 shape 与 IO。
 - `real`：真机 client 路径（硬件集成存在时）。
 
+`debug` 模式下，第 10 个参数也可以是 venv 目录或 Python 可执行文件。设置 `DEBUG_EVAL_EPISODE_NUM` 可缩短离线检查（默认 10 个 episode）。
+
 
 
 ## 📐 标准数据格式
 
 XPolicyLab 标准化 adapter、转换器与环境 client 之间传递的观测与轨迹字典。个别策略可将该标准格式再转成上游原生格式。
+
+策略服务端也会解码嵌套在历史、批量或自定义 RPC 包装中的观测。仅解码相机颜色字段，保留深度与标定数据。
 
 ### 图像解码只能走 `decode_image_bit`
 

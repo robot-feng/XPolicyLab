@@ -13,7 +13,7 @@
 | --- | --- | --- | --- |
 | 0 | 理解项目与主机检查 | 梳理模型/通信/评估边界；检查 GPU、现有环境及 GitHub 访问 | 已完成 |
 | 1 | 原生模型测试 | 两套隔离依赖；官方权重校验；直接调用上游推理，输出非空、有限、形状正确的动作；保存机器可读记录 | 已完成，两个模型均 PASS |
-| 2 | 已有 XPolicyLab 适配验证 | G05 真实权重加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 待开始；π0.5 的新环境接口随阶段 3 单独验证 |
+| 2 | 已有 XPolicyLab 适配验证 | G05 真实权重加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 已完成；π0.5 的新环境接口随阶段 3 单独验证 |
 | 3 | RoboMME 环境接入 | Panda 双处注册；观测与动作转换；真实任务 reset/step/终止；自动化回归 | 待阶段 2 通过 |
 | 4 | RoboMME 模型评估 | 相同任务、split、episode、动作与时间预算下运行；输出逐 episode 结果及视频 | 待阶段 3 通过 |
 
@@ -311,3 +311,90 @@ G05 checkpoint 的上游配置会提前解析仅供训练使用的数据集环�
 默认配置为 RoboDojo 双臂 14 维关节动作，不能直接裁切、补零后当作接口通过。
 下一步先验证已有匹配 checkpoint 的 G05 adapter，再为 RoboMME 使用其官方
 π0.5 baseline 权重与 Panda 单臂接口单独验证。
+
+## G05 两阶段训练边界
+
+动作编解码器训练与核心模型训练必须分开记录；`G05_TRAIN_MODE` 的三个取值
+是核心模型的目标选择，不是训练阶段编号。
+
+| 阶段 | 输入与主要目标 | 产物及后续使用 | 当前验证状态 |
+| --- | --- | --- | --- |
+| ActionCodec | 动作轨迹及对应分组/归一化配置；训练动作重建与量化表示 | codec checkpoint、动作分组与 codebook 配置；由 VLA 阶段加载 | 源码核对完成；独立训练未运行 |
+| 核心 VLA | RGB、语言、机器人状态与动作；使用匹配的已有 codec；根据模式训练 AR、FM 或两者 | VLA checkpoint、配套 codec、HF processor、dataset_stats 和完整配置 | FM-only 官方权重推理与接口通过；训练未运行；AR 路径未验收 |
+
+当前入口关系已按源码核对：
+
+- `policy/G05/train.sh` 最终调用 `G05/scripts/run/finetune.sh`，进入
+  `scripts/finetune.py`；它是核心 VLA 微调入口。
+- `configs/tokenizer/actioncodec.yaml` 指定 codec 架构与 `vq_config.ckpt_dir`。
+  `ActionCodecV2Wrapper` 包含 `_training_forward` 和重建/量化损失实现，
+  但当前 vendored `scripts/` 中没有独立 `train_vq.py` 或 codec 训练 launcher。
+- 核心微调脚本加载已有 codec，并将它复制为该 run 的 `action_tokenizer.pt`。
+  使用匹配官方 codec 时可以复用其权重；这不代表本仓库已经重现了 codec 训练。
+
+后续若进入训练，先为两阶段分别准备与验收：
+
+1. **codec 阶段**：先取得匹配版本的官方训练入口；核对机器人动作定义、
+   `parts_meta` / `merge_spec`、normalizer、horizon、patch、codebook 配置。
+   在独立验证集记录重建误差、编码/解码形状、有效码使用情况与有限数值，
+   按同配置基线判断，不能用“checkpoint 可以加载”代替此验收。
+2. **VLA 阶段**：固定已验收 codec 及其词表映射；核对 VLM tokenizer、
+   codec token IDs、动作 layout 和归一化统计的配套关系。
+   先验证小样本训练 loss / 参数更新，再做离线动作预测、接口闭环及目标环境评估。
+
+本次通过的是官方 **FM-only** checkpoint 的原生推理，以及后续记录的接口测试。
+它没有覆盖独立 codec 训练，也不能据此宣布 AR 动作生成或完整两阶段训练已通过。
+推理依赖配置 `install.sh --inference` 也不等同于完整训练环境。
+
+## 阶段 2：G05 的 XPolicyLab 接口闭环
+
+普通 RGB 与 `DEBUG_OBS_ENCODED=1` 两种模式均使用真实官方 FM 权重跑到
+`[MAIN] eval finished`，进程退出码 0。配置为 ARX X5 / joint / batch，
+每种模式 1 个 episode，10 个合成环境，每环境 20 步。此阶段验的是序列化、
+服务端解码、模型调用、动作字段/形状与 reset，不是仿真任务成功率。
+
+### 必要修复及范围
+
+- 服务端共享解码器处理嵌套的历史/批量观测，保持 RGB；G05 `model.py` 完全移除解码。
+  深度与标定字段保留原值；新增真实 WebSocket 自定义 RPC 回归验证此边界。
+- G05 使用共享 checkpoint resolver、机器人元数据及状态拆包，移除 ARX 维度硬编码。
+  缺失的显式 checkpoint 直接失败，不回退到另一个已有权重。
+- debug 评估端支持 venv 目录或 Python 路径，保留 Conda 环境支持。
+  本机 Conda base 的旧依赖未被升级来满足模型评估。
+- `setup_local_eval_metadata.py` 在父工作区生成最小 metadata，已有不同配置会拒绝覆盖。
+  它只提供离线接口检查所需的元数据，没有安装 RoboDojo 仿真器。
+
+这些修复没有修改 vendored G05 / OpenPI 模型实现或训练代码。
+首轮接口检查曾因移除解码导入时遗漏旧调用而出现 `NameError`；修复完整调用链后
+重新执行普通/编码 RGB 检查，失败记录保留于本地日志，不计入通过结果。
+
+### 完整复现命令
+
+```bash
+# 从仓库根目录执行；checkpoint 与 processor 已按阶段 1 下载、校验、解压。
+XPL_ROOT="$PWD"
+G05_ENV="$XPL_ROOT/policy/G05/G05/.venv"
+"$G05_ENV/bin/python" scripts/setup_local_eval_metadata.py arx_x5
+
+export G05_PYTHON="$G05_ENV/bin/python"
+export G05_CKPT_PATH="$XPL_ROOT/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint"
+export G05_HF_PROCESSOR_PATH="$XPL_ROOT/policy/G05/checkpoints/g05_robodojo_train_assets/g05_robodojo_train_base_assets/pretrained/hf_processor"
+export ROBODOJO_G05_ACTION_SOURCE=fm
+export ROBODOJO_G05_INFERENCE_BATCH_SIZE=1
+export ROBODOJO_LEROBOT_V30_ROOT=""  # 本阶段不读取训练数据
+export EVAL_ENV_TYPE=debug
+export DEBUG_EVAL_EPISODE_NUM=1
+
+cd policy/G05
+bash eval.sh RoboDojo stack_bowls g05_public_sim arx_x5 joint 0 0 0 "$G05_ENV" "$G05_ENV"
+DEBUG_OBS_ENCODED=1 bash eval.sh RoboDojo stack_bowls g05_public_sim arx_x5 joint 0 0 0 "$G05_ENV" "$G05_ENV"
+```
+
+验证记录：[stage2-g05-interface.json](validation/stage2-g05-interface.json)。
+对应日志：[普通 RGB](validation/stage2-g05-plain.txt)、
+[编码 RGB](validation/stage2-g05-encoded.txt)。
+[39 项回归测试](validation/stage2-regression.txt)全部通过，覆盖嵌套观测、
+metadata 保留/冲突、含空格环境路径、带引号 YAML 文件名及原有 transport/action/checkpoint 合同。
+
+后续 RoboMME 只新增该环境所需的观测/动作桥接，沿用现有服务端、协议和共享图像处理。
+G05 当前公开 FM checkpoint 是双臂 ARX 模型；不能将其动作补零或裁切成 Panda 成绩。

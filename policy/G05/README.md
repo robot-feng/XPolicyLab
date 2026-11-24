@@ -40,6 +40,14 @@ export G05_ROOT=/path/to/another/G05_checkout
 
 `G05_PYTHON` must point to an environment that can import the vendored G05 checkout and its dependencies. Checkpoint archives do not include a Python runtime.
 
+The released RoboDojo FM checkpoint is verified with `arx_x5` / `joint` and the
+matching official processor. Runtime dimensions and checkpoint selection use the
+shared XPolicyLab helpers. Register parent-workspace metadata before an offline
+check with `python scripts/setup_local_eval_metadata.py arx_x5` from the repo root.
+The [staged guide](../../docs/g05-pi05-robomme.md) includes complete environment
+variables and both plain/encoded RGB debug commands. `debug` accepts a venv prefix
+or Python executable as eval argument 10; simulation retains its own environment recipe.
+
 ## Model Assets
 
 Model files are hosted in:
@@ -140,6 +148,19 @@ This adapter does not provide a standalone data converter. Use the official Robo
 The keys are the standard ones of `XPolicyLab/scripts/transform_lerobot_v30_format.py` ([Official LeRobot conversion](../../README.md#official-lerobot-conversion)) — run that script to build a dataset for your own task subset. `G05/configs/data/robodojo.yaml` names them explicitly as `lerobot_key` entries: `observation.images.cam_high` / `cam_left_wrist` / `cam_right_wrist`, plus the flat `observation.state` and `action` vectors sliced by `start_index`. Nothing beyond the official output is required — no `meta/modality.json`, and normalization stats are computed during training.
 
 ## Training
+
+G05 has separate ActionCodec training and core VLA training. This adapter's
+`train.sh` launches **core VLA fine-tuning** using an existing codec checkpoint;
+`fm_only`, `ar_only`, and `ar_fm` select objectives within that stage. They are
+not the two training stages. The codec is selected by
+`model.tokenizer.vq_config.ckpt_dir` / `G05_ACTION_TOKENIZER_PATH` and must match
+the VLA run's action layout, vocabulary and normalization assets.
+
+The vendored snapshot includes the codec model and reconstruction-loss code,
+but has no standalone codec-training launcher (`train_vq.py`). Independent
+codec training and core VLA training have **not been run** in this setup;
+the verified inference profile is for evaluation. See the
+[two-stage training notes](../../docs/g05-pi05-robomme.md#g05-两阶段训练边界) before training.
 
 `train.sh` is a compatibility launcher around the vendored G05 checkout. It supports RoboDojo simulator training with `action_type=joint` and mode selection through `G05_TRAIN_MODE`.
 

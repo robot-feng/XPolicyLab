@@ -1,0 +1,115 @@
+[INFO] Using socket port: 40293
+[MAIN] start G05 policy server on localhost:40293
+[CONNECTING] G05 policy server -> localhost:40293 (PID=808416, timeout=1200s)
+[SERVER] policy=G05 task=stack_bowls host=localhost port=40293
+[SERVER] python=/home/haichao/feng/XPolicyLab/policy/G05/G05/.venv/bin/python
+[SERVER] g05_root=/home/haichao/feng/XPolicyLab/policy/G05/G05
+[SERVER] ckpt_path=/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint
+[SERVER] action_dim=14
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+WARNING:root:causal_conv1d available: False, FLA available: False
+[CONNECTING] G05 policy server still waiting for localhost:40293 (30/1200s)
+WARNING:g05.tokenizer.models.actioncodec2_v2.wrapper:ActionCodecV2Wrapper: checkpoint '/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/action_tokenizer.pt' has no tokenizer_meta. Falling back to YAML key_dims. Re-save with train_vq.py to embed it.
+INFO:g05.models.g05.io.input_preprocessor:[InputPreprocessor] Built-in modality processors registered: ['image', 'proprio', 'action', 'text', 'affordance']
+INFO:g05.models.g05.io.input_preprocessor:[InputPreprocessor] Initialized with modality processors: ['image', 'proprio', 'action', 'text', 'affordance']
+INFO:g05.models.g05.g05_policy:[G05PolicyQwen35] state token synced: state_token_id=252177
+INFO:g05.models.g05.g05_policy:[G05Policy] BAR synced: bos_blk=252173, eos_blk=252174, block_size=4
+INFO:g05.models.g05.g05_policy:BAR runtime state: tokenizer=True model_cfg=True (after sync) bos_blk_id=252173 eos_blk_id=252174 block_size=4
+INFO:g05.models.g05.g05_policy:[G05Policy] EOV token synced: eov_token_id=252176
+INFO:g05.models.g05.g05_policy:
+╔══════════════════════════════════════════════════════════════╗
+║                     🤖  G05 Policy Config                     ║
+╠══════════════════════════════════════════════════════════════╣
+║  AR Path               ❌ disabled  (discrete_action=False)   ║
+║  FM Path               ✅ enabled  (continuous_action=True)   ║
+║  predict_cot           False                                 ║
+║  return_continuous     True                                  ║
+╚══════════════════════════════════════════════════════════════╝
+INFO:g05.models.g05.g05_policy:
+╔══════════════════════════════════════════════════════════════╗
+║                      📐  Sequence Config                      ║
+╠══════════════════════════════════════════════════════════════╣
+║  obs_steps             1                                     ║
+║  action_steps          32                                    ║
+║  cameras               3                                     ║
+║  input_images          3                                     ║
+╚══════════════════════════════════════════════════════════════╝
+INFO:g05.models.g05.g05_policy:
+╔══════════════════════════════════════════════════════════════╗
+║                        🔧  BAR Config                         ║
+╠══════════════════════════════════════════════════════════════╣
+║  BAR                   bos=252173  eos=252174  block_size=4  ║
+╚══════════════════════════════════════════════════════════════╝
+[G05] loaded ckpt=/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint run_dir=/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint embodiment=robodojo inference_batch_size=1 num_obs_steps=1 action_source=fm discrete_action=False continuous_action=True
+[CONNECTED] G05 policy server ready on localhost:40293 (PID=808416)
+[MAIN] start env client
+[CLIENT] policy=G05, task=stack_bowls, server=localhost:40293
+[CLIENT] EVAL_ENV_TYPE=debug -> debug
+[CLIENT] Evaluator Python: /home/haichao/feng/XPolicyLab/policy/G05/G05/.venv/bin/python
+[CLIENT] Connecting to server localhost:40293...
+[CLIENT] Watch for green [CONNECTED]; yellow [RECONNECT] means the client is retrying.
+[CONNECTING] websocket policy server ws://localhost:40293 (attempt 1/180, timeout=30s)
+[CONNECTED] websocket policy server connected: ws://localhost:40293
+WARNING:g05.models.g05.qwen35.vision:flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+🚀 Running Episode 0
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 0 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 1 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 2 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 3 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 4 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 5 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 6 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 7 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 8 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 9 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 10 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 11 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 12 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 13 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 14 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 15 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 16 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 17 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 18 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 19 / 20 (step_limit)
+[TestEnv] Check Episode End: True
+[TestEnv] Check Episode End: True
+[TestEnv] Episode finished
+[MAIN] eval finished

@@ -23,21 +23,16 @@ eval_env_mode="$(resolve_eval_env_type)" || exit 1
 # Read deploy.yml with the eval env's interpreter. This runs before any of
 # the run_*_env_client.sh scripts activate that env, so otherwise the read
 # lands on whatever python the launching shell exposes. The eval env needs
-# pyyaml regardless: the client imports XPolicyLab.utils.process_data, which
-# pulls in load_file -> yaml. Activation is best-effort and confined to the
-# subshell; without conda the read falls back to the ambient interpreter.
+# pyyaml regardless: the client imports XPolicyLab.utils.process_data. Select
+# the requested Conda environment, venv prefix or Python executable explicitly.
+# Activation is confined to this subshell.
 deploy_meta="$(
-    if command -v conda >/dev/null 2>&1; then
-        conda_base="$(conda info --base 2>/dev/null)" || conda_base=""
-        if [[ -n "${conda_base}" && -f "${conda_base}/etc/profile.d/conda.sh" ]]; then
-            # shellcheck disable=SC1090
-            source "${conda_base}/etc/profile.d/conda.sh"
-            conda activate "${eval_env_conda_env}" 2>/dev/null || true
-        fi
-    fi
-    python - <<PY
+    source "${UTILS_DIR}/activate_eval_env.sh"
+    activate_eval_env "${eval_env_conda_env}" || exit 1
+    "${XPL_EVAL_PYTHON}" - "${yaml_file}" <<'PY'
+import sys
 import yaml
-with open("${yaml_file}", "r") as f:
+with open(sys.argv[1], "r") as f:
     data = yaml.safe_load(f)
 print(
     str(data.get("eval_batch", False)).lower(),

@@ -595,8 +595,8 @@ def decode_obs_images(obs):
     channels on top of that.
 
     Args:
-        obs: One observation dict, or a list/tuple of them for batched eval.
-             Anything else is returned unchanged.
+        obs: Observation dict(s), including observations nested in history or
+             custom-RPC wrappers. Non-container values are returned unchanged.
 
     Returns:
         The same object, with encoded color fields replaced by decoded arrays.
@@ -604,29 +604,32 @@ def decode_obs_images(obs):
     Raises:
         ValueError: if a color field fails to decode, naming the camera.
     """
-    if isinstance(obs, (list, tuple)):
-        for single_obs in obs:
-            decode_obs_images(single_obs)
-        return obs
+    visited = set()
 
-    if not isinstance(obs, dict):
-        return obs
+    def visit(value):
+        if not isinstance(value, (dict, list, tuple)) or id(value) in visited:
+            return
+        visited.add(id(value))
+        if isinstance(value, (list, tuple)):
+            for child in value:
+                visit(child)
+            return
+        vision = value.get("vision")
+        if isinstance(vision, dict):
+            for camera_name, camera in vision.items():
+                if isinstance(camera, dict):
+                    for image_key in OBS_IMAGE_KEYS:
+                        if image_key in camera:
+                            camera[image_key] = _decode_obs_image(camera[image_key], camera_name, image_key)
+                elif isinstance(camera, _DECODABLE_TYPES):
+                    vision[camera_name] = _decode_obs_image(camera, camera_name, "color")
+        # Do not traverse camera/depth/calibration values: only other nested
+        # observation records may carry additional vision dictionaries.
+        for key, child in value.items():
+            if key != "vision":
+                visit(child)
 
-    vision = obs.get("vision")
-    if not isinstance(vision, dict):
-        return obs
-
-    for camera_name, camera in vision.items():
-        if isinstance(camera, dict):
-            for image_key in OBS_IMAGE_KEYS:
-                if image_key in camera:
-                    camera[image_key] = _decode_obs_image(
-                        camera[image_key], camera_name, image_key
-                    )
-        elif isinstance(camera, _DECODABLE_TYPES):
-            # Layout where vision/<camera> is the image itself.
-            vision[camera_name] = _decode_obs_image(camera, camera_name, "color")
-
+    visit(obs)
     return obs
 
 def _encode_single_image_bit(image, quality=None):

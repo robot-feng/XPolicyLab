@@ -1,0 +1,66 @@
+{
+  "stage": 2,
+  "status": "PASS",
+  "scope": "offline real-G05 websocket contract checks; simulator task success not measured",
+  "policy": "G05",
+  "env_cfg_type": "arx_x5",
+  "action_type": "joint",
+  "checkpoint": "/home/haichao/feng/XPolicyLab/policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint",
+  "eval_batch": true,
+  "batch_envs": 10,
+  "episodes": 1,
+  "step_limit": 20,
+  "inference_batch_size": 1,
+  "checks": {
+    "plain": {
+      "status": "PASS",
+      "exit_code": 0,
+      "finished_marker": true,
+      "action_steps": 20,
+      "log": "stage2-g05-plain.txt",
+      "raw_log_sha256": "69d32ceb25d81f2c3f6e59072285fcb4dc973148348803e5bffe837659b33ffb"
+    },
+    "encoded": {
+      "status": "PASS",
+      "exit_code": 0,
+      "finished_marker": true,
+      "action_steps": 20,
+      "log": "stage2-g05-encoded.txt",
+      "raw_log_sha256": "627252e264ed19e89405aa25c7d965ab1a35703beb031d8f03eb8fce6dac64f3"
+    }
+  },
+  "regression_tests": 39,
+  "missing_explicit_checkpoint": "rejected without fallback",
+  "runtime_and_training_action_dim": 14,
+  "metadata": {
+    "env_cfg_type": "arx_x5",
+    "dimensions": {
+      "arm_dim": [
+        6,
+        6
+      ],
+      "ee_dim": [
+        1,
+        1
+      ]
+    },
+    "environment": "/home/haichao/feng/env_cfg/arx_x5.yml",
+    "robot_registry": "/home/haichao/feng/env_cfg/robot/_robot_info.json",
+    "scope": "minimal metadata; no simulator installed"
+  },
+  "reviewed_source_sha256": {
+    "policy/G05/model.py": "a22c61b3d0ffbe46cb50da3a4254958fc2f05fb133495101dc2a18131494fc99",
+    "policy/G05/setup_eval_policy_server.sh": "ee9bbb1c2b49ebce8095623eac5c6add191663af0cec27b531ddd88634b9272d",
+    "utils/process_data.py": "dbf138b4b720aacc5965a8fc7310c0b20be2cf485167a1d2e3927921e388acc5",
+    "utils/activate_eval_env.sh": "a694d0ba41aa2d14e60ea1b25229a2979c6afd63742352b000a3af729fd39331",
+    "utils/setup_env_client.sh": "18333cb1998b6fb557c8a881ab2b0a847e3fbef617830a6918660062e750b519",
+    "utils/run_debug_env_client.sh": "a5cec647fb397678a9907d61cdd9e376daeb8bffa2fc57bdde2a40be1a87ee33"
+  },
+  "code_hash_scope": "audited workspace snapshot",
+  "training_validation": {
+    "codec_training": "NOT_RUN",
+    "core_vla_training": "NOT_RUN",
+    "ar_inference": "NOT_RUN",
+    "verified_variant": "official RoboDojo FM-only"
+  }
+}
