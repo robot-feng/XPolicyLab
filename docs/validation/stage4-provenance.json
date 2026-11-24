@@ -1,0 +1,49 @@
+{
+  "stage": "4",
+  "checkpoint": {
+    "repo": "Yinpei/pi05_baseline",
+    "revision": "80caa59a4933804b6521e72981b107ae0051d32a",
+    "files": [
+      {
+        "path": "/home/haichao/feng/XPolicyLab/policy/Pi_05/checkpoints/robomme/79999.zip",
+        "size": 11551742488,
+        "url": "https://huggingface.co/Yinpei/pi05_baseline/resolve/80caa59a4933804b6521e72981b107ae0051d32a/pi05_baseline/79999.zip",
+        "algorithm": "sha256",
+        "digest": "b8a9e9d78e4336e04582a01767a59ee132ea1e17295c7cf98b4952500de178e5"
+      }
+    ]
+  },
+  "source_sha256": {
+    "policy/Pi_05/model.py": "68137257afb2b1061c4a6ebd4165e342ef61843d4f2ebe82fafd4e01f8ecbfdb",
+    "policy/Pi_05/robomme.py": "0015a5a14a49273ddd4cc09f343917cfa4e25cee7d2f02b314020d43ca27b500",
+    "utils/robomme_env_client.py": "e6352aa99c34b3f4d9effcdd33032a356e171b75b8a2c2d86ae56cf2a37da8a7",
+    "utils/run_robomme_env_client.sh": "e3b013b1b5540ed09130d91d69b77405439a26d0e9b9ea4ef0b0dbe6b8e77b4d",
+    "utils/setup_env_client.sh": "7466f26e73a3b87b64e3539f3c8ec5f29042f32911d47af129bdff4c1639f965",
+    "policy/G05/deploy.yml": "f520311f2c60745588ee3507b6b9a305ef9127e341b0d74c5bde8d84db0b8708",
+    "policy/Pi_05/deploy.yml": "4698721e926bcd24ca64869fe3758c326885722a797131f7ae634f9c3d4b6fe3"
+  },
+  "g05_robomme": {
+    "status": "NOT_RUN",
+    "reason": "The official public G05 FM checkpoint targets ARX X5 dual arms (14D); RoboMME requires a Panda checkpoint (8D). No compatible public G05 checkpoint found; no padding/cropping substitution."
+  },
+  "g05_training": {
+    "action_codec": "NOT_RUN",
+    "core_model": "NOT_RUN",
+    "native_fm_inference": "PASS"
+  },
+  "normalization_sha256": "998cb7dcd1b4726175ef06b2686281d321d8a811297e77e78dee36b431a8921b",
+  "interface": {
+    "plain": {
+      "status": "PASS",
+      "synthetic_environments": 10,
+      "episodes": 1,
+      "scope": "official baseline weights with synthetic observations; no simulator task score"
+    },
+    "encoded": {
+      "status": "PASS",
+      "synthetic_environments": 10,
+      "episodes": 1,
+      "scope": "official baseline weights with synthetic observations; no simulator task score"
+    }
+  }
+}

@@ -1,3 +1,9 @@
+import asyncio
+import json
+from pathlib import Path
+import sys
+import tempfile
+import types
 import unittest
 from unittest.mock import patch
 
@@ -6,6 +12,8 @@ import numpy as np
 from XPolicyLab.policy.Pi_05.model import Model, encode_obs, encode_robomme_obs
 from XPolicyLab.utils.process_data import unpack_robot_state
 from XPolicyLab.utils.robomme_env_client import joint_action, observations, run_episode
+from XPolicyLab.utils import robomme_env_client
+from client_server.ws.model_server import PolicyServer, PolicyServerConfig
 
 PANDA = {"arm_dim": [7], "ee_dim": [1]}
 DUAL = {"arm_dim": [6, 6], "ee_dim": [1, 1]}
@@ -109,6 +117,66 @@ class RoboMMETests(unittest.TestCase):
             self.assertEqual((client.resets, client.updates, client.calls), (1, 8, 3))
             self.assertEqual((result["steps"], result["initial_frames"], result["status"]), (5, 3, "timeout"))
             self.assertFalse(result["success"])
+
+
+class RoboMMEEntryPointTests(unittest.IsolatedAsyncioTestCase):
+    async def test_cli_uses_real_websocket_client_and_writes_episode_report(self):
+        class Policy:
+            def reset(self):
+                pass
+            def update_obs_batch(self, obs):
+                self.obs = obs[0]
+            def get_action_batch(self, env_idx_list=None):
+                return [[self.obs["state"]]]
+
+        class Env:
+            closed = False
+            def reset(self):
+                return raw_observation(), {"task_goal": ["pick"]}
+            def step(self, action):
+                return raw_observation(), 0, False, True, {"task_goal": ["pick"], "status": "timeout"}
+            def close(self):
+                self.closed = True
+
+        env = Env()
+        class Builder:
+            def __init__(self, **kwargs):
+                pass
+            def get_episode_num(self):
+                return 50
+            def resolve_episode(self, episode):
+                return 123, "easy"
+            def make_env_for_episode(self, episode):
+                return env
+
+        server = PolicyServer(Policy(), PolicyServerConfig(host="127.0.0.1", port=0))
+        await server.start()
+        try:
+            with tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary)
+                wrapper = types.ModuleType("robomme.env_record_wrapper")
+                wrapper.__file__ = str(root / "__init__.py")
+                wrapper.BenchmarkEnvBuilder = Builder
+                for file in ("episode_config_resolver.py", "DemonstrationWrapper.py", "RecordWrapper.py"):
+                    (root / file).write_text("# test fixture\n")
+                modules = {"robomme": types.ModuleType("robomme"), "robomme.env_record_wrapper": wrapper}
+                output = root / "results"
+                port = server.url.rsplit(":", 1)[1]
+                argv = ["robomme_env_client", "--task", "PickXtimes", "--host", "127.0.0.1", "--port", port,
+                        "--output", str(output), "--no-video"]
+                with patch.dict(sys.modules, modules), patch.object(sys, "argv", argv), patch.object(
+                        robomme_env_client, "get_robot_action_dim_info", return_value=PANDA), patch(
+                        "importlib.metadata.version", return_value="test-fixture"):
+                    await asyncio.to_thread(robomme_env_client.main)
+                report = json.loads((output / "report.json").read_text())
+                self.assertEqual(report["status"], "COMPLETED")
+                self.assertEqual(report["completed"], 1)
+                self.assertEqual(report["episodes"][0]["benchmark_seed"], 123)
+                self.assertEqual(report["episodes"][0]["steps"], 1)
+                self.assertEqual(report["success_rate"], 0)
+                self.assertTrue(env.closed)
+        finally:
+            await server.stop()
 
 
 if __name__ == "__main__":

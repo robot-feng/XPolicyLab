@@ -1,0 +1,37 @@
+{
+  "scope": "same real reset observation and RNG; native official inference vs XPolicyLab adapter; not task success",
+  "seed": 0,
+  "samples": [
+    {
+      "task": "PickXtimes",
+      "split": "test",
+      "episode": 0,
+      "shape": [
+        20,
+        8
+      ],
+      "max_abs_diff": 0.0,
+      "finite": true,
+      "actions_sha256": "6ba7e750f8160509e7e8ba78b4e65f5fddcabf72325976e77acca826d3189bf4",
+      "observation_sha256": "d48b271e3aaa1339e368cae0222a054a31e455bd9ffafd089a8a1c51360d4817"
+    },
+    {
+      "task": "VideoRepick",
+      "split": "test",
+      "episode": 0,
+      "shape": [
+        20,
+        8
+      ],
+      "max_abs_diff": 0.0,
+      "finite": true,
+      "actions_sha256": "4ba17b98ac692dc589b5a3553f80b7e8b2f4e988df8a7d846907535929976390",
+      "observation_sha256": "5ff284eee34ad94af69b1bbe664c2f6ecb52c7624df4b351e99444bbe62b32a1"
+    }
+  ],
+  "status": "PASS",
+  "reproduction_scripts_sha256": {
+    "docs/validation/stage4-check-parity.py": "984a9c1a8cf5908b534502ec9dc6f36677396bc0955b97dcceaa334a305e106f",
+    "docs/validation/stage4-capture-parity.py": "34ba72b44d0e2f07842e58d36a456b4ee3c190a47cee93206bd2ae5e600485fe"
+  }
+}

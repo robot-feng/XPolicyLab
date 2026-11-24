@@ -1,0 +1,26 @@
+.....................[part complete] 2/4
+[part complete] 3/4
+[part complete] 1/4
+[part complete] 4/4
+..[verified] /tmp/tmpi2lshe4o/weights
+.[part complete] 3/4
+[part complete] 4/4
+[verified] /tmp/tmpa1etd519/weights
+.[part complete] 3/4
+[part complete] 2/4
+[part complete] 1/4
+[part complete] 4/4
+[verified] /tmp/tmplq8qrkzz/weights
+..[CONNECTING] websocket policy server ws://127.0.0.1:43393 (attempt 1/180, timeout=30s)
+[CONNECTED] websocket policy server connected: ws://127.0.0.1:43393
+.[CONNECTING] websocket policy server ws://127.0.0.1:46127 (attempt 1/3, timeout=30s)
+[CONNECTED] websocket policy server connected: ws://127.0.0.1:46127
+{"task": "PickXtimes", "split": "test", "episode": 0, "benchmark_seed": 123, "difficulty": "easy", "status": "timeout", "success": false, "steps": 1, "chunks": 1, "initial_frames": 1, "observation_frames": 2, "reward": 0.0, "terminated": false, "truncated": true, "task_goal": ["pick"], "duration_s": 0.018601253628730774}
+[ROBOMME] Results: /tmp/tmp7m9vd9mz/results
+......response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+response undeliverable, client gone: received 1000 (OK); then sent 1000 (OK)
+...........
+----------------------------------------------------------------------
+Ran 45 tests in 4.917s
+
+OK

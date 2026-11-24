@@ -7,6 +7,7 @@ task_name: null
 ckpt_name: null
 env_cfg_type: arx_x5
 seed: null
+gpu_id: null
 action_type: joint
 eval_batch: true
 ws_ping_timeout_s: 120.0

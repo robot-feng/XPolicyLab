@@ -1,0 +1,5 @@
+G05 required runtime files, full reference deploy key set, Model methods: PASS
+G05 full training adapter file check: FAIL (existing process_data.sh absent; README delegates to shared v3.0 conversion; not added in this evaluation task)
+Pi_05 required runtime files, full reference deploy key set, Model methods: PASS
+G05 independent codec training and VLA training: NOT_RUN
+RoboMME Pi05 backend: eval-only; training NOT_RUN

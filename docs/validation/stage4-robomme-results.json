@@ -1,0 +1,99 @@
+{
+  "status": "COMPLETED",
+  "scope": "sample evaluation; not the full benchmark",
+  "config": {
+    "task": "PickXtimes,VideoRepick",
+    "split": "test",
+    "episodes": "1",
+    "start_episode": 0,
+    "max_steps": 1300,
+    "action_steps": 16,
+    "host": "localhost",
+    "port": 47185,
+    "eval_batch": "true",
+    "policy_name": "Pi_05",
+    "checkpoint": "./checkpoints/robomme/79999",
+    "seed": 0,
+    "output": "/home/haichao/feng/XPolicyLab/runs/robomme/pi05-official-sample-02",
+    "no_video": false
+  },
+  "client_sha256": "e6352aa99c34b3f4d9effcdd33032a356e171b75b8a2c2d86ae56cf2a37da8a7",
+  "benchmark_module": "/home/haichao/feng/robomme_benchmark/src/robomme/env_record_wrapper/__init__.py",
+  "benchmark_source_sha256": {
+    "episode_config_resolver.py": "33257072f6e5c0a3c702c3b7ff5018949a015ad8ac42f5450b0f816d580295f9",
+    "DemonstrationWrapper.py": "1355727502a56a79d19e5dfd40519bcbbc7ddce48f9a823408db4c6a4760c9d1",
+    "RecordWrapper.py": "052083f6a7658c993874d8f499a6b4cc8b01f665b83c326bf429ed0e9f28fee8"
+  },
+  "versions": {
+    "robomme": "0.1.0",
+    "mani-skill": "3.0.0b21",
+    "sapien": "3.0.2",
+    "numpy": "1.26.4"
+  },
+  "episodes": [
+    {
+      "task": "PickXtimes",
+      "split": "test",
+      "episode": 0,
+      "benchmark_seed": 510000,
+      "difficulty": "easy",
+      "video": "PickXtimes-test-0.mp4",
+      "status": "fail",
+      "success": false,
+      "steps": 422,
+      "chunks": 27,
+      "initial_frames": 1,
+      "observation_frames": 423,
+      "reward": 0.0,
+      "terminated": true,
+      "truncated": false,
+      "task_goal": [
+        "pick up the green cube and place it on the target, repeating this action three times, then press the button to stop",
+        "pick up the green cube and place it on the target, repeating this pick-and-place action three times, then press the button to stop"
+      ],
+      "duration_s": 18.00984131451696
+    },
+    {
+      "task": "VideoRepick",
+      "split": "test",
+      "episode": 0,
+      "benchmark_seed": 590000,
+      "difficulty": "easy",
+      "video": "VideoRepick-test-0.mp4",
+      "status": "fail",
+      "success": false,
+      "steps": 108,
+      "chunks": 7,
+      "initial_frames": 258,
+      "observation_frames": 366,
+      "reward": 0.0,
+      "terminated": true,
+      "truncated": false,
+      "task_goal": [
+        "watch the video carefully, then repeatedly pick up and put down the same block that was previously picked up for three times, finally put it down and press the button to stop",
+        "watch the video carefully, then pick up the same cube that was previously picked up three times, and finally press the button to stop",
+        "watch the video carefully, identify the cube that was picked up, then pick up and place down the same cube three times, finally press the button to stop"
+      ],
+      "duration_s": 8.100898175500333
+    }
+  ],
+  "completed": 2,
+  "successes": 0,
+  "success_rate": 0.0,
+  "video_verification": {
+    "PickXtimes-test-0.mp4": {
+      "sha256": "72e6bb14792364ffa1b5ad707682ff9017439ae32509c8c0dad7847e9cc9bc16",
+      "width": 512,
+      "height": 256,
+      "avg_frame_rate": "20/1",
+      "nb_read_frames": "423"
+    },
+    "VideoRepick-test-0.mp4": {
+      "sha256": "3b74c14188ae9a4c330181d637dae11f3a022c0ba0c5014d418494742ce36372",
+      "width": 512,
+      "height": 256,
+      "avg_frame_rate": "20/1",
+      "nb_read_frames": "109"
+    }
+  }
+}

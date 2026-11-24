@@ -15,7 +15,7 @@
 | 1 | 原生模型测试 | 两套隔离依赖；官方权重校验；直接调用上游推理，输出非空、有限、形状正确的动作；保存机器可读记录 | 已完成，两个模型均 PASS |
 | 2 | 已有 XPolicyLab 适配验证 | G05 真实权重加载；无模拟器 debug 闭环；普通 RGB 与共享编码 RGB 两条路径通过 | 已完成；π0.5 的新环境接口随阶段 3 单独验证 |
 | 3 | RoboMME 环境接入 | Panda 双处注册；观测与动作转换；真实任务 reset/step/终止；自动化回归 | 已完成；44 项测试通过，两个真实环境 smoke 通过 |
-| 4 | RoboMME 模型评估 | 固定任务、split、episode、动作与时间预算；输出逐 episode 结果及视频 | π0.5 官方 baseline 接口验证中；G05 缺少 Panda 权重 |
+| 4 | RoboMME 模型评估 | 固定任务、split、episode、动作与时间预算；输出逐 episode 结果及视频 | π0.5 两个完整样本已完成，0/2 成功；G05 因缺少 Panda 权重未运行 |
 
 “依赖能 import”“原生推理通过”“通信闭环通过”“仿真任务成功”是不同验收条件。
 没有执行的项目不记为通过；缩短步数的 smoke 测试不作为正式基准成绩。
@@ -494,3 +494,121 @@ discrete_state_input=False)`，两路相机、64 个文本 token，沿用 checkp
 - installer 已执行并通过幂等检查；官方配置 import 成功。GPU 接口与真实模型评估单列为阶段 4。
 
 以上新增训练支持范围仅为**评估**；没有将 RoboMME baseline 的训练声明为可用。
+
+## 阶段 4：官方 π0.5 baseline 接口与评估
+
+### 接口闭环与故障回归
+
+使用官方 RoboMME 权重，通过现有 `Pi_05/eval.sh` 跑了普通 RGB 与
+`DEBUG_OBS_ENCODED=1` 两次 debug 闭环，均退出码 0、到达 `[MAIN] eval finished`。
+每次为 10 个合成环境、1 个 episode，返回合法 Panda 动作 chunk；这些不是任务成绩。
+
+```bash
+cd policy/Pi_05
+EVAL_ENV_TYPE=debug DEBUG_EVAL_EPISODE_NUM=1 bash eval.sh \
+  RoboMME PickXtimes ./checkpoints/robomme/79999 panda joint 0 1 3 uv \
+  "$(cd ../../../robomme_benchmark/.venv && pwd)"
+EVAL_ENV_TYPE=debug DEBUG_OBS_ENCODED=1 DEBUG_EVAL_EPISODE_NUM=1 bash eval.sh \
+  RoboMME PickXtimes ./checkpoints/robomme/79999 panda joint 0 1 3 uv \
+  "$(cd ../../../robomme_benchmark/.venv && pwd)"
+```
+
+真实环境客户端首次启动暴露了 `WsModelClient` 缺少必填 `trial_id` 的遗漏，尚未执行
+episode 即退出；该次失败保留在 `runs/setup/stage4-pi05-robomme-full-episodes.log`，
+不计入成绩。修复后为每个 task/split/episode 设置独立 trial ID，并增加 CLI 入口的
+真实 loopback WebSocket 回归；该测试使用合成环境、真实服务及客户端，验证构造、
+reset、推理、动作执行、关闭与 JSON 报告写出。报告增加全局 `COMPLETED` / `ERROR`
+状态，连接失败也会保留错误。最终 **45 项回归测试通过**。
+
+证据：[普通 RGB](validation/stage4-pi05-debug-plain.txt)、
+[编码 RGB](validation/stage4-pi05-debug-encoded.txt)、
+[45 项回归](validation/stage4-regression.txt)。
+
+### 真实任务运行方法
+
+```bash
+cd policy/Pi_05
+ROBOMME_EPISODES=1 ROBOMME_MAX_STEPS=1300 \
+ROBOMME_OUTPUT_DIR="$PWD/../../runs/robomme/pi05-official-sample-02" \
+bash eval.sh RoboMME PickXtimes,VideoRepick ./checkpoints/robomme/79999 \
+  panda joint 0 1 3 uv "$(cd ../../../robomme_benchmark/.venv && pwd)"
+```
+
+未设置 `EVAL_ENV_TYPE` 时，`RoboMME` 自动路由到新客户端。参数为 `test`、各任务
+episode 0、模型 seed 0、执行 horizon 16、原生预算 1300；保留 benchmark 固定 seed。
+模型 seed 与训练配置打印中的默认 seed 42 是两个层次：创建 policy 时显式传入 0，
+其 reset 会用该值重置 JAX RNG。可选设置 `JAX_COMPILATION_CACHE_DIR` 到本机可写目录
+复用编译结果；缓存不影响数据/权重，不提交 Git。
+
+客户端为每个 episode 保存 JSON 和前/腕 RGB 并排 MP4，最后保存 aggregate report。
+视频以 20 FPS 编码，仅作为可视化。结果目录必须尚不存在，避免覆盖已完成或失败的
+运行。`ROBOMME_EPISODES=all` 可运行某任务整个 split；任务参数 `all` 可遍历任务，
+但本次仅做两个任务的有限样本评估，不产生完整 RoboMME 基准结论。
+
+### 实际结果
+
+第二次真实客户端启动退出码 0、报告 `COMPLETED`，两个 episode 均以原生
+`terminated=True` / `status=fail` 结束，没有运行到人为截断或客户端异常：
+
+| 任务 | split / episode | 原生 seed | 动作步数 | 推理 chunk 数 | 原生判定 |
+| --- | --- | --- | --- | --- | --- |
+| PickXtimes | test / 0 | 510000 | 422 | 27 | fail |
+| VideoRepick | test / 0 | 590000 | 108 | 7 | fail |
+
+样本成功率 **0/2**。环境与模型闭环通过不代表任务成功，更不能从两个 episode
+推断完整 benchmark 成绩。VideoRepick 的 258 个初始帧按序传递，但本次官方 baseline
+是无历史记忆模型。失败原因没有通过此样本评估得到完整诊断。
+
+逐回合及汇总证据：[stage4-robomme-results.json](validation/stage4-robomme-results.json)，
+运行日志：[stage4-robomme-eval.txt](validation/stage4-robomme-eval.txt)，
+权重 revision/校验值、归一化统计哈希与适配代码哈希：
+[stage4-provenance.json](validation/stage4-provenance.json)。
+
+本机完整产物位于 `runs/robomme/pi05-official-sample-02/`，包含两份逐 episode JSON、
+`report.json` 和两个 MP4。`ffprobe` 实际验证视频均为 512×256、20 FPS，帧数分别为
+423 与 109（reset 当前帧 + 每步最新帧）；验证 JSON 保存视频 SHA256。运行产物不入 Git，
+精简且可核对的结果与日志同步入 GitHub。
+
+G05 的 RoboMME 结果标记为 **NOT_RUN**：当前公开 FM 权重对应 14 维 ARX 双臂，
+没有匹配 8 维 Panda 的公开 checkpoint。本次未做动作裁切/补零，也未用保持动作
+或通用 π0.5 权重代替 G05 得分。
+
+### 原生策略与适配器的数值对照
+
+从两个任务的真实 `test/episode 0` reset 取得当前 RGB/关节/物理夹爪状态，对同一个
+官方 policy 分别 reset 到 seed 0，执行原生 `policy.infer` 和
+`Model.update_obs → Model.get_action → 共享动作 pack`。两次均严格逐元素一致：
+
+| 样本 | 输出形状 | 最大绝对误差 | 非有限值 |
+| --- | --- | --- | --- |
+| PickXtimes reset | 20×8 | 0 | 0 |
+| VideoRepick reset 最新帧 | 20×8 | 0 | 0 |
+
+证据：[stage4-native-parity.json](validation/stage4-native-parity.json)。这验证了这两份真实
+观测上的相机、状态、归一化及输出打包，没有把它扩展为所有轨迹的行为等价结论。
+失败仍按原生任务判定如实保留。另以全新进程检查原生 OpenPI 导入路径仍指向
+`policy/Pi_05/openpi/src/openpi`，JAX/Flax/Torch/Transformers/NumPy 版本未被新后端替换。
+
+复现脚本随验证材料保存，从仓库根目录运行（`runs/robomme/native-parity` 必须尚未存在，
+复跑前先保留或移动已有结果）：
+
+```bash
+CUDA_VISIBLE_DEVICES=3 PYTHONPATH="$PWD:$PWD/.." \
+  ../robomme_benchmark/.venv/bin/python docs/validation/stage4-capture-parity.py
+CUDA_VISIBLE_DEVICES=1 XLA_PYTHON_CLIENT_MEM_FRACTION=0.3 PYTHONPATH="$PWD:$PWD/.." \
+  policy/Pi_05/openpi/.venv/bin/python docs/validation/stage4-check-parity.py
+```
+
+### 最终静态复查与训练限制
+
+按 `.agents/skills/xpolicylab-adapter-check/SKILL.md` 对本次涉及的运行路径复查：
+模型方法、共享 checkpoint/维度入口、父工作区元数据、RGB/共享解码、shell 语法、
+Python 编译均通过。两个 deploy.yml 补齐 `demo_policy` 的完整键集合，包含
+`ckpt_name` 与 `gpu_id`，仍由启动参数覆盖。源码 diff 确认未修改 vendored
+`policy/G05/G05/` 或 `policy/Pi_05/openpi/`。
+
+G05 的完整训练适配器文件检查仍有既有缺口：没有 `process_data.sh`，README 将数据
+转换委托给共享 LeRobot v3.0 工具。独立 codec 训练入口也未随源码发布。本次没有
+补写未经验证的训练入口或宣称完整训练提交已就绪。后续训练应分别验收 codec 的
+重建/量化结果与核心模型训练；AR 推理也需单独测试，不能用 FM 推理通过替代。
+静态记录见 [stage4-static-audit.txt](validation/stage4-static-audit.txt)。

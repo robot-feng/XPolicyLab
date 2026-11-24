@@ -1,0 +1,67 @@
+[INFO] Using socket port: 60899
+[MAIN] start server, policy_server_port=60899
+[CONNECTING] Policy server -> localhost:60899 (PID=837595, timeout=1200s)
+[SERVER] policy=Pi_05, task=PickXtimes, port=60899, action_dim=8
+[SERVER] Activating uv environment: /home/haichao/feng/XPolicyLab/policy/Pi_05/openpi/.venv
+[SERVER] Using python: /home/haichao/feng/XPolicyLab/policy/Pi_05/openpi/.venv/bin/python
+[CONNECTING] Policy server still waiting for localhost:60899 (30/1200s)
+max_token_len: 64
+Training config:  TrainConfig(name='pi05_baseline', project_name='openpi', exp_name=<PropagatingMissingType id='140176025092496'>, model=HistoryPi0Config(action_dim=32, action_horizon=20, max_token_len=64, dtype='bfloat16', paligemma_variant='gemma_2b', action_expert_variant='gemma_300m', pi05=True, discrete_state_input=False, memory_expert_variant='gemma_150m', use_history=False, history_config=None), weight_loader=CheckpointWeightLoader(params_path='~/.cache/openpi/openpi-assets/checkpoints/pi05_base/params'), pytorch_weight_path=None, pytorch_training_precision='bfloat16', lr_schedule=CosineDecaySchedule(warmup_steps=10000, peak_lr=5e-05, decay_steps=100000, decay_lr=5e-05), optimizer=AdamW(b1=0.9, b2=0.95, eps=1e-08, weight_decay=1e-10, clip_gradient_norm=1.0), ema_decay=0.999, freeze_filter=PathRegex(pattern=re.compile('.*img.*'), sep='/'), data=RoboMMEDataConfig(repo_id='robomme', assets=AssetsConfig(assets_dir=None, asset_id=None), base_config=DataConfig(repo_id=None, asset_id=None, norm_stats=None, repack_transforms=Group(inputs=(), outputs=()), data_transforms=Group(inputs=(), outputs=()), model_transforms=Group(inputs=(), outputs=()), use_quantile_norm=False, action_sequence_keys=('actions',), prompt_from_task=True, rlds_data_dir=None, action_space=None, filter_dict_path=None)), assets_base_dir='runs/assets', checkpoint_base_dir='runs/ckpts', seed=42, batch_size=128, num_workers=4, num_train_steps=80000, log_interval=100, save_interval=10000, keep_period=10000, overwrite=False, resume=False, wandb_enabled=True, policy_metadata=None, fsdp_devices=4, resum_ckpt_id=None, dataset_path='data/robomme')
+Data config:  DataConfig(repo_id='robomme', asset_id='robomme', norm_stats=None, repack_transforms=Group(inputs=[RepackTransform(structure={'observation/image': 'image', 'observation/wrist_image': 'wrist_image', 'observation/state': 'state', 'actions': 'actions', 'prompt': 'prompt', 'static_image_emb': 'static_image_emb', 'static_pos_emb': 'static_pos_emb', 'static_state_emb': 'static_state_emb', 'static_mask': 'static_mask', 'recur_image_emb': 'recur_image_emb', 'recur_pos_emb': 'recur_pos_emb', 'recur_state_emb': 'recur_state_emb', 'recur_mask': 'recur_mask', 'simple_subgoal': 'simple_subgoal', 'grounded_subgoal': 'grounded_subgoal'})], outputs=()), data_transforms=Group(inputs=(RoboMMEInputs(model_type=<ModelType.PI05: 'pi05'>), DeltaActions(mask=(True, True, True, True, True, True, True, False))), outputs=(AbsoluteActions(mask=(True, True, True, True, True, True, True, False)), RoboMMEOutputs())), model_transforms=Group(inputs=[InjectDefaultPrompt(prompt=None), ResizeImages(height=224, width=224), TokenizePromptWithSymbolicMemory(tokenizer=<mme_vla_suite.training.config.PaligemmaTokenizer object at 0x7f7c9c504f90>, discrete_state_input=False, symbolic_memory_type=None), PadStatesAndActions(model_action_dim=32)], outputs=()), use_quantile_norm=True, action_sequence_keys=('actions',), prompt_from_task=True, rlds_data_dir=None, action_space=None, filter_dict_path=None)
+[CONNECTED] Policy server ready on localhost:60899 (PID=837595)
+[MAIN] start client, server=localhost:60899
+[CLIENT] policy=Pi_05, task=PickXtimes, server=localhost:60899
+[CLIENT] EVAL_ENV_TYPE=debug -> debug
+[CLIENT] Evaluator Python: /home/haichao/feng/robomme_benchmark/.venv/bin/python
+[CLIENT] Connecting to server localhost:60899...
+[CLIENT] Watch for green [CONNECTED]; yellow [RECONNECT] means the client is retrying.
+/home/haichao/feng/robomme_benchmark/.venv/lib/python3.11/site-packages/torch/cuda/__init__.py:63: FutureWarning: The pynvml package is deprecated. Please install nvidia-ml-py instead. If you did not install pynvml directly, please report this to the maintainers of the package that installed pynvml for you.
+  import pynvml  # type: ignore[import]
+[CONNECTING] websocket policy server ws://localhost:60899 (attempt 1/180, timeout=30s)
+[CONNECTED] websocket policy server connected: ws://localhost:60899
+🚀 Running Episode 0
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 0 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 1 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 2 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 3 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 4 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 5 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 6 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 7 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 8 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 9 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 10 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 11 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 12 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 13 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 14 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 15 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 16 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 17 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 18 / 20 (step_limit)
+[TestEnv] Check Episode End: False
+[TestEnv] Action Step: 19 / 20 (step_limit)
+[TestEnv] Check Episode End: True
+[TestEnv] Check Episode End: True
+[TestEnv] Episode finished
+[MAIN] eval finished
+[MAIN] kill server 837595

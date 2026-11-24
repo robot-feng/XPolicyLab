@@ -83,6 +83,8 @@ def run_episode(env, client, dimensions, *, action_steps=16, eval_batch=True, wr
             raw, reward, terminated, truncated, info = env.step(joint_action(action, dimensions))
             steps += 1
             update(raw)
+            if steps % 100 == 0:
+                print(f"[ROBOMME] steps={steps} chunks={chunks} status={info.get('status')}", flush=True)
             if terminated or truncated:
                 break
     return {
@@ -118,13 +120,13 @@ def main():
     from robomme.env_record_wrapper import BenchmarkEnvBuilder
     import robomme.env_record_wrapper as wrapper
     from client_server.ws import WsModelClient
-    import imageio.v2 as imageio
 
     tasks = BenchmarkEnvBuilder.get_task_list(args.split) if args.task == "all" else args.task.split(",")
     dimensions = get_robot_action_dim_info("panda")
     output = args.output or ROOT / "runs/robomme" / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ-") + uuid4().hex[:8])
     output.mkdir(parents=True, exist_ok=False)
     report = {
+        "status": "RUNNING",
         "scope": "sample evaluation; not the full benchmark", "config": {**vars(args), "output": str(output)},
         "client_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
         "benchmark_module": wrapper.__file__,
@@ -138,7 +140,7 @@ def main():
     client = None
     try:
         client = WsModelClient(url=f"ws://{args.host}:{args.port}", evaluation_id=output.name,
-                               request_timeout_s=600, max_connect_attempts=3)
+                               trial_id=output.name, request_timeout_s=600, max_connect_attempts=3)
         for task in tasks:
             builder = BenchmarkEnvBuilder(env_id=task, dataset=args.split, action_space="joint_angle",
                                           gui_render=False, max_steps=args.max_steps)
@@ -147,6 +149,7 @@ def main():
             if not 0 <= args.start_episode < stop <= total:
                 raise ValueError(f"Episode range [{args.start_episode}, {stop}) exceeds {task}/{args.split}: {total}")
             for episode in range(args.start_episode, stop):
+                client.trial_id = f"{task}-{args.split}-{episode}"
                 env = writer = None
                 benchmark_seed, difficulty = builder.resolve_episode(episode)
                 result = {"task": task, "split": args.split, "episode": episode,
@@ -154,6 +157,7 @@ def main():
                 try:
                     env = builder.make_env_for_episode(episode)
                     if not args.no_video:
+                        import imageio.v2 as imageio
                         video = f"{task}-{args.split}-{episode}.mp4"
                         writer = imageio.get_writer(output / video, fps=20, codec="libx264")
                         result["video"] = video
@@ -170,6 +174,10 @@ def main():
                     if env is not None:
                         env.close()
                 print(json.dumps(result), flush=True)
+        report["status"] = "COMPLETED"
+    except BaseException as error:
+        report.update(status="ERROR", error=f"{type(error).__name__}: {error}")
+        raise
     finally:
         report["completed"] = sum(r.get("status") != "error" for r in report["episodes"])
         report["successes"] = sum(r["success"] for r in report["episodes"])
