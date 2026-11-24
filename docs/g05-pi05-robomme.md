@@ -220,7 +220,7 @@ policy/G05/G05/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 
 ## 阶段 1B：原生权重推理验收
 
-此阶段仍在进行；不得将上述环境检查写成模型推理通过。
+此阶段仍在进行：π0.5 原生推理已通过，G05 等待完整 FM 权重校验。
 完整权重校验、必要 sidecar 提取完成后，用各自模型解释器运行：
 
 ```bash
@@ -228,9 +228,11 @@ policy/G05/G05/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
 tar -xf policy/G05/checkpoints/g05_robodojo_sim/g05_robodojo_fm_only_checkpoint.tar \
   -C policy/G05/checkpoints/g05_robodojo_sim
 
-# HF processor 从 g05-assets 的校验完成包中提取，路径确认后再执行模型测试。
-# G05_HF_PROCESSOR_PATH 指向匹配的官方 hf_processor 目录。
-export G05_HF_PROCESSOR_PATH=/absolute/path/to/official/hf_processor
+# 只提取推理需要的 processor，不解压训练资产里的额外模型权重。
+tar -xf policy/G05/checkpoints/g05_robodojo_train_assets/g05_robodojo_train_base_assets.tar \
+  -C policy/G05/checkpoints/g05_robodojo_train_assets \
+  g05_robodojo_train_base_assets/pretrained/hf_processor
+export G05_HF_PROCESSOR_PATH="$PWD/policy/G05/checkpoints/g05_robodojo_train_assets/g05_robodojo_train_base_assets/pretrained/hf_processor"
 CUDA_VISIBLE_DEVICES=0 policy/G05/G05/.venv/bin/python scripts/smoke_native_model.py g05 \
   --checkpoint policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint \
   --output runs/native-g05-01
@@ -250,3 +252,24 @@ processor schema 构造输入。π0.5 直接调用 OpenPI `create_trained_policy
 自身 processor 一致，π0.5 输出为 10×7。输入是合成 RGB/状态，不声称任务成功。
 每次保存动作 `.npz`、版本、设备、source commit、测试脚本 SHA-256、加载/推理耗时
 和 JSON 报告，失败时另存 traceback。`--output` 必须是新目录，以免覆盖已有证据。
+
+### π0.5 原生推理实际结果
+
+2026-11-24 21:01（Asia/Shanghai）完成，进程退出码 0：
+
+| 项目 | 结果 |
+| --- | --- |
+| checkpoint | 官方 `gs://openpi-assets/checkpoints/pi05_libero` |
+| 下载完整性 | 16/16 文件通过长度及 MD5/CRC32C 校验；约 12.44 GB |
+| GPU | 物理 GPU 1，RTX 4090；进程内为 `CudaDevice(id=0)` |
+| 权重/模型加载 | 85.08 秒 |
+| 第 1 次推理 | 66.19 秒，包含首次 JAX 编译/算子选择；输出 10×7，全部有限 |
+| 第 2 次推理 | 0.102 秒，输出 10×7，全部有限 |
+| 总耗时 | 151.37 秒 |
+| 任务成功率 | 未测量；输入为合成 RGB/状态，未启动 LIBERO 或 RoboMME |
+
+原始报告：[stage1b-pi05-native.json](validation/stage1b-pi05-native.json)。
+可复现的源对象 generation 和校验值：[stage1b-pi05-assets.json](validation/stage1b-pi05-assets.json)。
+本地动作数组在 `runs/native-pi05-01/actions_0.npz` 和 `actions_1.npz`。
+报告记录实际启动时的 source commit 与入口脚本 SHA-256；测试是在开发分支工作区执行，
+以脚本 SHA-256 标识该次入口版本。本机当时有其他权重下载，这些耗时仅作为运行记录。

@@ -65,6 +65,7 @@ def download(entry):
         subprocess.run([
             "curl", "--fail", "--location", "--silent", "--show-error",
             "--retry", "5", "--retry-all-errors", "--connect-timeout", "30",
+            "--speed-limit", "4096", "--speed-time", "60",
             "--continue-at", "-", "--output", str(partial), entry["url"],
         ], check=True)
     if not verified(partial):
@@ -88,9 +89,19 @@ def download_multipart(entry, parts):
     width = (entry["size"] + parts - 1) // parts
     partial = path.with_name(path.name + ".partial")
     first = directory / "000"
-    if partial.exists():
-        if first.exists() or partial.stat().st_size > entry["size"]:
+    if partial.exists() and first.exists():
+        # A previous process may have stopped during assembly or hashing.
+        # Rebuild only when every original range is still present in full.
+        complete_parts = all(
+            (directory / f"{index:03d}").is_file()
+            and (directory / f"{index:03d}").stat().st_size == min(width, entry["size"] - index * width)
+            for index in range(parts)
+        )
+        if not complete_parts:
             raise RuntimeError(f"Inspect existing assembled partial file before retrying: {partial}")
+    elif partial.exists():
+        if partial.stat().st_size > entry["size"]:
+            raise RuntimeError(f"Oversized partial file: {partial}")
         if partial.stat().st_size <= width:
             partial.replace(first)
         else:
@@ -111,27 +122,34 @@ def download_multipart(entry, parts):
         target = directory / f"{index:03d}"
         if target.exists() and target.stat().st_size > end - start + 1:
             raise RuntimeError(f"Oversized download part: {target}")
-        for attempt in range(6):
+        failures = 0
+        while True:
             offset = target.stat().st_size if target.exists() else 0
             if start + offset > end:
                 return
-            request = Request(entry["url"], headers={"Range": f"bytes={start + offset}-{end}"})
+            # Bound each request so a slow CDN connection cannot own a multi-GB
+            # range indefinitely. Completed prefixes survive reconnects.
+            request_end = min(start + offset + 128 * 1024 * 1024 - 1, end)
+            request = Request(entry["url"], headers={"Range": f"bytes={start + offset}-{request_end}"})
             try:
                 with urlopen(request, timeout=60) as response:
-                    expected = f"bytes {start + offset}-{end}/{entry['size']}"
+                    expected = f"bytes {start + offset}-{request_end}/{entry['size']}"
                     if response.status != 206 or response.headers.get("Content-Range") != expected:
                         raise RuntimeError("The server did not honor the requested byte range")
                     with target.open("ab") as stream:
-                        while chunk := response.read(min(8 * 1024 * 1024, end - start + 1 - stream.tell())):
+                        while chunk := response.read(min(8 * 1024 * 1024, request_end - start + 1 - stream.tell())):
                             stream.write(chunk)
-                        if stream.tell() != end - start + 1:
+                        if stream.tell() != request_end - start + 1:
                             raise EOFError("The server closed the byte range early")
-                print(f"[part complete] {index + 1}/{parts}", flush=True)
-                return
+                if request_end == end:
+                    print(f"[part complete] {index + 1}/{parts}", flush=True)
+                    return
+                failures = 0
             except Exception:
-                if attempt == 5:
+                failures += 1
+                if failures == 6:
                     raise
-                time.sleep(min(2 ** attempt, 10))
+                time.sleep(min(2 ** (failures - 1), 10))
 
     with ThreadPoolExecutor(max_workers=parts) as executor:
         list(executor.map(fetch, range(parts)))

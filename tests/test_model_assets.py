@@ -3,6 +3,7 @@
 import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import importlib.util
+import json
 from pathlib import Path
 import tempfile
 import threading
@@ -75,6 +76,21 @@ class ModelAssetTests(unittest.TestCase):
             path = Path(directory) / "weights"
             path.with_name("weights.partial").write_bytes(PAYLOAD[:150_123])
             assets.download_multipart(self.entry(path), 4)
+            self.assertEqual(path.read_bytes(), PAYLOAD)
+
+    def test_rebuild_after_interrupted_assembly(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "weights"
+            parts = path.with_name("weights.parts")
+            parts.mkdir()
+            entry = self.entry(path)
+            (parts / "layout.json").write_text(json.dumps({
+                "parts": 4, "size": len(PAYLOAD), "digest": entry["digest"],
+            }))
+            for index in range(4):
+                (parts / f"{index:03d}").write_bytes(PAYLOAD[index * 65536:(index + 1) * 65536])
+            path.with_name("weights.partial").write_bytes(PAYLOAD[:10000])
+            assets.download_multipart(entry, 4)
             self.assertEqual(path.read_bytes(), PAYLOAD)
 
     def test_invalid_existing_checkpoint_is_preserved(self):

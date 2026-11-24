@@ -1,0 +1,60 @@
+{
+  "status": "PASS",
+  "model": "pi05",
+  "checkpoint": "/home/haichao/feng/XPolicyLab/policy/Pi_05/checkpoints/pi05_libero",
+  "scope": "native inference on synthetic RGB/state; task success not measured",
+  "started_at_utc": "2026-11-24T12:59:24.577036+00:00",
+  "python": "3.11.5 (main, Sep 11 2023, 13:54:46) [GCC 11.2.0]",
+  "executable": "/home/haichao/feng/XPolicyLab/policy/Pi_05/openpi/.venv/bin/python",
+  "platform": "Linux-5.15.0-139-generic-x86_64-with-glibc2.31",
+  "seed": 0,
+  "cuda_visible_devices": "1",
+  "source_commit": "d96778602cd50010689177a3d3c1173b2aca9ffd",
+  "smoke_script_sha256": "bf064855f679eeead40aec2b69218908ba3dbf0ba55b70c9402da661a3218677",
+  "packages": {
+    "torch": "2.10.0",
+    "torchvision": "0.25.0",
+    "jax": "0.5.3",
+    "jaxlib": "0.5.3",
+    "flax": "0.10.2",
+    "transformers": "4.53.2",
+    "numpy": "1.26.4",
+    "openpi": "0.1.0"
+  },
+  "iterations": [
+    {
+      "seconds": 66.18815312255174,
+      "actions": {
+        "actions": {
+          "shape": [
+            10,
+            7
+          ],
+          "min": -1.004312489210546,
+          "max": 1.0047059536485672,
+          "finite": true
+        }
+      }
+    },
+    {
+      "seconds": 0.10189069993793964,
+      "actions": {
+        "actions": {
+          "shape": [
+            10,
+            7
+          ],
+          "min": -1.000753490777135,
+          "max": 1.0011568476122616,
+          "finite": true
+        }
+      }
+    }
+  ],
+  "backend": "upstream openpi create_trained_policy",
+  "embodiment": "libero",
+  "device": "[CudaDevice(id=0)]",
+  "train_config": "pi05_libero",
+  "load_seconds": 85.08104985300452,
+  "elapsed_seconds": 151.3712707106024
+}

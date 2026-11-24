@@ -35,6 +35,9 @@ def load_g05(args):
     import numpy as np
     import torch
     model_root = ROOT / "policy/G05/G05"
+    # The upstream config loader eagerly resolves training-only environment
+    # fields even for inference. No dataset is opened by serve_policy.setup.
+    os.environ.setdefault("ROBODOJO_LEROBOT_V30_ROOT", "")
     sys.path[:0] = [str(model_root / "src"), str(model_root)]
     os.chdir(model_root)
     from g05.utils.config.config_resolvers import register_default_resolvers
@@ -70,14 +73,23 @@ def load_g05(args):
         with torch.inference_mode():
             result = inferencer.infer([build_obs_dict(raw, processor)])[0]
         torch.cuda.synchronize()
+        result = {
+            key: value.detach().float().cpu().numpy() if isinstance(value, torch.Tensor)
+            else np.asarray(value)
+            for key, value in result.items() if not key.startswith("_")
+        }
+        result = {key: value[0] if value.ndim == 3 and value.shape[0] == 1 else value
+                  for key, value in result.items()}
         for entry in sub.shape_meta["action"]:
             value = np.asarray(result[entry["key"]])
             if value.ndim != 2 or value.shape[-1] != entry["raw_shape"]:
                 raise ValueError(f"Unexpected G05 action layout for {entry['key']}: {value.shape}")
-        return {key: value for key, value in result.items() if not key.startswith("_")}
+        return result
 
     return infer, {"backend": "upstream g05 PolicyInferencer", "embodiment": "robodojo",
-                   "device": torch.cuda.get_device_name(0), "hydra_overrides": overrides}
+                   "device": torch.cuda.get_device_name(0), "hydra_overrides": overrides,
+                   "processor_path": os.environ.get("G05_HF_PROCESSOR_PATH"),
+                   "training_dataset_used": False}
 
 
 def load_pi05(args):
