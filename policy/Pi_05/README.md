@@ -16,6 +16,11 @@ source openpi/.venv/bin/activate  # OpenPI is uv-managed; there is no policy con
 
 `eval.sh` arg 9 is not a conda env: pass `uv` (uses `deploy.yml` `policy_uv_env_path`) or an explicit OpenPI project path.
 
+For a checkpoint-loading and native-inference check before starting XPolicyLab
+evaluation, see the [staged setup guide](../../docs/g05-pi05-robomme.md). It uses
+the official `pi05_libero` checkpoint with the upstream OpenPI inference API;
+this is independent of the adapter's default RoboDojo training configuration.
+
 ## Data Processing
 
 Converts RoboDojo demonstrations into the LeRobot repo consumed by training. The dataset uses the official keys — `observation.state`, `action`, `observation.images.cam_high` / `cam_left_wrist` / `cam_right_wrist` ([official LeRobot conversion](../../README.md#official-lerobot-conversion)); the bundled script exists because conversion must run inside openpi's own pinned LeRobot environment, which sets the dataset version. The optional `expert_data_num` caps episodes for data conversion only (it is not part of checkpoint naming); the optional `raw_task_dirs` is a source task directory or comma-separated task list under `data/<bench_name>/` (defaults to `ckpt_name`). `raw_task_dirs` may also be passed directly as the 5th argument to write a differently named dataset from all of a task's demos, e.g. `bash process_data.sh RoboDojo stack_bowls_ablation arx_x5 joint stack_bowls`.

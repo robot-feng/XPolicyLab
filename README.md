@@ -27,6 +27,8 @@ XPolicyLab is the shared layer between policy code and evaluation environments. 
 
 Start here for repo-level concepts and integration steps. For install commands, checkpoint layout, and training details, jump to that policy's README — it is the source of truth for its model.
 
+The [G05 / π0.5 staged setup log](docs/g05-pi05-robomme.md) (Chinese) records local environment checks, native-model validation, and the planned RoboMME integration with separate acceptance criteria.
+
 ## 📚 Contents
 
 - [What XPolicyLab Enables](#-what-xpolicylab-enables)

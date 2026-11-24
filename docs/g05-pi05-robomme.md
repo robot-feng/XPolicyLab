@@ -122,3 +122,131 @@ RoboMME 返回的观测字段是列表；reset 可能附带条件演示视频，
 `runs/setup/` 保存依赖安装日志与下载日志，`policy/**/checkpoints/` 和 `.venv/`
 已被忽略。阶段验收后将精简且不含凭证的验证记录保存到版本控制中的文档目录。
 网络代理仅由调用时的环境变量传入，不将本机端口、凭证或 SSH 私钥写进配置。
+
+## 阶段 1A：隔离环境与验证工具
+
+### 安装
+
+以下命令从 XPolicyLab 仓库根目录运行。两套环境独立，不向 Conda base 混装
+Torch、JAX 或模型依赖。首次安装会下载较大的 CUDA wheel；uv 缓存可复用。
+
+```bash
+# G05：Python 3.10、Torch 2.7.1+cu128、Transformers 4.57.1
+bash policy/G05/install.sh --inference
+
+# π0.5：沿用原始 uv.lock 和安装脚本，不改模型实现
+(cd policy/Pi_05 && bash install.sh)
+```
+
+G05 的 `--inference` 是仅面向推理的依赖配置：保留上游模型代码，使用原有
+PyTorch SDPA / delta-rule fallback；不安装训练器、其他模拟器、FA4 等全量依赖。
+因此它不是完整训练环境，不能用此配置宣称训练已验证。不传该参数时仍保留原安装方式。
+
+π0.5 保留默认 dev dependency group：vendored OpenPI 的运行时代码有无条件
+`import pytest`，删掉 dev group 会导致推理模块无法导入。
+
+### 验证依赖与 GPU
+
+```bash
+CUDA_VISIBLE_DEVICES=0 policy/G05/G05/.venv/bin/python - <<'PY'
+import torch
+from g05.models.g05.inferencer import PolicyInferencer
+from g05.models.g05.g05_policy_qwen35 import G05PolicyQwen35
+x = torch.ones((64, 64), device="cuda")
+assert bool(torch.isfinite(x @ x).all())
+print(torch.__version__, torch.cuda.get_device_name(0))
+PY
+
+CUDA_VISIBLE_DEVICES=1 XLA_PYTHON_CLIENT_PREALLOCATE=false \
+policy/Pi_05/openpi/.venv/bin/python - <<'PY'
+import jax
+import jax.numpy as jnp
+from openpi.policies import policy_config
+from openpi.training import config
+assert any(device.platform == "gpu" for device in jax.devices())
+assert bool(jnp.isfinite(jnp.ones((64, 64)) @ jnp.ones((64, 64))).all())
+print(jax.__version__, jax.devices())
+PY
+```
+
+本机结果：上述两项均通过；G05 为 `2.7.1+cu128`，π0.5 JAX 为 `0.5.3`，
+均使用 RTX 4090。它们验证的是依赖和 GPU 运算，尚不等于权重推理通过。
+
+### 校验下载
+
+`scripts/download_pretrained_models.py` 用固定 Hugging Face revision，或 GCS
+对象的固定 generation 下载官方文件。G05 校验官方 SHA-256；GCS 普通对象
+校验 MD5，组合对象校验 CRC32C。文件经校验后才移除 `.partial` 后缀。
+GCS 对象清单和每个文件的来源、长度、校验值写入 `download_manifest.json`。
+
+下载工具的 Python 依赖可通过临时 uv 环境提供，不需要装进模型环境：
+
+```bash
+uv run --no-project --python 3.11 --with google-crc32c==1.9.0 \
+  python scripts/download_pretrained_models.py g05 --parts 8
+uv run --no-project --python 3.11 --with google-crc32c==1.9.0 \
+  python scripts/download_pretrained_models.py g05-assets --parts 8
+uv run --no-project --python 3.11 --with google-crc32c==1.9.0 \
+  python scripts/download_pretrained_models.py pi05 --workers 3
+```
+
+G05 FM archive 约 34.43 GB，processor 所在训练资产 archive 约 13.70 GB，
+π0.5 LIBERO checkpoint 约 12.44 GB。G05 主仓库 gated，本流程使用可公开读取的
+RoboDojo 发布包；FM archive 本身未带 HF processor，需要从同一官方发布的训练
+资产中提取匹配的 processor，不使用另一个模型的 tokenizer 顶替。
+
+网络不稳可原命令重跑。`--parts` 开启 HTTP Range 分片，恢复时必须沿用原分片数。
+已经存在但校验失败的最终文件不会被覆盖；先检查文件原因再处理。相同目标不要同时
+运行多个下载命令。如果网络需要代理，请在 shell 中设置自己的 `HTTPS_PROXY` 等变量。
+
+### 验证工具自身
+
+```bash
+git diff --check
+bash -n policy/G05/install.sh
+python -m py_compile scripts/download_pretrained_models.py scripts/smoke_native_model.py
+policy/G05/G05/.venv/bin/python -m unittest discover -s tests -p 'test_*.py' -v
+```
+
+下载回归使用真实本地 HTTP 服务验证字节范围恢复、跨分片恢复、损坏内容拒绝、
+已有文件保护、分片布局不匹配拒绝；不依赖公网或模型权重。
+原生推理工具在 checkpoint 缺失时确实返回非零并保存 `FAIL` 报告，已执行验证。
+
+阶段 1A 的留档证据：
+
+- [G05 环境与 GPU 检查](validation/stage1a-g05-environment.json)。
+- [π0.5 环境与 GPU 检查](validation/stage1a-pi05-environment.json)。
+- [32 项回归测试原始输出](validation/stage1a-regression.txt)：27 项原有回归 + 5 项下载完整性回归，全部通过。
+
+## 阶段 1B：原生权重推理验收
+
+此阶段仍在进行；不得将上述环境检查写成模型推理通过。
+完整权重校验、必要 sidecar 提取完成后，用各自模型解释器运行：
+
+```bash
+# G05：先解压下载并校验后的官方 FM archive。
+tar -xf policy/G05/checkpoints/g05_robodojo_sim/g05_robodojo_fm_only_checkpoint.tar \
+  -C policy/G05/checkpoints/g05_robodojo_sim
+
+# HF processor 从 g05-assets 的校验完成包中提取，路径确认后再执行模型测试。
+# G05_HF_PROCESSOR_PATH 指向匹配的官方 hf_processor 目录。
+export G05_HF_PROCESSOR_PATH=/absolute/path/to/official/hf_processor
+CUDA_VISIBLE_DEVICES=0 policy/G05/G05/.venv/bin/python scripts/smoke_native_model.py g05 \
+  --checkpoint policy/G05/checkpoints/g05_robodojo_sim/hf_g05_robodojo_fm_only_checkpoint/checkpoints/checkpoint \
+  --output runs/native-g05-01
+
+CUDA_VISIBLE_DEVICES=1 XLA_PYTHON_CLIENT_PREALLOCATE=false \
+policy/Pi_05/openpi/.venv/bin/python scripts/smoke_native_model.py pi05 \
+  --checkpoint policy/Pi_05/checkpoints/pi05_libero \
+  --output runs/native-pi05-01
+```
+
+G05 直接调用 upstream `PolicyInferencer`，使用 FM 模式与 checkpoint 自身的
+processor schema 构造输入。π0.5 直接调用 OpenPI `create_trained_policy`，配置
+与官方 `pi05_libero` 发布一致：`pi05=True`、horizon 10、不使用离散状态输入、
+关闭额外 delta transform；该配置只用于原生测试，不修改 RoboDojo 的默认 deploy。
+
+验收工具默认连续推理两次；检查动作非空、二维、每个数值有限，G05 输出宽度与
+自身 processor 一致，π0.5 输出为 10×7。输入是合成 RGB/状态，不声称任务成功。
+每次保存动作 `.npz`、版本、设备、source commit、测试脚本 SHA-256、加载/推理耗时
+和 JSON 报告，失败时另存 traceback。`--output` 必须是新目录，以免覆盖已有证据。

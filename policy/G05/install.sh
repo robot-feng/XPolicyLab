@@ -5,6 +5,22 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 XPL_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 G05_ROOT="${G05_ROOT:-${SCRIPT_DIR}/G05}"
 
+if [[ "${1:-}" == "--inference" ]]; then
+  command -v uv >/dev/null || { echo "Install uv first." >&2; exit 2; }
+  if [[ ! -x "${G05_ROOT}/.venv/bin/python" ]]; then
+    uv venv --python 3.10 --seed "${G05_ROOT}/.venv"
+  fi
+  PYTHON_BIN="${G05_ROOT}/.venv/bin/python"
+  uv pip install --python "${PYTHON_BIN}" \
+    --index-strategy unsafe-best-match \
+    --extra-index-url https://download.pytorch.org/whl/cu128 \
+    -r "${SCRIPT_DIR}/requirements-inference.txt"
+  uv pip install --python "${PYTHON_BIN}" --no-deps -e "${G05_ROOT}" -e "${XPL_ROOT}"
+  "${PYTHON_BIN}" -c 'from g05.models.g05.inferencer import PolicyInferencer; import XPolicyLab; print("G05 inference imports OK")'
+  echo "[G05] Activate: source ${G05_ROOT}/.venv/bin/activate"
+  exit 0
+fi
+
 PYTHON_BIN="${G05_PYTHON:-$(command -v python3)}"
 
 if [[ -z "${PYTHON_BIN}" || ! -x "${PYTHON_BIN}" ]]; then

@@ -1,0 +1,23 @@
+{
+  "stage": "1A",
+  "model": "Pi_05",
+  "status": "PASS",
+  "scope": "environment imports and GPU computation only",
+  "native_checkpoint_inference": "NOT_RUN",
+  "created_at_utc": "2026-11-24T12:52:05.960570+00:00",
+  "python": "3.11.5 (main, Sep 11 2023, 13:54:46) [GCC 11.2.0]",
+  "executable": "/home/haichao/feng/XPolicyLab/policy/Pi_05/openpi/.venv/bin/python",
+  "gpu": [
+    "cuda:0"
+  ],
+  "packages": {
+    "torch": "2.10.0",
+    "jax": "0.5.3",
+    "jaxlib": "0.5.3",
+    "flax": "0.10.2",
+    "transformers": "4.53.2",
+    "numpy": "1.26.4",
+    "openpi": "0.1.0",
+    "websockets": "15.0.1"
+  }
+}

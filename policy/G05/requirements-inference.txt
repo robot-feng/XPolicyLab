@@ -1,0 +1,39 @@
+# Inference profile for the vendored G05 source on Ampere/Ada GPUs.
+# The full upstream training/simulator environment remains available via install.sh.
+# Upstream uses PyTorch SDPA and its own delta-rule fallback when FA4/FLA are absent.
+torch==2.7.1
+torchvision==0.22.1
+torchaudio==2.7.1
+numpy==1.26.4
+transformers==4.57.1
+peft==0.18.0
+huggingface-hub==0.35.0
+safetensors==0.6.1
+accelerate==1.8.1
+datasets==3.6.0
+diffusers==0.29.0
+hydra-core==1.3.2
+einops==0.8.0
+timm==0.9.10
+pillow==10.2.0
+opencv-python-headless==4.10.0.84
+scipy==1.15.3
+h5py==3.14.0
+matplotlib==3.10.0
+pandas==2.2.3
+av==14.2.0
+torchcodec==0.4.0
+vector-quantize-pytorch==1.27.6
+vit-pytorch==1.9.1
+ema-pytorch==0.7.7
+torchmetrics==1.7.4
+rich==13.9.4
+loguru==0.7.3
+rootutils==1.0.7
+GitPython>=3.1,<4
+pyyaml==6.0.3
+tqdm>=4.67.1
+websockets==16.0
+msgpack>=1.0.8
+msgpack-numpy>=0.4.8
+pydantic==2.12.5

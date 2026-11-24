@@ -8,6 +8,20 @@ Shared conventions — argument meanings, checkpoint naming, split-machine deplo
 
 ## Installation
 
+For an isolated inference environment on RTX 4090 / Ampere / Ada, run from the
+repository root (requires `uv`):
+
+```bash
+bash policy/G05/install.sh --inference
+export G05_PYTHON="$PWD/policy/G05/G05/.venv/bin/python"
+```
+
+This creates a Python 3.10 environment from `requirements-inference.txt`, installs
+the vendored source and XPolicyLab, and checks inference imports. It uses the
+upstream SDPA fallback; FA4 and training/simulator packages are outside this
+profile. Use the upstream full installation for training. Environment and native
+checkpoint validation are documented in the [staged setup guide](../../docs/g05-pi05-robomme.md).
+
 Install the XPolicyLab-side adapter dependencies:
 
 ```bash
