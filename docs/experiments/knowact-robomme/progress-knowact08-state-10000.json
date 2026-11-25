@@ -1,0 +1,26 @@
+{
+  "step": 10000,
+  "run": "knowact08-state",
+  "split": "val",
+  "context_token_limit": 65536,
+  "holdout_ce": 1.1197903156280518,
+  "checkpoints": {
+    "last": 10000
+  },
+  "results": {
+    "last": {
+      "MoveCube": [
+        {
+          "episode": 0,
+          "benchmark_seed": 1140000,
+          "difficulty": "easy",
+          "status": "timeout",
+          "steps": 1301,
+          "initial_frames": 281,
+          "terminated": false,
+          "truncated": true
+        }
+      ]
+    }
+  }
+}
