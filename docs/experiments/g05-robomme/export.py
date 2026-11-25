@@ -11,8 +11,10 @@ from g05.tokenizer.models.actioncodec2_v2.modeling_actioncodec2v2 import ActionC
 from config import configure
 
 
-def export(root, kind):
-    folder = root / f"eval-{kind}"
+def export(root, kind, step=None):
+    if step is not None and kind != "tuned":
+        raise ValueError("--step selects a saved tuned checkpoint")
+    folder = root / (f"eval-step-{step}" if step is not None else f"eval-{kind}")
     folder.mkdir(exist_ok=False)
     (folder / ".hydra").mkdir()
     codec = folder / "action_tokenizer.pt"
@@ -24,7 +26,11 @@ def export(root, kind):
         os.link(base, ckpt)
     else:
         os.link(root / "run/action_tokenizer.pt", codec)
-        best = torch.load(root / "run/best.pt", map_location="cpu", weights_only=True)
+        source = "resume.pt" if kind == "last" else "best.pt"
+        if step is not None:
+            source = f"step-{step}.pt"
+        best = torch.load(root / "run" / source, map_location="cpu", weights_only=True, mmap=True)
+        assert step is None or best["step"] == step
         full = torch.load(base, map_location="cpu", mmap=True, weights_only=True)
         weights = full["model_state_dict"]
         assert best["delta"] and best["delta"].keys() <= weights.keys()
@@ -52,6 +58,7 @@ def export(root, kind):
 if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("root", type=Path)
-    p.add_argument("kind", choices=["base", "tuned"])
+    p.add_argument("kind", choices=["base", "tuned", "last"])
+    p.add_argument("--step", type=int, help="use one of the saved intermediate core steps")
     a = p.parse_args()
-    export(a.root.resolve(), a.kind)
+    export(a.root.resolve(), a.kind, a.step)

@@ -56,6 +56,27 @@ def atomic_save(value, path):
     tmp.replace(path)
 
 
+PEAK_LR, FLOOR_LR, WARMUP = 2e-5, 2e-6, 100
+MILESTONES = (10_000, 20_000)
+
+
+def lr_schedule(start, end, saved_lr):
+    """Continue the cosine from its saved phase even when extending the total steps."""
+    if not 0 <= start < end:
+        raise ValueError(f"Expected 0 <= checkpoint step {start} < total steps {end}")
+    phase = 0.0
+    if start:
+        envelope = saved_lr / min(1.0, start / WARMUP)
+        cos = 2 * (envelope - FLOOR_LR) / (PEAK_LR - FLOOR_LR) - 1
+        phase = math.acos(max(-1.0, min(cos, 1.0)))
+
+    def lr(step):
+        angle = phase + (math.pi - phase) * (step - start) / (end - start)
+        return min(1.0, step / WARMUP) * (FLOOR_LR + (PEAK_LR - FLOOR_LR) * (1 + math.cos(angle)) / 2)
+
+    return lr
+
+
 def main(a):
     root = a.root.resolve()
     run = root / "run"
@@ -70,7 +91,7 @@ def main(a):
     cfg = configure(root, run / "action_tokenizer.pt")
     model, processors = setup(cfg, device=f"cuda:{local}")
     params = select_parameters(model)
-    opt = torch.optim.AdamW(params, lr=2e-5, weight_decay=0.01, fused=True)
+    opt = torch.optim.AdamW(params, lr=PEAK_LR, weight_decay=0.01, fused=True)
     net = DistributedDataParallel(
         model, device_ids=[local], broadcast_buffers=False, find_unused_parameters=True
     )
@@ -87,13 +108,13 @@ def main(a):
     val = DataLoader(
         Subset(ds, val_ids), batch_size=a.batch, collate_fn=collate_fn_pad_sequences, num_workers=0
     )
-    if a.steps is None:
-        a.steps = math.ceil(3 * len(train) / (a.batch * world))
     names = {n for n, p in model.named_parameters() if p.requires_grad}
     best = float("inf")
     start = 0
     if a.resume:
-        s = torch.load(run / "resume.pt", weights_only=False, map_location="cpu")
+        s = torch.load(run / "resume.pt", weights_only=True, mmap=True, map_location="cpu")
+        if s["delta"].keys() != names or not s["optimizer"]["state"]:
+            raise ValueError("Checkpoint does not match the trainable parameters or lacks optimizer state")
         model.load_state_dict(s["delta"], strict=False)
         opt.load_state_dict(s["optimizer"])
         start = s["step"]
@@ -101,7 +122,11 @@ def main(a):
         del s
     elif (run / "resume.pt").exists():
         raise FileExistsError("Run exists; use --resume")
+    schedule = lr_schedule(start, a.steps, opt.param_groups[0]["lr"])
     if rank == 0:
+        if start:
+            print(f"resuming optimizer at step {start}, saved_lr={opt.param_groups[0]['lr']:.10g}, "
+                  f"next_lr={schedule(start + 1):.10g}", flush=True)
         (run / ".hydra").mkdir(exist_ok=True)
         OmegaConf.save(cfg, run / ".hydra/config.yaml")
         print(
@@ -141,10 +166,10 @@ def main(a):
         num_workers=2,
         persistent_workers=True,
     )
-    torch.manual_seed(7 + rank)
+    torch.manual_seed(7 + rank + start * world)
     for step, batch in enumerate(loader, start + 1):
         net.train()
-        lr = 2e-5 * min(1.0, step / 100) * (0.1 + 0.9 * (1 + math.cos(math.pi * step / a.steps)) / 2)
+        lr = schedule(step)
         opt.param_groups[0]["lr"] = lr
         opt.zero_grad(set_to_none=True)
         with torch.autocast("cuda", dtype=torch.bfloat16):
@@ -152,7 +177,7 @@ def main(a):
         loss.backward()
         norm = torch.nn.utils.clip_grad_norm_(params, 1, error_if_nonfinite=True)
         opt.step()
-        if step == 1 or step % 25 == 0:
+        if step == start + 1 or step % 25 == 0:
             metrics = torch.stack([loss.detach(), parts["ce_loss"], parts["fm_loss"]]).float()
             dist.all_reduce(metrics)
             total, ce, fm = (metrics / world).tolist()
@@ -161,13 +186,16 @@ def main(a):
                     json.dumps(dict(step=step, loss=total, ce=ce, fm=fm, grad_norm=norm.item(), lr=lr)),
                     flush=True,
                 )
-        if step % 256 == 0 or step == a.steps:
+        if step % 256 == 0 or step in MILESTONES or step == a.steps:
             metric = score()
             assert math.isfinite(metric)
             if rank == 0:
                 delta = {k: v.detach().cpu() for k, v in model.named_parameters() if k in names}
+                snapshot = {"step": step, "delta": delta, "holdout_loss": metric}
+                if step in MILESTONES:
+                    atomic_save(snapshot, run / f"step-{step}.pt")
                 if metric < best:
-                    atomic_save({"step": step, "delta": delta, "holdout_loss": metric}, run / "best.pt")
+                    atomic_save(snapshot, run / "best.pt")
                     best = metric
                 atomic_save(
                     dict(step=step, delta=delta, optimizer=opt.state_dict(), best=best),
@@ -184,6 +212,6 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("root", type=Path)
     p.add_argument("--batch", type=int, default=2)
-    p.add_argument("--steps", type=int, help="default: three training-set equivalents")
+    p.add_argument("--steps", type=int, default=30_000, help="total optimizer updates, including resumed steps")
     p.add_argument("--resume", action="store_true")
     main(p.parse_args())

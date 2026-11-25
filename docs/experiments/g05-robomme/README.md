@@ -29,14 +29,14 @@ python "$EXP/prepare.py" ../datasets/robomme_data_h5 \
 ## 训练、选模与仿真
 
 1. `codec.py` 从官方 ActionCodec 启动，适配编码器与解码器，固定量化字典以保留原有 token 编号。夹爪沿用上游二值规则。训练 1024 次，batch 24，AdamW 学习率 `2e-5`；每 128 步用同一组 384 个留出窗口评估 **两层残差码** 的七关节重建 MAE（弧度），在基础权重和历次训练权重中选误差最低的一次。
-2. `core.py` 使用选出的 tokenizer 和同一批训练示范，按上游联合目标训练离散动作（CE）和连续动作（FM）。每张 4090 只有 24 GiB；这里更新 VLM 和动作专家各自最后 4 层，以及本体状态与动作投影，共 343,294,964 个参数；视觉主干冻结。可训练权重保留 FP32，前向用 BF16。使用均匀随机窗口，默认处理相当于训练集三遍的样本量。每 256 步计算固定 128 个留出窗口的联合 loss；按该指标保存 `best.pt`，并将当前参数、优化器及步数存入 `resume.pt`。中断后用相同的 GPU 数、batch 和总步数加 `--resume`。两种 loss 量纲不同，不把其和解释成成功率。
+2. `core.py` 使用选出的 tokenizer 和同一批训练示范，按上游联合目标训练离散动作（CE）和连续动作（FM）。每张 4090 只有 24 GiB；这里更新 VLM 和动作专家各自最后 4 层，以及本体状态与动作投影，共 343,294,964 个参数；视觉主干冻结。可训练权重保留 FP32，前向用 BF16。使用全局 batch 6，目标是累计 **30,000 次优化器更新**（180,000 个按均匀随机抽取的训练窗口，约 11.32 遍的数据量）。每 256 步、10K、20K 和最后一步计算同一组 128 个留出窗口的联合 loss；按该指标保存 `best.pt`，并将当前参数、优化器及步数存入 `resume.pt`。中断后保持相同的 GPU 数和 batch，加 `--resume` 并传入目标总步数；恢复参数和 AdamW 一、二阶矩，余弦学习率从保存时的相位延长到新终点 `2e-6`，不重复预热。窗口抽样按全局步数接续；旧断点不保存数据增强与扩散噪声的全部 RNG 状态，因此不承诺逐位复现。两种 loss 量纲不同，不把其和解释成成功率。
 3. 基线和微调权重均使用这次训练集的归一化统计；独立服务用相同种子启动，都取连续动作头，执行每个 32 步预测的前 16 步。每个回合交给原生环境终止和判分，预算 1300 步。协议、模拟器、动作打包和评分不为 G05 特化。
 
 ```bash
 CUDA_VISIBLE_DEVICES=3 "$PY" "$EXP/codec.py" "$ART"
 CUDA_VISIBLE_DEVICES=0,1,3 NCCL_P2P_DISABLE=1 "$PY" -m torch.distributed.run \
-  --standalone --nproc-per-node=3 "$EXP/core.py" "$ART"
-for kind in base tuned; do
+  --standalone --nproc-per-node=3 "$EXP/core.py" "$ART" --steps 30000
+for kind in base tuned last; do
   "$PY" "$EXP/export.py" "$ART" "$kind"
   POLICY_GPU=2 ENV_GPU=2 bash "$EXP/evaluate.sh" \
     "$ART/eval-$kind/model_state_dict.pt" "$PWD/runs/robomme/g05-$kind"
@@ -49,9 +49,9 @@ done
 
 ## 本机训练跟踪
 
-三卡正式配置为每卡 batch 2、全局 batch 6，训练 7,948 次更新（47,688 个窗口位置）。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned}/<任务>-<回合>/report.json` 是原生仿真记录。对应阶段完成后，分支中的 `result-base.json`、`result-core.json`、`result-tuned.json` 分别记录基础模型对照、选模曲线和最终逐任务配对成绩。每个任务只有三个测试回合，报告样本数与终止状态。
+三卡正式配置为每卡 batch 2、全局 batch 6，目标已从 7,948 步延长到累计 30,000 步；第一阶段维持已完成的 1,024 步。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned,last}/<任务>-<回合>/report.json` 是原生仿真记录。[基础模型的正式对照](result-base.json)为 0/12。`result-core.json` 将保存整条验证曲线；`result-tuned.json` 和 `result-last.json` 将分别记录验证最优和第 30,000 步在相同测试场景的逐任务成绩。若最优正好是最后一步，则复用同一批仿真记录。每个任务只有三个测试回合，报告样本数与终止状态。
 
-另在第 256 步固定保存一次候选，在 `MoveCube/val/0` 与基础权重各跑一次（同一仿真 seed）。这是中途观察，不参与选模，也不混入 12 个测试回合。复现单独验证回合时给 `evaluate.sh` 设置 `ROBOMME_SPLIT=val ROBOMME_TASKS=MoveCube ROBOMME_EPISODE_IDS=0` 即可。正式评估不传这些覆盖值。
+在第 256、10,000、20,000 步保存候选，在 `MoveCube/val/0` 与基础权重作同 seed 对照（基础模型同一回合只跑一次）。10K、20K 增量存于 `$ART/run/step-{10000,20000}.pt`；用 `export.py "$ART" tuned --step 10000` 等命令合并，输出 `eval-step-10000/`。每个导出命令要求目标目录尚不存在。`progress-10000.json`、`progress-20000.json` 记录阶段对照。这是中途观察，不参与选模，也不混入 12 个测试回合。复现单独验证回合时给 `evaluate.sh` 设置 `ROBOMME_SPLIT=val ROBOMME_TASKS=MoveCube ROBOMME_EPISODE_IDS=0` 即可。正式评估不传这些覆盖值。
 
 第 256 步在这 128 个固定窗口上的联合验证 loss 为 `2.717556`。已把该步独立导出，并逐个对照了推理包的 946 个张量：121 个等于训练快照（343,294,964 个可训练参数），另外 825 个等于官方基础权重。本机快照位于 `$ART/preview-256/eval-tuned/`，不会随着 `run/best.pt` 更新而被覆盖。
 
