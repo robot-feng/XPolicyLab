@@ -1,0 +1,134 @@
+{
+  "tasks": {
+    "MoveCube": [
+      {
+        "episode": 0,
+        "benchmark_seed": 640000,
+        "difficulty": "easy",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 247,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 2,
+        "benchmark_seed": 640200,
+        "difficulty": "medium",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 247,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 3,
+        "benchmark_seed": 640300,
+        "difficulty": "hard",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 284,
+        "terminated": false,
+        "truncated": true
+      }
+    ],
+    "PatternLock": [
+      {
+        "episode": 0,
+        "benchmark_seed": 650000,
+        "difficulty": "easy",
+        "status": "fail",
+        "steps": 664,
+        "initial_frames": 87,
+        "terminated": true,
+        "truncated": false
+      },
+      {
+        "episode": 2,
+        "benchmark_seed": 650200,
+        "difficulty": "medium",
+        "status": "fail",
+        "steps": 369,
+        "initial_frames": 124,
+        "terminated": true,
+        "truncated": false
+      },
+      {
+        "episode": 3,
+        "benchmark_seed": 650300,
+        "difficulty": "hard",
+        "status": "fail",
+        "steps": 263,
+        "initial_frames": 199,
+        "terminated": true,
+        "truncated": false
+      }
+    ],
+    "RouteStick": [
+      {
+        "episode": 0,
+        "benchmark_seed": 660000,
+        "difficulty": "easy",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 151,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 2,
+        "benchmark_seed": 660200,
+        "difficulty": "medium",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 201,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 3,
+        "benchmark_seed": 660300,
+        "difficulty": "hard",
+        "status": "fail",
+        "steps": 4,
+        "initial_frames": 201,
+        "terminated": true,
+        "truncated": false
+      }
+    ],
+    "InsertPeg": [
+      {
+        "episode": 0,
+        "benchmark_seed": 630000,
+        "difficulty": "easy",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 268,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 2,
+        "benchmark_seed": 630200,
+        "difficulty": "medium",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 275,
+        "terminated": false,
+        "truncated": true
+      },
+      {
+        "episode": 3,
+        "benchmark_seed": 630300,
+        "difficulty": "hard",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 226,
+        "terminated": false,
+        "truncated": true
+      }
+    ]
+  },
+  "successes": 0,
+  "episodes": 12
+}
