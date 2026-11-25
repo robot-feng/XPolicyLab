@@ -35,3 +35,23 @@ CUDA_VISIBLE_DEVICES=0 PYTHONPATH="$ART/fla6:$PYTHONPATH" "$PY" "$EXP/bench_step
 | FLA 0.6.0 | 1,792 → 2,048 | 194.02 | 0.758 | 10.56 |
 
 本机实测吞吐为原来的 **2.43 倍**，同样步数用时减少 58.9%。在后一段中，不含验证的日志区间吞吐中位数为 11.71 窗口/秒，rank 0 等待输入中位数为 15.5 ms/步。第 1,792 与 2,048 步的联合留出 loss 分别为 2.248296 和 2.220855。这些数字适用于这台机器、这个 batch 和这四项数据；评测成功率另行统计。
+
+## 第二轮：数据还是同步？
+
+第 2,816 步，同一模型、FLA 0.6.0、4 × 4090、全局 batch 8。正式任务从 2,048 到 2,816 步（含 3 次验证和写盘）实测速率为 **10.40 窗口/秒**。参考 [ResearchBoost-Agent 固定版本](https://github.com/DAGroup-PKU/ResearchBoost-Agent/tree/f6182090511f0b317262c42025e55cf3c940880b) 的[分层分析](https://github.com/DAGroup-PKU/ResearchBoost-Agent/blob/f6182090511f0b317262c42025e55cf3c940880b/skills/train-opt-tiered-profiling/SKILL.md)及[通信优化清单](https://github.com/DAGroup-PKU/ResearchBoost-Agent/blob/f6182090511f0b317262c42025e55cf3c940880b/skills/train-opt-action-ladder/SKILL.md)，区分诊断上限和可以用于训练的优化。
+
+每个 rank 取四个不同的真实双样本批次，固定图像增强和扩散噪声，均使用零学习率防止测速改变权重。每项 10 步，首 2 步不计，正序和反序各一次；步末等待各卡完成，表内是每步最慢 rank 的时间，每轮取中位数。端到端速度另看正式训练日志。
+
+| 诊断或候选设置 | 正序 ms/步 | 反序 ms/步 |
+|---|---:|---:|
+| 原四卡 FLA | 643.4 | 663.2 |
+| 批次预存 CPU | 629.6 | 635.8 |
+| 批次预存 GPU | 621.5 | 644.0 |
+| 禁用梯度同步（仅诊断） | 495.6 | 480.0 |
+| 跳过动作专家不读取的递归缓存 | 635.4 | 610.8 |
+| 普通注意力切 PyTorch SDPA | 652.4 | 628.7 |
+| 同时跳过缓存和切 SDPA | 624.6 | 614.5 |
+
+四卡中最慢的输入准备约 14.5 ms，H2D 约 1 ms；两个缓存对照均仅节省约 3%。禁用梯度同步平均节省约 166 ms（含卡间等待），该对照不能用于正式训练。基线 rank 0 的前向组件 CUDA event 中位数：视觉塔 31 ms，视觉语言主干 110 ms，动作专家 64 ms；这些是前向子区间，不与反向或各 rank 分项相加。缓存和 SDPA 候选未通过预定门槛：须在两轮都至少快 5%，因此未采用。
+
+可迁移的是定位和验收方法，而不是其他机器的倍速。例如 [Faster-Motus](https://github.com/AI4AI-for-Anything/Faster-Motus#what-changed) 消除的是 DeepSpeed ZeRO hooks 的重复遍历及嵌入文件的重复读取；本轮 G05 为原生 DDP，RGB 已按轨迹 mmap。
