@@ -34,11 +34,11 @@ python "$EXP/prepare.py" ../datasets/robomme_data_h5 \
 
 ```bash
 CUDA_VISIBLE_DEVICES=3 "$PY" "$EXP/codec.py" "$ART"
-CUDA_VISIBLE_DEVICES=0,1,2 NCCL_P2P_DISABLE=1 "$PY" -m torch.distributed.run \
+CUDA_VISIBLE_DEVICES=0,1,3 NCCL_P2P_DISABLE=1 "$PY" -m torch.distributed.run \
   --standalone --nproc-per-node=3 "$EXP/core.py" "$ART"
 for kind in base tuned; do
   "$PY" "$EXP/export.py" "$ART" "$kind"
-  POLICY_GPU=2 ENV_GPU=3 bash "$EXP/evaluate.sh" \
+  POLICY_GPU=2 ENV_GPU=2 bash "$EXP/evaluate.sh" \
     "$ART/eval-$kind/model_state_dict.pt" "$PWD/runs/robomme/g05-$kind"
 done
 ```
@@ -52,3 +52,7 @@ done
 三卡正式配置为每卡 batch 2、全局 batch 6，训练 7,948 次更新（47,688 个窗口位置）。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned}/<任务>-<回合>/report.json` 是原生仿真记录。对应阶段完成后，分支中的 `result-base.json`、`result-core.json`、`result-tuned.json` 分别记录基础模型对照、选模曲线和最终逐任务配对成绩。每个任务只有三个测试回合，报告样本数与终止状态。
 
 另在第 256 步固定保存一次候选，在 `MoveCube/val/0` 与基础权重各跑一次（同一仿真 seed）。这是中途观察，不参与选模，也不混入 12 个测试回合。复现单独验证回合时给 `evaluate.sh` 设置 `ROBOMME_SPLIT=val ROBOMME_TASKS=MoveCube ROBOMME_EPISODE_IDS=0` 即可。正式评估不传这些覆盖值。
+
+第 256 步在这 128 个固定窗口上的联合验证 loss 为 `2.717556`。已把该步独立导出，并逐个对照了推理包的 946 个张量：121 个等于训练快照（343,294,964 个可训练参数），另外 825 个等于官方基础权重。本机快照位于 `$ART/preview-256/eval-tuned/`，不会随着 `run/best.pt` 更新而被覆盖。
+
+要看模型具体做了什么，在 `runs/robomme/g05-training/{base,tuned}/` 下打开相同任务和回合目录的 MP4：左边是前视相机，右边是腕部相机。以同目录 `report.json` 的 `benchmark_seed` 核对场景，以原生 `status` 判定 `success`、`fail` 或 `timeout`；超时也计入分母。中途对照的视频在 `val256-base/` 和 `val256-tuned/`。
