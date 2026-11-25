@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 
 from XPolicyLab.policy.demo_policy.deploy import eval_one_episode, eval_one_episode_batch
-from XPolicyLab.utils.robomme_env_client import Episode, EpisodeRPC, observations
+from XPolicyLab.benchmarks.robomme.client import Episode, EpisodeRPC, observations
 
 
 def frames(indices):

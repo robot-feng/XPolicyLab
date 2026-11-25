@@ -19,7 +19,7 @@ Building Scalable Infrastructure for Robot Learning Workshop，授予全体 XPol
 
 <img src="assets/teaser.png" alt="XPolicyLab overview" width="100%"/>
 
-<p><em>把 N 个策略接到 M 个评测环境 —— 从 O(N×M) 降到 O(N+M)。</em></p>
+<p><em>当策略与环境的观测和动作约定兼容时，接入共享接口需要 N 个策略适配器和 M 个环境客户端。</em></p>
 
 </div>
 
@@ -74,6 +74,8 @@ XPolicyLab 与具体 benchmark 解耦：任意 benchmark、仿真器或真机方
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**：通过策略专用 adapter 与转换脚本作为 benchmark 与数据源。[RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) 覆盖干净与随机设置下 50 个双臂操作任务。
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**：基于 RoboTwin 2.0 的记忆依赖操作 benchmark，九个双臂任务覆盖不同任务记忆复杂度（[论文](https://arxiv.org/abs/2603.01229)，[网站](https://rmbench.github.io/)）。其参考策略已接入为 [Mem-0](policy/Mem_0/README.md)。
 - **[RoboMME](docs/g05-pi05-robomme.md)** 通过已有的 XPolicyLab 策略服务评估 Panda 关节控制，客户端在模拟器环境中运行。
+
+**接入仿真 benchmark。** 对使用公共启动器的策略，`EVAL_ENV_TYPE=sim` 选择本仓库的 `benchmarks/<name>/scripts/eval_policy.sh`，目录名取 `bench_name` 的小写。该目录也可以是指向外部 benchmark 仓库的软链接，只要它提供同一入口。目录不存在时，启动器会使用父工作区原有的 `scripts/eval_policy.sh`。两种布局接收同一组参数。环境客户端在指定的仿真环境中构造观测、执行动作并记录回合评分。参见 [RoboMME 启动脚本](benchmarks/robomme/scripts/eval_policy.sh)和[客户端](benchmarks/robomme/client.py)。
 
 **基础设施**
 

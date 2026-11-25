@@ -9,6 +9,31 @@
 
 初版的 `deploy.py` 是环境端可调用的部署循环，`model.py` 是服务端的模型实现。新客户端把 Panda 封装为 `TASK_ENV`，按该策略的 `deploy.yml` 选择单环境或 batch 部署循环。batch 模式每次有一个活动环境，episode 按顺序运行。适配范围为 WebSocket、Panda 单臂、绝对关节控制以及使用标准观测和动作 RPC 的部署循环。
 
+## 环境目录与启动约定
+
+```text
+<workspace>/
+├── env_cfg/                               # 工作区机器人配置
+├── robomme_benchmark/                     # 本机模拟器、数据与独立 Python 环境
+└── XPolicyLab/
+    ├── benchmarks/robomme/
+    │   ├── scripts/eval_policy.sh         # benchmark 入口
+    │   └── client.py                      # Panda 观测、动作、原生评分
+    └── policy/<POLICY>/                   # 策略及其部署循环
+```
+
+从策略的标准启动脚本进入时，`EVAL_ENV_TYPE` 选择运行模式；在 `sim` 模式内，公共启动器把 `bench_name` 转为小写查找上述目录。原始名称仍传给 benchmark。缺少该目录时执行 `<workspace>/scripts/eval_policy.sh`，兼容把 XPolicyLab 嵌在 RoboDojo 中的布局。已有环境目录缺少入口时，启动器报出缺失文件，以便发现安装错误。调试和真机沿用各自的入口。
+
+接入另一个仿真器时，提供 `benchmarks/<小写名称>/scripts/eval_policy.sh` 即可，环境团队也可以维护该目录并软链接进来。脚本在选定的 Conda 环境或 Python venv 中运行。它接收 12 个具名参数，`--root_dir` 始终指向 XPolicyLab 的父工作区。
+
+```text
+--bench_name  --task_name  --env_cfg_type  --policy_name
+--host        --port       --protocol      --eval_batch
+--root_dir    --device_id  --additional_info  --seed
+```
+
+RoboMME 入口把参数转交给同目录树的 Python 客户端，使用已有的 `WsModelClient` 和策略部署循环。任务资源由环境包加载。接入使用其他机器人的 benchmark 时，还需按项目规范登记机器人维度。当前部分 RoboTwin 策略有专用启动脚本，这些脚本只有接入公共启动器后才会使用此查找约定。
+
 ## 在环境机运行
 
 1. 按 [RoboMME 安装指南](https://github.com/RoboMME/robomme_benchmark) 安装模拟器、任务数据和资产。本机使用同级目录 `../robomme_benchmark/.venv`，其中已有 ManiSkill、SAPIEN、imageio 和 FFmpeg。该 Python 还需要本仓库 `pyproject.toml` 中的通信和数据依赖。
@@ -34,13 +59,13 @@ bash policy/Pi_05/setup_eval_env_client.sh \
 | `ROBOMME_EVALUATION_ID` | 结果目录名 | 跨客户端复用同一服务时，在第一次连接和后续各次指定同一 ID |
 | `ROBOMME_OUTPUT_DIR` | `runs/robomme/<id>/` | 新建结果目录，保存 report.json 和每回合的 MP4 |
 
-每次指定一个原生任务名。对多个任务依次启动客户端时，设置相同的 `ROBOMME_EVALUATION_ID`。服务在首次握手时绑定该 ID，各任务的 trial ID 包含任务、split 和回合编号。直接调用的等价入口可以用 `python -m XPolicyLab.utils.robomme_env_client --help` 查看。需要从 checkout 或其父目录导入 XPolicyLab。
+每次指定一个原生任务名。对多个任务依次启动客户端时，设置相同的 `ROBOMME_EVALUATION_ID`。服务在首次握手时绑定该 ID，各任务的 trial ID 包含任务、split 和回合编号。从 checkout 根目录、在仿真 Python 环境中运行 `python -m XPolicyLab.benchmarks.robomme.client --help` 可查看入口的全部参数。此前阶段的直接调用路径 `XPolicyLab.utils.robomme_env_client` 已迁至这个模块，策略的启动命令沿用上面的写法。
 
 环境端将前视和腕部的 RGB 映射到 `cam_head`、`cam_wrist`。状态是 7 个关节和第一根夹指的物理位置，动作是 7 个绝对关节目标和一个夹爪命令（−1 闭合，+1 张开）。策略 reset 后，先发送演示帧，再将当前帧交给部署循环。环境使用数据集的 episode seed，并按原生 `terminated`、`truncated` 和 `info["status"]` 记录结果。
 
 ## 对上一轮改动的复核
 
-范围为初版 `4a9e3afd` 到实验提交 `59fe9968`。下表覆盖该比较中的 55 个文件。完整逐文件 diff 和各阶段的原始记录保存在[实验分支的固定版本](https://github.com/robot-feng/XPolicyLab/tree/59fe99687c60568c78eb6f54c77b8062740664e9)。
+下表记录环境分支首次提交 `f39a60dc` 时的取舍，复核范围为初版 `4a9e3afd` 到实验提交 `59fe9968` 之间的 55 个文件。完整逐文件 diff 和各阶段的原始记录保存在[实验分支的固定版本](https://github.com/robot-feng/XPolicyLab/tree/59fe99687c60568c78eb6f54c77b8062740664e9)。
 
 | 原改动 | 文件数 | 复核与处理 |
 | --- | ---: | --- |
@@ -62,7 +87,7 @@ git diff --exit-code 4a9e3afd HEAD -- policy/ client_server/ setup_policy_server
 
 ## 本分支的实际验证
 
-2026-11-25，从各策略原有的 `setup_eval_env_client.sh` 进入，新分支上的客户端和独立策略进程通过 WebSocket 通信。π0.5 服务从实验提交 `59fe9968` 的独立 checkout 启动，使用已验证的官方 Panda 权重；客户端与两个策略的部署循环均来自本分支。
+以下为环境分支 `f39a60dc` 的基线。2026-11-25，从各策略原有的 `setup_eval_env_client.sh` 进入，新分支上的客户端和独立策略进程通过 WebSocket 通信。π0.5 服务从实验提交 `59fe9968` 的独立 checkout 启动，使用已验证的官方 Panda 权重；客户端与两个策略的部署循环均来自本分支。
 
 | 服务与设置 | 环境结果 | 本机记录 |
 | --- | --- | --- |

@@ -20,28 +20,6 @@ protocol_override="${14:-}"
 source "${UTILS_DIR}/resolve_eval_env_type.sh"
 eval_env_mode="$(resolve_eval_env_type)" || exit 1
 
-# A RoboMME process owns the simulator and uses the selected policy's deploy loop.
-if [[ "${eval_env_mode}" == sim && "${bench_name,,}" == robomme ]]; then
-    if [[ "${env_cfg_type}" != panda || ",${additional_info}," != *,action_type=joint,* ]]; then
-        echo "RoboMME requires panda and joint actions" >&2
-        exit 1
-    fi
-    if [[ -f "${eval_env_conda_env}/pyvenv.cfg" ]]; then
-        evaluator="${eval_env_conda_env}/bin/python"
-    else
-        source "$(conda info --base)/etc/profile.d/conda.sh"
-        conda activate "${eval_env_conda_env}"
-        evaluator=python
-    fi
-    export CUDA_VISIBLE_DEVICES="${env_gpu_id}" PYTHONPATH="${ROOT_DIR}/XPolicyLab:${ROOT_DIR}${PYTHONPATH:+:${PYTHONPATH}}"
-    exec "${evaluator}" -m XPolicyLab.utils.robomme_env_client --task "${task_name}" --policy "${policy_name}" \
-        --host "${policy_server_ip}" --port "${policy_server_port}" --deploy-config "${yaml_file}" \
-        --protocol "${protocol_override}" --split "${ROBOMME_SPLIT:-test}" --start-episode "${ROBOMME_START_EPISODE:-0}" \
-        --episodes "${ROBOMME_EPISODES:-1}" --max-steps "${ROBOMME_MAX_STEPS:-1300}" --action-steps "${ROBOMME_ACTION_STEPS:-16}" \
-        --evaluation-id "${ROBOMME_EVALUATION_ID:-}" \
-        ${ROBOMME_OUTPUT_DIR:+--output "${ROBOMME_OUTPUT_DIR}"}
-fi
-
 # Read deploy.yml with the eval env's interpreter. This runs before any of
 # the run_*_env_client.sh scripts activate that env, so otherwise the read
 # lands on whatever python the launching shell exposes. The eval env needs
@@ -49,7 +27,9 @@ fi
 # pulls in load_file -> yaml. Activation is best-effort and confined to the
 # subshell; without conda the read falls back to the ambient interpreter.
 deploy_meta="$(
-    if command -v conda >/dev/null 2>&1; then
+    if [[ "${eval_env_mode}" == sim && -f "${eval_env_conda_env}/pyvenv.cfg" ]]; then
+        export PATH="${eval_env_conda_env}/bin:${PATH}"
+    elif command -v conda >/dev/null 2>&1; then
         conda_base="$(conda info --base 2>/dev/null)" || conda_base=""
         if [[ -n "${conda_base}" && -f "${conda_base}/etc/profile.d/conda.sh" ]]; then
             # shellcheck disable=SC1090
@@ -57,15 +37,16 @@ deploy_meta="$(
             conda activate "${eval_env_conda_env}" 2>/dev/null || true
         fi
     fi
-    python - <<PY
+    python - "${yaml_file}" <<'PYTHON'
+import sys
 import yaml
-with open("${yaml_file}", "r") as f:
+with open(sys.argv[1], "r") as f:
     data = yaml.safe_load(f)
 print(
     str(data.get("eval_batch", False)).lower(),
     data.get("protocol", "ws"),
 )
-PY
+PYTHON
 )" || true
 
 read eval_batch yaml_protocol <<< "${deploy_meta}" || true

@@ -3,11 +3,11 @@ import argparse
 from contextlib import ExitStack, closing
 from importlib import import_module
 import json
+import os
 from pathlib import Path
 from uuid import uuid4
 
 import numpy as np
-import yaml
 
 from client_server.ws import WsModelClient
 from XPolicyLab.utils.process_data import get_robot_action_dim_info, pack_robot_state
@@ -106,32 +106,37 @@ class EpisodeRPC:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--task", required=True, help="One native task name")
-    parser.add_argument("--policy", required=True, help="XPolicyLab adapter with the deployment loop")
+    parser.add_argument("--bench_name", required=True)
+    parser.add_argument("--task_name", dest="task", required=True, help="One native task name")
+    parser.add_argument("--policy_name", dest="policy", required=True)
+    parser.add_argument("--env_cfg_type", required=True)
+    parser.add_argument("--additional_info", required=True)
+    parser.add_argument("--root_dir", type=Path, required=True, help="Parent workspace")
+    parser.add_argument("--device_id", required=True)
+    parser.add_argument("--seed", required=True, help="Policy run seed; the dataset fixes each episode seed")
     parser.add_argument("--host", default="localhost")
     parser.add_argument("--port", type=int, required=True)
-    parser.add_argument("--evaluation-id", help="Shared session ID for sequential trials on the same server")
-    parser.add_argument("--deploy-config", type=Path)
-    parser.add_argument("--protocol", help="Optional override of the configured WebSocket protocol")
-    parser.add_argument("--split", default="test", choices=("train", "val", "test", "ood_test"))
-    parser.add_argument("--start-episode", type=int, default=0)
-    parser.add_argument("--episodes", type=int, default=1)
-    parser.add_argument("--max-steps", type=int, default=1300)
-    parser.add_argument("--action-steps", type=int, default=16)
-    parser.add_argument("--output", type=Path)
+    parser.add_argument("--protocol", choices=("ws",), required=True)
+    parser.add_argument("--eval_batch", choices=("true", "false"), required=True)
+    parser.add_argument("--evaluation-id", default=os.getenv("ROBOMME_EVALUATION_ID"))
+    parser.add_argument("--split", default=os.getenv("ROBOMME_SPLIT") or "test", choices=("train", "val", "test", "ood_test"))
+    parser.add_argument("--start-episode", type=int, default=os.getenv("ROBOMME_START_EPISODE") or 0)
+    parser.add_argument("--episodes", type=int, default=os.getenv("ROBOMME_EPISODES") or 1)
+    parser.add_argument("--max-steps", type=int, default=os.getenv("ROBOMME_MAX_STEPS") or 1300)
+    parser.add_argument("--action-steps", type=int, default=os.getenv("ROBOMME_ACTION_STEPS") or 16)
+    parser.add_argument("--output", type=Path, default=os.getenv("ROBOMME_OUTPUT_DIR") or None)
     parser.add_argument("--no-video", action="store_true")
     args = parser.parse_args()
+    if args.env_cfg_type != "panda" or "action_type=joint" not in args.additional_info.split(","):
+        parser.error("RoboMME requires panda and joint actions")
     if min(args.episodes, args.max_steps, args.action_steps) < 1 or args.start_episode < 0:
         parser.error("Episode count and step budgets must be positive, and start-episode nonnegative")
+    os.environ["CUDA_VISIBLE_DEVICES"] = args.device_id
     from robomme.env_record_wrapper import BenchmarkEnvBuilder
 
     if args.task not in BenchmarkEnvBuilder.get_task_list(args.split):
         parser.error(f"Unknown task for {args.split}: {args.task}")
-    config_path = args.deploy_config or Path(__file__).resolve().parents[1] / "policy" / args.policy / "deploy.yml"
-    config = yaml.safe_load(config_path.read_text())
-    if (args.protocol or config.get("protocol", "ws")) != "ws":
-        parser.error("RoboMME requires the XPolicyLab WebSocket protocol")
-    batch = config.get("eval_batch", False)
+    batch = args.eval_batch == "true"
     deploy = import_module(f"XPolicyLab.policy.{args.policy}.deploy")
     evaluate = deploy.eval_one_episode_batch if batch else deploy.eval_one_episode
     dimensions = get_robot_action_dim_info("panda")
@@ -140,7 +145,7 @@ def main():
     end = args.start_episode + args.episodes
     if end > builder.get_episode_num():
         parser.error("Requested episode range exceeds the split")
-    output = args.output or Path(__file__).resolve().parents[1] / "runs/robomme" / uuid4().hex
+    output = args.output or args.root_dir / "XPolicyLab/runs/robomme" / uuid4().hex
     output.mkdir(parents=True, exist_ok=False)
 
     results = []

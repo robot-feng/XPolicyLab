@@ -19,7 +19,7 @@ Building Scalable Infrastructure for Robot Learning Workshop, awarded to all XPo
 
 <img src="assets/teaser.png" alt="XPolicyLab overview" width="100%"/>
 
-<p><em>Connecting N policies to M evaluation environments — from O(N×M) down to O(N+M).</em></p>
+<p><em>For policies and environments with compatible observations and actions, the shared interface takes N policy adapters and M environment clients.</em></p>
 
 </div>
 
@@ -72,6 +72,8 @@ XPolicyLab is benchmark-agnostic: any benchmark, simulator, or real-robot setup 
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**: benchmark and data source through policy-specific adapters and conversion scripts. The [RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) covers bimanual manipulation across 50 tasks under clean and randomized settings.
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**: memory-dependent manipulation benchmark built on RoboTwin 2.0, with nine dual-arm tasks spanning levels of task memory complexity ([paper](https://arxiv.org/abs/2603.01229), [website](https://rmbench.github.io/)). Its reference policy is integrated as [Mem-0](policy/Mem_0/README.md).
 - **[RoboMME](docs/g05-pi05-robomme.md)** runs native Panda joint-control episodes through an existing XPolicyLab policy server. Use the simulator environment on the client machine.
+
+**Adding a simulation benchmark.** For policies using the shared launcher, `EVAL_ENV_TYPE=sim` selects `benchmarks/<name>/scripts/eval_policy.sh` inside this checkout, with `bench_name` in lowercase. The directory can also be a symlink to a benchmark repository that provides the entry point. When that directory is absent, the launcher uses the parent workspace's existing `scripts/eval_policy.sh`. Both layouts receive the same arguments. The environment client builds observations, executes actions and scores episodes in the selected simulation environment. See the [RoboMME entry point](benchmarks/robomme/scripts/eval_policy.sh) and its [client](benchmarks/robomme/client.py).
 
 **Infrastructure**
 
