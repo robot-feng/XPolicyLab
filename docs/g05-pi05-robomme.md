@@ -98,3 +98,33 @@ git diff --exit-code 4a9e3afd HEAD -- policy/ client_server/ setup_policy_server
 π0.5 的两个回合成功数为 0/2。与实验版本在相同权重、模型 seed 0 和执行长度 16 下的记录逐个比较，原生终止状态、步数及两个 MP4 文件的 SHA256 都一致。首次跨任务重连时，新的评估 ID 被已有服务拒绝。表中复测使用同一 evaluation ID 及各回合独立的 trial ID。
 
 `python -m unittest discover -s tests` 共通过 29 项（初版 27 项、本次新增 2 项）。新增测试运行原有单环境和 batch 部署循环，覆盖演示帧顺序、RGB、夹指单位、动作 chunk 截取和终止。另用相同输入对比初版和当前共享分派脚本，RoboDojo sim、RoboMME debug、RoboDojo real 三种情况下目标脚本和传入参数一致。
+
+## 按 benchmark 选客户端的回归验证
+
+测试代码版本为 `8d3890d2`，迁移前的环境客户端为 `f39a60dc`。从 checkout 根目录，在安装了项目依赖的 Python 环境里运行以下命令。
+
+```bash
+python -m unittest discover -s tests
+git diff --exit-code 4a9e3afd 8d3890d2 -- policy/ client_server/ setup_policy_server.py utils/process_data.py
+```
+
+31 项测试全部通过。新增的两项用独立临时工作区运行完整的共享启动脚本，分别验证外部环境目录的软链接与 12 个参数传递、旧工作区回退与已安装目录缺少入口时报错。另用真实 Conda 环境运行了旧布局的入口夹具。真实 RoboMME 搭配 `demo_policy` 的单环境测试在预算 2 下得到原生 `timeout`，实走 3 步，与基线相同。
+
+为单独验证目录迁移，在同一个 π0.5 服务上，对每个任务先后运行旧版和新版客户端。两边分别从各自 checkout 的 `policy/Pi_05/setup_eval_env_client.sh` 进入，策略服务使用实验提交 `59fe9968`、官方 Panda checkpoint `79999`、模型 seed 0。两个工作区使用同一份 Panda 配置、同一仿真 venv、同一 GPU 和同一 evaluation ID，每个回合重新 reset。split 为 `test`，episode 为 0，步数预算 1300，动作执行长度 16。
+
+| 任务 | reset 帧数 | 旧客户端 | 新客户端 | 两份视频的 SHA256 |
+| --- | ---: | --- | --- | --- |
+| PickXtimes | 1 | 445 步，fail | 445 步，fail | `cae4114d541e1770d287faf2cfafa748082b329a9fb737f82ebfca2291e04cb0` |
+| VideoRepick | 258 | 108 步，fail | 108 步，fail | `06f94cd5e1cc1963416e77c83aecee077c757497e95e27d6fd3d7385b0cd944d` |
+
+两套客户端的原生回合记录逐字段一致，对照样本成功数为 0/2。另一次独立启动的服务在这两个任务分别走了 438 和 105 步，前一阶段独立服务的记录为 422 和 108 步。跨服务进程观察到了轨迹差异，具体来源未定位。下列命令可在本机复核配对实验保存的原生记录和录像。
+
+```bash
+for task in PickXtimes VideoRepick; do
+    for version in old new; do
+        dir="runs/robomme/named-ab-${version}-${task}"
+        python -c 'import json, sys; print(json.load(open(sys.argv[1]))["episodes"])' "$dir/report.json"
+        sha256sum "$dir/$task-test-0.mp4"
+    done
+done
+```
