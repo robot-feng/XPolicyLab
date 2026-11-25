@@ -1,0 +1,100 @@
+{
+  "source": "OpenGalaxea/g05-robodojo, base training assets",
+  "holdout_episodes_per_task": [
+    0,
+    11,
+    22,
+    33,
+    44,
+    55,
+    66,
+    77,
+    88,
+    99
+  ],
+  "tasks": {
+    "MoveCube": {
+      "train": {
+        "episodes": 90,
+        "frames": 15528
+      },
+      "holdout": {
+        "episodes": 10,
+        "frames": 1803
+      }
+    },
+    "PatternLock": {
+      "train": {
+        "episodes": 90,
+        "frames": 9341
+      },
+      "holdout": {
+        "episodes": 10,
+        "frames": 1050
+      }
+    },
+    "RouteStick": {
+      "train": {
+        "episodes": 90,
+        "frames": 16750
+      },
+      "holdout": {
+        "episodes": 10,
+        "frames": 1700
+      }
+    },
+    "InsertPeg": {
+      "train": {
+        "episodes": 90,
+        "frames": 21451
+      },
+      "holdout": {
+        "episodes": 10,
+        "frames": 2415
+      }
+    }
+  },
+  "fixed_holdout_windows": 384,
+  "best": {
+    "step": 256,
+    "holdout_arm_mae_rad": 0.005617547285510227
+  },
+  "curve": [
+    {
+      "step": 0,
+      "holdout_arm_mae_rad": 0.005728178133722395
+    },
+    {
+      "step": 128,
+      "holdout_arm_mae_rad": 0.0062653781787958
+    },
+    {
+      "step": 256,
+      "holdout_arm_mae_rad": 0.005617547285510227
+    },
+    {
+      "step": 384,
+      "holdout_arm_mae_rad": 0.0061612233985215425
+    },
+    {
+      "step": 512,
+      "holdout_arm_mae_rad": 0.006152427900815383
+    },
+    {
+      "step": 640,
+      "holdout_arm_mae_rad": 0.006218808703124523
+    },
+    {
+      "step": 768,
+      "holdout_arm_mae_rad": 0.006170940527226776
+    },
+    {
+      "step": 896,
+      "holdout_arm_mae_rad": 0.006091065268265083
+    },
+    {
+      "step": 1024,
+      "holdout_arm_mae_rad": 0.006501301628304645
+    }
+  ]
+}
