@@ -91,6 +91,11 @@ def main(a):
     np.random.seed(7)
     cfg = configure(root, run / "action_tokenizer.pt")
     model, processors = setup(cfg, device=f"cuda:{local}")
+    kernel = next(m.chunk_gated_delta_rule for m in model.modules() if hasattr(m, "chunk_gated_delta_rule"))
+    if rank == 0:
+        print(f"GatedDeltaNet training kernel: {kernel.__module__}.{kernel.__name__}", flush=True)
+    if a.require_fla and not kernel.__module__.startswith("fla."):
+        raise RuntimeError("--require-fla was set, but G05 selected its PyTorch fallback")
     params = select_parameters(model)
     opt = torch.optim.AdamW(params, lr=PEAK_LR, weight_decay=0.01, fused=True)
     net = DistributedDataParallel(
@@ -238,5 +243,6 @@ if __name__ == "__main__":
     p.add_argument("--batch", type=int, default=2)
     p.add_argument("--steps", type=int, default=30_000, help="total optimizer updates, including resumed steps")
     p.add_argument("--stop-at", type=int, choices=MILESTONES, help="release GPUs after a milestone; keep the full LR schedule")
+    p.add_argument("--require-fla", action="store_true", help="abort if G05 silently falls back to unfused attention")
     p.add_argument("--resume", action="store_true")
     main(p.parse_args())

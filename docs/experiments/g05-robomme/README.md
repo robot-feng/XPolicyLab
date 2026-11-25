@@ -35,7 +35,7 @@ python "$EXP/prepare.py" ../datasets/robomme_data_h5 \
 ```bash
 CUDA_VISIBLE_DEVICES=3 "$PY" "$EXP/codec.py" "$ART"
 PYTHONPATH="$ART/fla6:$PYTHONPATH" CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 "$PY" -m torch.distributed.run \
-  --standalone --nproc-per-node=4 "$EXP/core.py" "$ART" --steps 30000
+  --standalone --nproc-per-node=4 "$EXP/core.py" "$ART" --steps 30000 --require-fla
 for kind in base tuned last; do
   "$PY" "$EXP/export.py" "$ART" "$kind"
   POLICY_GPU=2 ENV_GPU=2 bash "$EXP/evaluate.sh" \
