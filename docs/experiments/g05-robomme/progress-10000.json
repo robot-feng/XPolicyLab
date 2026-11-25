@@ -1,0 +1,26 @@
+{
+  "step": 10000,
+  "holdout_loss": 2.7534074783325195,
+  "split": "val",
+  "task": "MoveCube",
+  "base": {
+    "episode": 0,
+    "benchmark_seed": 1140000,
+    "difficulty": "easy",
+    "status": "timeout",
+    "steps": 1301,
+    "initial_frames": 281,
+    "terminated": false,
+    "truncated": true
+  },
+  "tuned": {
+    "episode": 0,
+    "benchmark_seed": 1140000,
+    "difficulty": "easy",
+    "status": "timeout",
+    "steps": 1301,
+    "initial_frames": 281,
+    "terminated": false,
+    "truncated": true
+  }
+}
