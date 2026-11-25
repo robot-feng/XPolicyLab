@@ -1,0 +1,117 @@
+{
+  "step": 3072,
+  "protocol": {
+    "hardware": "four RTX 4090, no peer reads, unchanged clock and global batch 8",
+    "precision": "BF16 forward, FP32 trainable parameters and FP32 full gradient all-reduce",
+    "variants": [
+      "original DDP",
+      "gradient views, used-parameter scan off, 25 MiB",
+      "gradient views, used-parameter scan off, 64 MiB"
+    ],
+    "sequence": [
+      "base",
+      "25",
+      "64",
+      "64",
+      "25",
+      "base"
+    ],
+    "timing": "4 warmup steps then 3 windows of 4 steps; no intermediate device/host barriers for timing within each window; maximum rank time per window",
+    "quality": "same four real windows per rank, same random noise. Restore full AdamW state for a real nonzero update. Worst of all full tensors/ranks: relative L2 of gradient < 0.002, max abs updated weight difference < 2e-6, loss difference < 1e-5",
+    "gate": "at least 5% faster in BOTH forward and reverse comparisons",
+    "source_sha256": "bef40b3ec9688f66c10523495048b33248fc3c2e56c774c7192d24c2a9dfd40d"
+  },
+  "comparison_lr": 2e-06,
+  "records": {
+    "base": [
+      {
+        "median_s": 0.6829943952616304,
+        "windows_s": [
+          0.6800908097065985,
+          0.6829943952616304,
+          0.6830682309810072
+        ],
+        "skew_ms": 0.17721392214298248,
+        "peak_GiB": 19.908068656921387,
+        "buckets_count": 31
+      },
+      {
+        "median_s": 0.7617027356754988,
+        "windows_s": [
+          0.7393629665020853,
+          0.7617027356754988,
+          0.7649613420944661
+        ],
+        "skew_ms": 0.372506445273757,
+        "peak_GiB": 19.908069133758545,
+        "buckets_count": 31
+      }
+    ],
+    "25": [
+      {
+        "median_s": 0.5235840294044465,
+        "windows_s": [
+          0.5235840294044465,
+          0.5212839785963297,
+          0.5286289544310421
+        ],
+        "skew_ms": 0.9059614967554808,
+        "peak_GiB": 19.888629913330078,
+        "buckets_count": 32
+      },
+      {
+        "median_s": 0.5522662759758532,
+        "windows_s": [
+          0.5522662759758532,
+          0.5531828480307013,
+          0.5463037614244968
+        ],
+        "skew_ms": 0.6808072794228792,
+        "peak_GiB": 19.888629913330078,
+        "buckets_count": 32
+      }
+    ],
+    "64": [
+      {
+        "median_s": 0.5391397054772824,
+        "windows_s": [
+          0.5251276812050492,
+          0.5407934784889221,
+          0.5391397054772824
+        ],
+        "skew_ms": 0.4332906100898981,
+        "peak_GiB": 19.888629913330078,
+        "buckets_count": 18
+      },
+      {
+        "median_s": 0.5781556335277855,
+        "windows_s": [
+          0.5653628748841584,
+          0.5923948849085718,
+          0.5781556335277855
+        ],
+        "skew_ms": 0.2950378693640232,
+        "peak_GiB": 19.888629913330078,
+        "buckets_count": 18
+      }
+    ]
+  },
+  "max_relative_gradient_abs_weight_abs_loss": {
+    "base": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "25": [
+      8.441777765710867e-08,
+      7.450580596923828e-09,
+      0.0
+    ],
+    "64": [
+      9.013342605612706e-08,
+      7.450580596923828e-09,
+      0.0
+    ]
+  },
+  "winner": "25"
+}

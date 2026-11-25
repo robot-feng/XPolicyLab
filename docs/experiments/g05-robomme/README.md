@@ -35,7 +35,7 @@ python "$EXP/prepare.py" ../datasets/robomme_data_h5 \
 ```bash
 CUDA_VISIBLE_DEVICES=3 "$PY" "$EXP/codec.py" "$ART"
 PYTHONPATH="$ART/fla6:$PYTHONPATH" CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 "$PY" -m torch.distributed.run \
-  --standalone --nproc-per-node=4 "$EXP/core.py" "$ART" --steps 30000 --require-fla
+  --standalone --nproc-per-node=4 "$EXP/core.py" "$ART" --steps 30000 --require-fla --ddp-bucket-mib 25
 for kind in base tuned last; do
   "$PY" "$EXP/export.py" "$ART" "$kind"
   POLICY_GPU=2 ENV_GPU=2 bash "$EXP/evaluate.sh" \
@@ -52,6 +52,8 @@ done
 正式续训使用 GPU 0、1、2、3，每卡一个 DDP 进程，目标已从 7,948 步延长到累计 30,000 步；第一阶段维持已完成的 1,024 步。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned,last}/<任务>-<回合>/report.json` 是原生仿真记录。[基础模型的正式对照](result-base.json)为 0/12。`result-core.json` 将保存整条验证曲线；`result-tuned.json` 和 `result-last.json` 将分别记录验证最优和第 30,000 步在相同测试场景的逐任务成绩。若最优正好是最后一步，则复用同一批仿真记录。每个任务只有三个测试回合，报告样本数与终止状态。
 
 第 1,536 步后启用了 G05 上游的 FLA 训练后端；安装命令、原实现对照、冷启动及实测速率见[四卡性能实验](throughput.md)。推理和仿真服务仍用之前的后端。
+
+第 3,072 步后，四卡续训命令加入 `--ddp-bucket-mib 25`。该开关让 DDP 用梯度桶视图，并利用本次训练的 121 个参数张量每步都参与反向传播这一条件。全局 batch 为 8，每步同步完整 FP32 梯度。复查两轮计时和梯度、权重差异可见[通信实验](throughput.md#第三轮让梯度同步与反向计算重叠)。
 
 上面的命令演示从头开始的四卡训练。本机实际在第 1,024 步的完整断点从三卡切成四卡。已核实 121 组 AdamW 状态均为 1,024 步，四卡第 1,025 步完成梯度同步和更新（loss `2.373102`）。`nvidia-smi` 逐个 PID 对照确认 GPU 0、1、2、3 各承担一个 rank；GPU 2 的训练进程当时占用 23,460 MiB。每次优化同步八个窗口的梯度；续用 AdamW 和原有学习率，不随 batch 放大学习率。离线验证保留原先的三组窗口、每组随机种子和 batch 顺序，使切换前后的 loss 可以比较。四卡训练期间不并行启动仿真。10K 和 20K 用 `--steps 30000 --stop-at 10000` / `--stop-at 20000` 保存并释放训练进程，短暂在 GPU 2 跑同一验证回合，之后用四卡和 `--resume` 继续。30K 再运行预定的正式测试。
 

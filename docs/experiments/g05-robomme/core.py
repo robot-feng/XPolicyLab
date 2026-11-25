@@ -99,7 +99,10 @@ def main(a):
     params = select_parameters(model)
     opt = torch.optim.AdamW(params, lr=PEAK_LR, weight_decay=0.01, fused=True)
     net = DistributedDataParallel(
-        model, device_ids=[local], broadcast_buffers=False, find_unused_parameters=True
+        model, device_ids=[local], broadcast_buffers=False,
+        find_unused_parameters=a.ddp_bucket_mib is None,
+        gradient_as_bucket_view=a.ddp_bucket_mib is not None,
+        bucket_cap_mb=a.ddp_bucket_mib,
     )
     proc = processors["panda"]
     proc.eval()
@@ -243,6 +246,8 @@ if __name__ == "__main__":
     p.add_argument("--batch", type=int, default=2)
     p.add_argument("--steps", type=int, default=30_000, help="total optimizer updates, including resumed steps")
     p.add_argument("--stop-at", type=int, choices=MILESTONES, help="release GPUs after a milestone; keep the full LR schedule")
+    p.add_argument("--ddp-bucket-mib", type=int, choices=(25, 64),
+                   help="use gradient bucket views and fixed parameter participation with this bucket size")
     p.add_argument("--require-fla", action="store_true", help="abort if G05 silently falls back to unfused attention")
     p.add_argument("--resume", action="store_true")
     main(p.parse_args())
