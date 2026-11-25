@@ -71,6 +71,7 @@ XPolicyLab is benchmark-agnostic: any benchmark, simulator, or real-robot setup 
 - **[RoboDojo](https://github.com/RoboDojo-Benchmark/RoboDojo)**: simulator-backed evaluation and RoboDojo-format data exports. The [RoboDojo Leaderboard](https://robodojo-benchmark.com/LeaderBoard) covers 42 simulation tasks across five capability dimensions (Generalization, Precision, Long-Horizon, Memory, Open) plus 18 real-robot tasks on three bimanual embodiments.
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**: benchmark and data source through policy-specific adapters and conversion scripts. The [RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) covers bimanual manipulation across 50 tasks under clean and randomized settings.
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**: memory-dependent manipulation benchmark built on RoboTwin 2.0, with nine dual-arm tasks spanning levels of task memory complexity ([paper](https://arxiv.org/abs/2603.01229), [website](https://rmbench.github.io/)). Its reference policy is integrated as [Mem-0](policy/Mem_0/README.md).
+- **[RoboMME](docs/g05-pi05-robomme.md)** runs native Panda joint-control episodes through an existing XPolicyLab policy server. Use the simulator environment on the client machine.
 
 **Infrastructure**
 

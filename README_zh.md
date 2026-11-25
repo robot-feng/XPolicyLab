@@ -73,6 +73,7 @@ XPolicyLab 与具体 benchmark 解耦：任意 benchmark、仿真器或真机方
 - **[RoboDojo](https://github.com/RoboDojo-Benchmark/RoboDojo)**：基于仿真器的评测，以及 RoboDojo 格式数据导出。[RoboDojo Leaderboard](https://robodojo-benchmark.com/LeaderBoard) 覆盖五个能力维度（Generalization、Precision、Long-Horizon、Memory、Open）上的 42 个仿真任务，以及三套双臂本体上的 18 个真机任务。
 - **[RoboTwin](https://github.com/RoboTwin-Platform/RoboTwin)**：通过策略专用 adapter 与转换脚本作为 benchmark 与数据源。[RoboTwin 2.0 Leaderboard](https://robotwin-platform.github.io/leaderboard) 覆盖干净与随机设置下 50 个双臂操作任务。
 - **[RMBench](https://github.com/RoboTwin-Platform/RMBench)**：基于 RoboTwin 2.0 的记忆依赖操作 benchmark，九个双臂任务覆盖不同任务记忆复杂度（[论文](https://arxiv.org/abs/2603.01229)，[网站](https://rmbench.github.io/)）。其参考策略已接入为 [Mem-0](policy/Mem_0/README.md)。
+- **[RoboMME](docs/g05-pi05-robomme.md)** 通过已有的 XPolicyLab 策略服务评估 Panda 关节控制，客户端在模拟器环境中运行。
 
 **基础设施**
 
