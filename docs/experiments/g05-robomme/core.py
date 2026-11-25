@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 import random
+import time
 
 import numpy as np
 from omegaconf import OmegaConf
@@ -162,6 +163,15 @@ def main(a):
         dist.all_reduce(acc)
         return (acc[0] / acc[1]).item()
 
+    if a.resume:
+        history = [json.loads(line) for line in (run / "core_metrics.jsonl").read_text().splitlines()]
+        ref = next(entry["holdout_loss"] for entry in reversed(history) if entry["step"] == start)
+        fresh = score()
+        if rank == 0:
+            print(f"resume validation {start}: reference={ref:.6f} current={fresh:.6f}", flush=True)
+        if not math.isclose(ref, fresh, rel_tol=0.01, abs_tol=1e-5):
+            raise RuntimeError("Resumed checkpoint failed fixed holdout comparison before optimization")
+
     rng = np.random.default_rng(7 + rank)
     # Per-step sampling is reproducible at an arbitrary resumed step.
     ids = rng.integers(len(train), size=(stop, a.batch))[start:]
@@ -169,11 +179,14 @@ def main(a):
         train,
         batch_sampler=ids,
         collate_fn=collate_fn_pad_sequences,
-        num_workers=2,
-        persistent_workers=True,
+        # Cached RGB windows are cheap to prepare; avoid forking a CUDA/Triton process.
+        num_workers=0,
     )
     torch.manual_seed(7 + rank + start * world)
+    tick = ready = time.perf_counter()
+    first, input_wait = start, 0.0
     for step, batch in enumerate(loader, start + 1):
+        input_wait += time.perf_counter() - ready
         net.train()
         lr = schedule(step)
         opt.param_groups[0]["lr"] = lr
@@ -189,9 +202,12 @@ def main(a):
             total, ce, fm = (metrics / world).tolist()
             if rank == 0:
                 print(
-                    json.dumps(dict(step=step, loss=total, ce=ce, fm=fm, grad_norm=norm.item(), lr=lr)),
+                    json.dumps(dict(step=step, loss=total, ce=ce, fm=fm, grad_norm=norm.item(), lr=lr,
+                                    samples_s=(step-first)*world*a.batch/(time.perf_counter()-tick),
+                                    input_wait_ms=1000*input_wait/(step-first))),
                     flush=True,
                 )
+            tick, first, input_wait = time.perf_counter(), step, 0.0
         if step % 256 == 0 or step in MILESTONES or step == a.steps:
             metric = score()
             assert math.isfinite(metric)
@@ -211,6 +227,8 @@ def main(a):
                     print(json.dumps(dict(step=step, holdout_loss=metric)), file=f)
                 print("validation", step, metric, flush=True)
             dist.barrier()
+            tick, first, input_wait = time.perf_counter(), step, 0.0
+        ready = time.perf_counter()
     dist.destroy_process_group()
 
 
