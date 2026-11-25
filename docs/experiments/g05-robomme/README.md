@@ -51,6 +51,8 @@ done
 
 三卡正式配置为每卡 batch 2、全局 batch 6，目标已从 7,948 步延长到累计 30,000 步；第一阶段维持已完成的 1,024 步。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned,last}/<任务>-<回合>/report.json` 是原生仿真记录。[基础模型的正式对照](result-base.json)为 0/12。`result-core.json` 将保存整条验证曲线；`result-tuned.json` 和 `result-last.json` 将分别记录验证最优和第 30,000 步在相同测试场景的逐任务成绩。若最优正好是最后一步，则复用同一批仿真记录。每个任务只有三个测试回合，报告样本数与终止状态。
 
+本次实际在第 768 步切换到 30K：核实 121 组 AdamW 状态的 `step` 均为 768，再从完整断点恢复；第 769 步已完成反向传播和优化。学习率从 `1.958848913e-5` 接到 `1.958822790e-5`。固定留出窗口在 256、512、768 步的联合 loss 分别是 `2.717556`、`2.488617`、`2.405152`。还单独从真实的 `resume.pt` 导出过推理包，比对全部 121 个微调张量一致。
+
 在第 256、10,000、20,000 步保存候选，在 `MoveCube/val/0` 与基础权重作同 seed 对照（基础模型同一回合只跑一次）。10K、20K 增量存于 `$ART/run/step-{10000,20000}.pt`；用 `export.py "$ART" tuned --step 10000` 等命令合并，输出 `eval-step-10000/`。每个导出命令要求目标目录尚不存在。`progress-10000.json`、`progress-20000.json` 记录阶段对照。这是中途观察，不参与选模，也不混入 12 个测试回合。复现单独验证回合时给 `evaluate.sh` 设置 `ROBOMME_SPLIT=val ROBOMME_TASKS=MoveCube ROBOMME_EPISODE_IDS=0` 即可。正式评估不传这些覆盖值。
 
 第 256 步在这 128 个固定窗口上的联合验证 loss 为 `2.717556`。已把该步独立导出，并逐个对照了推理包的 946 个张量：121 个等于训练快照（343,294,964 个可训练参数），另外 825 个等于官方基础权重。本机快照位于 `$ART/preview-256/eval-tuned/`，不会随着 `run/best.pt` 更新而被覆盖。
