@@ -113,5 +113,40 @@
       0.0
     ]
   },
-  "winner": "25"
+  "winner": "25",
+  "production": {
+    "native": {
+      "from_step": 1280,
+      "to_step": 1536,
+      "global_batch": 8,
+      "from_validation_mtime_unix_s": 1795609542.6569123,
+      "to_validation_mtime_unix_s": 1795610014.6212294,
+      "seconds": 471.96431708335876,
+      "windows": 2048,
+      "windows_s": 4.339311100161583
+    },
+    "fla": {
+      "from_step": 2048,
+      "to_step": 2816,
+      "global_batch": 8,
+      "from_validation_mtime_unix_s": 1795610853.598465,
+      "to_validation_mtime_unix_s": 1795611444.2819192,
+      "seconds": 590.6834542751312,
+      "windows": 6144,
+      "windows_s": 10.401510242977315
+    },
+    "fla_ddp_25": {
+      "from_step": 3328,
+      "to_step": 3584,
+      "global_batch": 8,
+      "from_validation_mtime_unix_s": 1795612561.3056746,
+      "to_validation_mtime_unix_s": 1795612715.3484325,
+      "seconds": 154.04275798797607,
+      "windows": 2048,
+      "windows_s": 13.29500994886016,
+      "median_full_25_step_windows_s": 14.493933183377282,
+      "median_full_25_step_input_wait_ms": 15.420295745134354,
+      "holdout_at_end": 2.198787212371826
+    }
+  }
 }
