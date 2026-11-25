@@ -56,3 +56,44 @@ done
 第 256 步在这 128 个固定窗口上的联合验证 loss 为 `2.717556`。已把该步独立导出，并逐个对照了推理包的 946 个张量：121 个等于训练快照（343,294,964 个可训练参数），另外 825 个等于官方基础权重。本机快照位于 `$ART/preview-256/eval-tuned/`，不会随着 `run/best.pt` 更新而被覆盖。
 
 要看模型具体做了什么，在 `runs/robomme/g05-training/{base,tuned}/` 下打开相同任务和回合目录的 MP4：左边是前视相机，右边是腕部相机。以同目录 `report.json` 的 `benchmark_seed` 核对场景，以原生 `status` 判定 `success`、`fail` 或 `timeout`；超时也计入分母。中途对照的视频在 `val256-base/` 和 `val256-tuned/`。
+
+## 专家动作回放（环境正对照）
+
+取每个任务第 11 条轨迹（官方 `train` 中本实验留作验证的困难轨迹），用相同 seed 重置模拟器。从数据缓存读取每个执行步的八维 `action.npy`，经 `unpack_robot_state` 和环境客户端 `Episode.take_action` 执行。四条轨迹均由原生环境判为 `success`。这验证了数据转换的时间顺序、Panda 动作打包与原生成功判定可以一起工作；下表不计入任何模型成绩。
+
+| 任务 | seed | 达成步数 |
+| --- | ---: | ---: |
+| MoveCube | 15100 | 91 |
+| PatternLock | 16100 | 129 |
+| RouteStick | 17100 | 194 |
+| InsertPeg | 14100 | 247 |
+
+<details><summary>在本机复查（RoboMME 的 Python 环境）</summary>
+
+```bash
+CUDA_VISIBLE_DEVICES=2 PYTHONPATH="$PWD:$PWD/.." ../robomme_benchmark/.venv/bin/python - <<'PY'
+import os
+from contextlib import closing
+from pathlib import Path
+import numpy as np
+from robomme.env_record_wrapper import BenchmarkEnvBuilder
+from XPolicyLab.benchmarks.robomme.client import Episode
+from XPolicyLab.utils.process_data import get_robot_action_dim_info, unpack_robot_state
+
+root = Path(os.environ["ART"]) / "data"
+dims = get_robot_action_dim_info("panda")
+for task in ("MoveCube", "PatternLock", "RouteStick", "InsertPeg"):
+    builder = BenchmarkEnvBuilder(env_id=task, dataset="train", action_space="joint_angle",
+                                  gui_render=False, max_steps=1300)
+    with closing(builder.make_env_for_episode(11)) as env:
+        ep = Episode(env, dims, None)
+        for action in np.load(root / task / "11/action.npy"):
+            ep.take_action(unpack_robot_state(action, "joint", dims))
+            if ep.is_episode_end():
+                break
+        print(task, builder.resolve_episode(11), ep.steps, ep.info["status"])
+        assert ep.terminated and ep.info["status"] == "success"
+PY
+```
+
+</details>
