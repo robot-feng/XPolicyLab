@@ -306,7 +306,7 @@ class Qwen3_5GatedDeltaNet(nn.Module):
         self.A_log = nn.Parameter(torch.log(A))
 
         # Use FusedRMSNormGated when available, else fallback
-        if FusedRMSNormGated is not None:
+        if FusedRMSNormGated is not None and getattr(config, "linear_attn_backend", "fla") != "torch":
             self.norm = FusedRMSNormGated(
                 self.head_v_dim,
                 eps=config.rms_norm_eps,

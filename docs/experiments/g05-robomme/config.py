@@ -9,8 +9,8 @@ from omegaconf import OmegaConf as OC
 from g05.utils.config.config_resolvers import register_default_resolvers
 
 
-def configure(root, codec):
-    source = Path(__file__).resolve().parents[3] / "policy/G05/G05"
+def configure(root, codec, source=None):
+    source = source or Path(__file__).resolve().parents[3] / "policy/G05/G05"
     os.chdir(source)
     register_default_resolvers()
     with initialize_config_dir(version_base=None, config_dir=str(source / "configs")):

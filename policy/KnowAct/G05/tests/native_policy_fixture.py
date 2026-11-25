@@ -3,11 +3,12 @@ No pretrained weights, no real text tokenizer; the deterministic fixture maps wo
 """
 import sys, types, re
 import native_context_imports
+import transformers
 import torch
 from torch import nn
 from omegaconf import OmegaConf
 from native_context_fixture import tiny
-if not hasattr(sys.modules['transformers'], 'PretrainedConfig'):
+if not hasattr(transformers, 'PretrainedConfig'):
     class PretrainedConfig:
         def __init__(self, **kw): self.__dict__.update(kw)
     class PreTrainedModel(nn.Module):

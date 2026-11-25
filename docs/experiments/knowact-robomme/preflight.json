@@ -1,0 +1,147 @@
+{
+  "source_zip_sha256": "b190794523404b89d6fe6266c29194db58dd6ac67f9aa5565d5a06995fb8a241",
+  "qwen_revision": "2fc06364715b967f1860aea9cf38778875588b17",
+  "qwen_verified": {
+    "language": 320,
+    "vision": 153,
+    "proprio_bias_token": 2374
+  },
+  "g05_alternate": {
+    "hidden_size": 2048,
+    "vision_depth": 24,
+    "verified_checkpoint_tensors": 618
+  },
+  "action_codec": {
+    "selected_step": 256,
+    "exactly_equal_state_tensors_per_backbone": 208
+  },
+  "gradient_probe": {
+    "seeds": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "original_largest_layer": "proprio_embedder.mlp.3.weight",
+    "original_largest_layer_norm": [
+      5375025217536,
+      2202630619136,
+      2452704722944,
+      2482682724352,
+      849794170880,
+      1024066256896
+    ],
+    "corrected_largest_layer_norm": [
+      102.642,
+      66.22,
+      58.771,
+      59.132,
+      59.753,
+      58.632
+    ]
+  },
+  "gpu_training": {
+    "trainable_parameters": 342333408,
+    "trainable_tensors": 61,
+    "world_size": 4,
+    "batch_per_gpu": 1,
+    "kernel": "fla.ops.gated_delta_rule.chunk",
+    "ddp_bucket_mib": 25,
+    "train_windows": 15896,
+    "holdout_windows": 1755,
+    "schedule_steps": 30000,
+    "first_train_step": 1,
+    "first_gradient_norm": 128.5166473388672,
+    "resumed_from_step": 4,
+    "first_resumed_step": 5,
+    "checked_saved_step": 512,
+    "adam_step_per_tensor": [
+      512
+    ],
+    "holdout": [
+      {
+        "step": 4,
+        "holdout_ce": 14.287376403808594
+      },
+      {
+        "step": 256,
+        "holdout_ce": 1.5485904216766357
+      },
+      {
+        "step": 512,
+        "holdout_ce": 1.4848964214324951
+      }
+    ],
+    "steady_windows_s": {
+      "interval_end_steps": [
+        50,
+        75,
+        100,
+        125,
+        150,
+        175,
+        200,
+        225,
+        250
+      ],
+      "min": 7.691484750759363,
+      "median": 8.030389372102455,
+      "max": 8.55228625180913
+    },
+    "gpu_poll": [
+      {
+        "gpu": 0,
+        "one_second_samples": 31,
+        "mean_utilization_pct": 55.1,
+        "peak_memory_mib": 13949
+      },
+      {
+        "gpu": 1,
+        "one_second_samples": 31,
+        "mean_utilization_pct": 68.5,
+        "peak_memory_mib": 13189
+      },
+      {
+        "gpu": 2,
+        "one_second_samples": 31,
+        "mean_utilization_pct": 73.2,
+        "peak_memory_mib": 13529
+      },
+      {
+        "gpu": 3,
+        "one_second_samples": 31,
+        "mean_utilization_pct": 74.3,
+        "peak_memory_mib": 13529
+      }
+    ]
+  },
+  "tests": {
+    "release": 73,
+    "repository": 32,
+    "debug_control_steps": {
+      "rgb": 20,
+      "encoded_jpeg": 20
+    }
+  },
+  "simulator_smoke": {
+    "training_step": 4,
+    "task": "MoveCube",
+    "split": "val",
+    "configured_max_steps": 18,
+    "action_steps": 16,
+    "episode": 0,
+    "benchmark_seed": 1140000,
+    "difficulty": "easy",
+    "status": "timeout",
+    "steps": 19,
+    "initial_frames": 281,
+    "terminated": false,
+    "truncated": true
+  },
+  "previous_g05": {
+    "last_resumable_step": 10240,
+    "retained_numbered_step": 10000
+  }
+}

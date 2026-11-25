@@ -8,7 +8,8 @@ ckpt_name: null
 env_cfg_type: arx_x5
 seed: null
 action_type: joint
-action_dim: 14
+action_dim: null
+gpu_id: null
 eval_batch: true
 ws_ping_timeout_s: 120.0
 ws_ping_interval_s: 120.0
@@ -17,8 +18,8 @@ g05_root: null
 action_source: ar
 native_context: true
 ckpt_path: null
-eval_embodiment: robodojo
+eval_embodiment: null
 action_steps: 32
-frequency: 30
+frequency: null
 # Native context uses AR/BAR16 only. Legacy FM requires native_context=false.
 hydra_overrides: []

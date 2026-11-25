@@ -12,13 +12,16 @@ from XPolicyLab.policy.KnowAct import deploy
 
 class IOFixture:
     pad_token_id=0; num_obs_steps=1
+    shape_meta = {"action": [dict(key=side + "_" + part, raw_shape=size)
+                             for side in ("left", "right")
+                             for part, size in (("control", 2), ("gripper", 1))]}
     def preprocess(self,obs):
         b=turn(obs.get('instruction','same')); return {'samples':b['samples'][0],'pixel_values':{k:v[0] for k,v in b['pixel_values'].items()},'proprio':torch.zeros(1,2)}
     def postprocess(self,b):
         a=b['action'][0]; return {'action':{'left_control':a[:,:2],'right_control':a[:,2:4],'left_gripper':a[:,4:5],'right_gripper':a[:,4:5]}}
 
 def adapter():
-    m=Model.__new__(Model);m.native_context=True;m.keep_history=True;m._native_lock=threading.RLock();m._native_states={};m._history_buffers={};m.batch_size=2;m.action_steps=8;m.action_type='joint';m.robot_action_dim_info={'arm_dim':[2,2],'ee_dim':[1,1]};m.processor=IOFixture();m.policy=make_policy();m.inferencer=PolicyInferencer(m.policy,m.processor,'cpu','ar');m._to_g05_raw_obs=lambda obs:obs;m._build_obs_dict=lambda raw,p:raw;m.reset();return m
+    m=Model.__new__(Model);m.embodiment_type="robodojo";m.native_context=True;m.keep_history=True;m._native_lock=threading.RLock();m._native_states={};m._history_buffers={};m.batch_size=2;m.action_steps=8;m.action_type='joint';m.robot_action_dim_info={'arm_dim':[2,2],'ee_dim':[1,1]};m.processor=IOFixture();m.policy=make_policy();m.inferencer=PolicyInferencer(m.policy,m.processor,'cpu','ar');m._to_g05_raw_obs=lambda obs:obs;m._build_obs_dict=lambda raw,p:raw;m.reset();return m
 
 def obs(k,receipt=None):
     o={'env_idx':k,'instruction':'left' if k==5 else 'right'}

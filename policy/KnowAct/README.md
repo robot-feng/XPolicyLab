@@ -21,7 +21,11 @@ XPolicyLab/
 
 `KnowAct/G05/` 是 KnowAct 使用的 G0.5 源码副本，不是原始 Baseline。**不要将其复制覆盖到 `policy/G05/`。** 原始 G05 和 KnowAct 应使用独立 Python 环境、独立 policy-server 进程，因为两者都导入名为 `g05` 的 Python 包。
 
-## 当前版本状态
+## RoboMME / Panda
+
+已接入四任务 Panda 关节控制训练，支持官方 Qwen3.5-0.8B 和 G05 两种初始化。环境客户端位于仓库的 `benchmarks/robomme/`。数据准备、两阶段权重、四卡启动命令、原生评估、检查点结构与实测记录见 [RoboMME 训练手册](../../docs/experiments/knowact-robomme/README.md)。
+
+## V7.1 原始发布状态
 
 | 项目 | 当前状态 |
 |---|---|

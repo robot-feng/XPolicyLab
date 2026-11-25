@@ -129,13 +129,13 @@ def setup(cfg, device: str = "cuda"):
     # DroidIdleActionFilter.forward detects idle frames from action deltas, but
     # inference uses all-zero dummy actions. That would make action_op_mask all
     # False and cause postprocess.backward to zero out the entire prediction.
-    # Replace it with BaseActionFilter: forward emits an all-True mask and
+    # Replace it with DummyActionFilter: forward emits an all-True mask and
     # backward is a no-op.
-    from g05.data_processor.transforms.action_filter import BaseActionFilter
+    from g05.data_processor.transforms.action_filter import DummyActionFilter
 
     def _neutralize_action_filter(p):
-        """Replace the processor action_filter with a no-op BaseActionFilter."""
-        safe_filter = BaseActionFilter()
+        """Replace the processor action_filter with a no-op DummyActionFilter."""
+        safe_filter = DummyActionFilter()
         safe_filter.set_shape_meta(p.shape_meta)
         p.action_filter = safe_filter
 

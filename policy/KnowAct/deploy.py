@@ -1,4 +1,4 @@
-"""RoboDojo deployment loop for Native Context.
+"""XPolicyLab deployment loop for Native Context.
 
 The environment is the source of truth for applied action steps and episode
 completion. Replanning currently happens at action-chunk boundaries; this file
@@ -42,17 +42,17 @@ def _attach_receipt(
     return {**observation, EXECUTION_RECEIPT_KEY: receipt}
 
 
-def eval_one_episode(task_env: Any, model_client: Any) -> None:
+def eval_one_episode(TASK_ENV: Any, model_client: Any) -> None:
     """Evaluate one environment with per-chunk execution receipts."""
     if not _native_enabled():
-        return g05_deploy.eval_one_episode(task_env, model_client)
+        return g05_deploy.eval_one_episode(TASK_ENV, model_client)
 
     model_client.call(func_name="reset")
     plan_id = 0
     previous_receipt: dict[str, int] | None = None
 
-    while not task_env.is_episode_end():
-        observation = task_env.get_obs()
+    while not TASK_ENV.is_episode_end():
+        observation = TASK_ENV.get_obs()
         model_client.call(
             func_name="update_obs",
             obs=_attach_receipt(observation, previous_receipt),
@@ -63,26 +63,26 @@ def eval_one_episode(task_env: Any, model_client: Any) -> None:
 
         applied_steps = 0
         for action in action_chunk:
-            task_env.take_action(action)
+            TASK_ENV.take_action(action)
             applied_steps += 1
-            if task_env.is_episode_end():
+            if TASK_ENV.is_episode_end():
                 break
 
         previous_receipt = {"plan": plan_id, "steps": applied_steps}
         plan_id += 1
 
 
-def eval_one_episode_batch(task_env: Any, model_client: Any) -> None:
+def eval_one_episode_batch(TASK_ENV: Any, model_client: Any) -> None:
     """Evaluate a batch while keeping receipts isolated by environment key."""
     if not _native_enabled():
-        return g05_deploy.eval_one_episode_batch(task_env, model_client)
+        return g05_deploy.eval_one_episode_batch(TASK_ENV, model_client)
 
     model_client.call(func_name="reset")
     receipts: dict[Any, dict[str, int]] = {}
 
-    while not task_env.is_episode_end():
-        env_keys = list(task_env.get_running_env_idx_list())
-        observations = task_env.get_obs_batch(env_keys)
+    while not TASK_ENV.is_episode_end():
+        env_keys = list(TASK_ENV.get_running_env_idx_list())
+        observations = TASK_ENV.get_obs_batch(env_keys)
         if not env_keys or len(set(env_keys)) != len(env_keys):
             raise RuntimeError("invalid or duplicate environment keys")
         if len(observations) != len(env_keys):
@@ -112,10 +112,10 @@ def eval_one_episode_batch(task_env: Any, model_client: Any) -> None:
 
         max_chunk_length = max(len(action_chunk) for action_chunk in plans.values())
         for action_index in range(max_chunk_length):
-            if task_env.is_episode_end():
+            if TASK_ENV.is_episode_end():
                 break
 
-            running_keys = set(task_env.get_running_env_idx_list())
+            running_keys = set(TASK_ENV.get_running_env_idx_list())
             active_keys = [
                 env_key
                 for env_key in env_keys
@@ -124,7 +124,7 @@ def eval_one_episode_batch(task_env: Any, model_client: Any) -> None:
             if not active_keys:
                 break
 
-            task_env.take_action_batch(
+            TASK_ENV.take_action_batch(
                 [plans[env_key][action_index] for env_key in active_keys],
                 active_keys,
             )
@@ -132,4 +132,4 @@ def eval_one_episode_batch(task_env: Any, model_client: Any) -> None:
                 receipts[env_key]["steps"] += 1
 
 
-# XPolicyLab's RoboDojo launcher imports these exact function names.
+# XPolicyLab clients pass TASK_ENV by keyword or position.

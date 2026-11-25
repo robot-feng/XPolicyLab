@@ -1,5 +1,7 @@
 # G05：RoboMME 四任务两阶段训练
 
+G05 的四卡训练已按实验安排停止，最近一次完整断点为第 10,240 步，10K 权重和离线最优权重均已保留。后续四卡训练切换到 [KnowAct / RoboMME 实验](../knowact-robomme/README.md)。下文保留 G05 的原定计划与历史结果。
+
 目标是测量 G05 在 Panda 关节控制下的任务完成率。使用 `MoveCube`、`InsertPeg`、`PatternLock`、`RouteStick` 四项本地可用的官方训练数据，不把它们的分数推广到整个 RoboMME。环境端继续使用 `benchmarks/robomme/`。
 
 ## 数据和预注册的评估方法

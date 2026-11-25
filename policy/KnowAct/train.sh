@@ -31,6 +31,19 @@ if [[ -z "${PYTHON_BIN}" || ! -x "${PYTHON_BIN}" ]]; then
   exit 3
 fi
 
+if [[ "${bench_name,,}" == robomme ]]; then
+  [[ "$env_cfg_type" == panda ]] || { echo "RoboMME training requires panda/joint" >&2; exit 2; }
+  experiment="$SCRIPT_DIR/../../docs/experiments/knowact-robomme"
+  data=${KNOWACT_ROBOMME_DATA:?Set KNOWACT_ROBOMME_DATA to the prepared RoboMME data and codec root}
+  initial=${KNOWACT_INITIAL:?Set KNOWACT_INITIAL to the prepared backbone initialization}
+  IFS=, read -r -a devices <<< "$gpu_id"
+  export CUDA_VISIBLE_DEVICES="$gpu_id"
+  export PYTHONPATH="$KNOWACT_ROOT/src:$KNOWACT_ROOT:$SCRIPT_DIR/../../..:${PYTHONPATH:-}"
+  exec "$PYTHON_BIN" -m torch.distributed.run --standalone --nproc-per-node="${#devices[@]}" \
+    "$experiment/train.py" --data "$data" --initial "$initial" --output "$OUTPUT_ROOT/$EXP_NAME" \
+    --steps "${KNOWACT_MAX_STEPS:-30000}" --batch "${KNOWACT_BATCH_SIZE:-1}" --seed "$seed" "$@"
+fi
+
 case "${KNOWACT_TRAIN_BENCHMARK:-}" in
   "")
     case "${bench_name}" in

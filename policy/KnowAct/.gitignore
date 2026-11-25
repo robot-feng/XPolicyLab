@@ -24,7 +24,7 @@ wandb/
 # Local data and caches
 .cache/
 cache/
-data/
+/data/
 datasets/
 *.mp4
 *.mkv

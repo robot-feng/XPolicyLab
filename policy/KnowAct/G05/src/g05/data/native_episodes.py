@@ -48,6 +48,33 @@ def hold_pad(action: torch.Tensor, count: int) -> torch.Tensor:
     return result
 
 
+def executed_turn(sample: dict, stride: int) -> dict:
+    """Represent only the executed prefix of this real history window."""
+    action_is_pad = torch.as_tensor(sample["action_is_pad"])
+    action_entry = sample["samples"]["action"]
+    padded_action = hold_pad(action_entry["value"], stride)
+    padded_raw_action = hold_pad(sample["action"], stride)
+    sample = {
+        **sample,
+        "samples": {
+            **sample["samples"],
+            "action": {**action_entry, "value": padded_action},
+        },
+        "action": padded_raw_action,
+        "_native_executed_steps": stride,
+    }
+
+    # Legacy gt_action is not used for CE. Do not retain its unseen suffix.
+    if isinstance(sample.get("gt_action"), torch.Tensor):
+        sample["gt_action"] = hold_pad(sample["gt_action"], stride)
+
+    padded_mask = action_is_pad.clone()
+    padded_mask[stride:] = True
+    sample["action_is_pad"] = padded_mask
+
+    return sample
+
+
 def validate_history_processor(processor: Any) -> None:
     """Enforce the currently verified pointwise action-normalization path."""
     if processor is None:
@@ -127,26 +154,7 @@ def completed_history(
             continue
 
         if replan_steps:
-            action_entry = sample["samples"]["action"]
-            padded_action = hold_pad(action_entry["value"], stride)
-            padded_raw_action = hold_pad(sample["action"], stride)
-            sample = {
-                **sample,
-                "samples": {
-                    **sample["samples"],
-                    "action": {**action_entry, "value": padded_action},
-                },
-                "action": padded_raw_action,
-                "_native_executed_steps": stride,
-            }
-
-            # Legacy gt_action is not used for CE. Do not retain its unseen suffix.
-            if isinstance(sample.get("gt_action"), torch.Tensor):
-                sample["gt_action"] = hold_pad(sample["gt_action"], stride)
-
-            padded_mask = action_is_pad.clone()
-            padded_mask[stride:] = True
-            sample["action_is_pad"] = padded_mask
+            sample = executed_turn(sample, stride)
 
         history.append(sample)
 

@@ -29,6 +29,9 @@ class Model(G05Adapter):
 
     def __init__(self, model_cfg: Any):
         config = dict(model_cfg)
+        if config.get("env_cfg_type") == "panda":
+            config["eval_embodiment"] = config.get("eval_embodiment") or "panda"
+            config["frequency"] = config.get("frequency") or 20
         g05_root = Path(
             config.get("g05_root")
             or os.environ.get("KNOWACT_ROOT")
@@ -65,6 +68,11 @@ class Model(G05Adapter):
         overrides.append(
             f"model.model_arch.native_context={str(self.native_context).lower()}"
         )
+        if token_limit := os.environ.get("KNOWACT_CONTEXT_MAX_TOKENS"):
+            token_limit = int(token_limit)
+            if token_limit <= 0:
+                raise ValueError("KNOWACT_CONTEXT_MAX_TOKENS must be positive")
+            overrides.append(f"model.model_arch.native_context_max_tokens={token_limit}")
         config["hydra_overrides"] = overrides
 
         super().__init__(config)
@@ -217,22 +225,9 @@ class Model(G05Adapter):
         if checkpoint_root.is_file():
             return checkpoint_root
 
-        # Preserve the base adapter's supported native G05 checkpoint layout.
-        candidates = [checkpoint_root / "last.pt"]
-        candidates.extend(
-            sorted(
-                (checkpoint_root / "checkpoints").glob("step_*.pt"),
-                key=_step_sort_key,
-            )
-        )
-        candidates.extend(
-            sorted(checkpoint_root.glob("**/step_*.pt"), key=_step_sort_key)
-        )
-        candidates.extend(checkpoint_root.glob("model_state_dict.pt"))
-
-        for candidate in reversed(candidates):
+        candidates = [checkpoint_root / "last.pt", checkpoint_root / "model_state_dict.pt"]
+        candidates.extend(sorted(checkpoint_root.rglob("step_*.pt"), key=_step_sort_key, reverse=True))
+        for candidate in candidates:
             if candidate.is_file():
                 return candidate.resolve()
-        raise FileNotFoundError(
-            f"No G0.5-format .pt checkpoint found under {checkpoint_root}"
-        )
+        raise FileNotFoundError(f"No G0.5-format .pt checkpoint found under {checkpoint_root}")

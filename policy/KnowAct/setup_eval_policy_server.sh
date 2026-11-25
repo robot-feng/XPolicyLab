@@ -31,40 +31,6 @@ if [[ -z "${PYTHON_BIN}" ]]; then
   fi
 fi
 
-resolve_ckpt_path() {
-  local raw="$1"
-  local run_dir_name="${bench_name}-${ckpt_name}-${env_cfg_type}-${action_type}-${seed}"
-  local candidates=()
-
-  if [[ -n "${KNOWACT_CKPT_PATH:-}" ]]; then
-    candidates+=("${KNOWACT_CKPT_PATH}")
-  fi
-  if [[ "${raw}" == /* ]]; then
-    candidates+=("${raw}")
-  elif [[ "${raw}" == */* ]]; then
-    candidates+=("${SCRIPT_DIR}/${raw}")
-  else
-    candidates+=(
-      "${SCRIPT_DIR}/checkpoints/${run_dir_name}"
-      "${SCRIPT_DIR}/checkpoints/${raw}"
-      "${KNOWACT_ROOT}/outputs/${run_dir_name}"
-    )
-  fi
-
-  local candidate
-  for candidate in "${candidates[@]}"; do
-    if [[ -f "${candidate}" || -d "${candidate}" ]]; then
-      realpath "${candidate}"
-      return 0
-    fi
-  done
-
-  echo "No checkpoint found. Set KNOWACT_CKPT_PATH to a G0.5 .pt file or run directory." >&2
-  echo "Tried:" >&2
-  printf '  %s\n' "${candidates[@]}" >&2
-  return 1
-}
-
 if [[ "${action_type}" != "joint" ]]; then
   echo "KnowAct adapter currently supports action_type=joint, got ${action_type}" >&2
   exit 2
@@ -75,21 +41,11 @@ if [[ ! -d "${KNOWACT_ROOT}" ]]; then
   exit 3
 fi
 
-ckpt_path="$(resolve_ckpt_path "${ckpt_name}")"
-
-if ! action_dim=$(bash "${UTILS_DIR}/get_action_dim.sh" "${BENCH_ROOT}" "${env_cfg_type}" 2>/dev/null); then
-  if [[ "${env_cfg_type}" == "arx_x5" ]]; then
-    action_dim=14
-  else
-    echo "Could not resolve action_dim for ${env_cfg_type}; check ${BENCH_ROOT}/env_cfg." >&2
-    exit 4
-  fi
-fi
+action_dim=$(bash "${UTILS_DIR}/get_action_dim.sh" "${BENCH_ROOT}" "${env_cfg_type}" "${action_type}")
 
 echo "[SERVER] policy=${policy_name} task=${task_name} host=${policy_server_host} port=${policy_server_port}"
 echo "[SERVER] python=${PYTHON_BIN}"
 echo "[SERVER] g05_root=${KNOWACT_ROOT}"
-echo "[SERVER] ckpt_path=${ckpt_path}"
 echo "[SERVER] action_dim=${action_dim}"
 
 cd "${KNOWACT_ROOT}"
@@ -112,5 +68,4 @@ exec env \
       policy_name="${policy_name}" \
       action_type="${action_type}" \
       action_dim="${action_dim}" \
-      ckpt_path="${ckpt_path}" \
       g05_root="${KNOWACT_ROOT}"
