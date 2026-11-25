@@ -98,16 +98,18 @@ def main(a):
     proc = processors["panda"]
     proc.eval()
     ds = Windows(root, "holdout", proc)
-    val_ids = np.random.default_rng(123).choice(len(ds), 128, replace=False)[rank::world]
+    val_ids = np.random.default_rng(123).choice(len(ds), 128, replace=False)
     # Separate per-worker processors: validation must never inherit train augmentation.
     import copy
 
     train_proc = copy.deepcopy(proc)
     train_proc.train()
     train = Windows(root, "train", train_proc)
-    val = DataLoader(
-        Subset(ds, val_ids), batch_size=a.batch, collate_fn=collate_fn_pad_sequences, num_workers=0
-    )
+    # Keep the three original validation RNG streams and their batches identical across DDP sizes.
+    validation = {
+        shard: DataLoader(Subset(ds, val_ids[shard::3]), batch_size=2, collate_fn=collate_fn_pad_sequences)
+        for shard in range(rank, 3, world)
+    }
     names = {n for n, p in model.named_parameters() if p.requires_grad}
     best = float("inf")
     start = 0
@@ -122,6 +124,9 @@ def main(a):
         del s
     elif (run / "resume.pt").exists():
         raise FileExistsError("Run exists; use --resume")
+    stop = a.stop_at or a.steps
+    if not start < stop <= a.steps or (stop != a.steps and stop not in MILESTONES):
+        raise ValueError("Stop at a future checkpoint milestone or the final step")
     schedule = lr_schedule(start, a.steps, opt.param_groups[0]["lr"])
     if rank == 0:
         if start:
@@ -137,7 +142,7 @@ def main(a):
             "holdout",
             len(ds),
             "updates",
-            a.steps,
+            a.steps, "world_size", world, "global_batch", world * a.batch, "segment_end", stop,
             flush=True,
         )
 
@@ -146,19 +151,20 @@ def main(a):
         net.eval()
         acc = torch.zeros(2, device="cuda")
         with torch.random.fork_rng(devices=[local]):
-            torch.manual_seed(801 + rank)
-            for batch in val:
-                with torch.autocast("cuda", dtype=torch.bfloat16):
-                    loss, _ = model(on_device(batch))
-                n = len(batch["idx"])
-                acc[0] += loss * n
-                acc[1] += n
+            for shard, val in validation.items():
+                torch.manual_seed(801 + shard)
+                for batch in val:
+                    with torch.autocast("cuda", dtype=torch.bfloat16):
+                        loss, _ = model(on_device(batch))
+                    n = len(batch["idx"])
+                    acc[0] += loss * n
+                    acc[1] += n
         dist.all_reduce(acc)
         return (acc[0] / acc[1]).item()
 
     rng = np.random.default_rng(7 + rank)
     # Per-step sampling is reproducible at an arbitrary resumed step.
-    ids = rng.integers(len(train), size=(a.steps, a.batch))[start:]
+    ids = rng.integers(len(train), size=(stop, a.batch))[start:]
     loader = DataLoader(
         train,
         batch_sampler=ids,
@@ -213,5 +219,6 @@ if __name__ == "__main__":
     p.add_argument("root", type=Path)
     p.add_argument("--batch", type=int, default=2)
     p.add_argument("--steps", type=int, default=30_000, help="total optimizer updates, including resumed steps")
+    p.add_argument("--stop-at", type=int, choices=MILESTONES, help="release GPUs after a milestone; keep the full LR schedule")
     p.add_argument("--resume", action="store_true")
     main(p.parse_args())
