@@ -1,0 +1,29 @@
+{
+  "torch": "2.10.0+cpu",
+  "cuda": false,
+  "gpu_count": 0,
+  "assets": {
+    "G05_PRETRAINED_CKPT": {
+      "path": null,
+      "present": false,
+      "expected": "file"
+    },
+    "G05_HF_PROCESSOR_PATH": {
+      "path": null,
+      "present": false,
+      "expected": "dir"
+    },
+    "G05_ACTION_TOKENIZER_CKPT": {
+      "path": null,
+      "present": false,
+      "expected": "file"
+    },
+    "ROBODOJO_LEROBOT_V30_ROOT": {
+      "path": null,
+      "present": false,
+      "expected": "dir"
+    }
+  },
+  "ready_for_asset_load_attempt": false,
+  "scope": "Presence check only, not a checkpoint compatibility or dataset integrity test."
+}

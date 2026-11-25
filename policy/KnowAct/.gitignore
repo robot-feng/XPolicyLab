@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Environments and editable builds
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+
+# Training outputs / checkpoints (large and reproducible)
+checkpoints/
+outputs/
+comparison_runs/
+wandb/
+*.pt
+*.pth
+*.safetensors
+
+# Local data and caches
+.cache/
+cache/
+data/
+datasets/
+*.mp4
+*.mkv
+
+# Local machine settings
+.env
+.env.*
+!.env.example

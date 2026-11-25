@@ -1,0 +1,9 @@
+flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+/mnt/data/knowact_v6/policy/KnowAct/G05/src/g05/tokenizer/interface/vq_base.py:509: UserWarning: CUDA is not available or torch_xla is imported. Disabling autocast.
+  with torch.autocast("cuda", dtype=torch.float32, enabled=True):
+{'seed': 11, 'history': False, 'steps': 100, 'first_loss': 29.57169532775879, 'last_loss': 0.17291012406349182, 'rule_accuracy': 0.0, 'exact_accuracy': 0.0, 'code_accuracy': 0.6923076923076923, 'seconds': 7.854741434999596}
+{'seed': 11, 'history': True, 'steps': 100, 'first_loss': 29.573598861694336, 'last_loss': 0.12880100309848785, 'rule_accuracy': 0.0, 'exact_accuracy': 0.0, 'code_accuracy': 0.7051282051282051, 'seconds': 10.165778100999887}
+{'seed': 22, 'history': False, 'steps': 100, 'first_loss': 30.760143280029297, 'last_loss': 0.18236815929412842, 'rule_accuracy': 0.0, 'exact_accuracy': 0.0, 'code_accuracy': 0.8974358974358975, 'seconds': 8.088343760000498}
+{'seed': 22, 'history': True, 'steps': 100, 'first_loss': 30.772233963012695, 'last_loss': 0.16716480255126953, 'rule_accuracy': 0.5, 'exact_accuracy': 0.0, 'code_accuracy': 0.8974358974358975, 'seconds': 10.940586103999522}
+{'seed': 33, 'history': False, 'steps': 100, 'first_loss': 26.64126205444336, 'last_loss': 0.1355324238538742, 'rule_accuracy': 0.0, 'exact_accuracy': 0.0, 'code_accuracy': 0.7948717948717948, 'seconds': 7.36644600299951}
+{'seed': 33, 'history': True, 'steps': 100, 'first_loss': 26.6981201171875, 'last_loss': 0.11713530123233795, 'rule_accuracy': 0.0, 'exact_accuracy': 0.0, 'code_accuracy': 0.8205128205128205, 'seconds': 11.387151267000263}

@@ -1,0 +1,46 @@
+{
+  "python": "3.13.5",
+  "python_compatible_with_vendored_g05": false,
+  "torch": "2.10.0+cpu",
+  "cuda_available": false,
+  "gpu_count": 0,
+  "xpolicylab_root": "/mnt/data/XPolicyLab",
+  "knowact_root": "/mnt/data/XPolicyLab/policy/KnowAct",
+  "source": {
+    "xpolicylab_g05_adapter": true,
+    "xpolicylab_server": true,
+    "knowact_adapter": true,
+    "vendored_g05_policy": true,
+    "robodojo_task_config": true
+  },
+  "assets": {
+    "G05_PRETRAINED_CKPT": {
+      "path": null,
+      "present": false,
+      "kind": "non-empty file"
+    },
+    "G05_HF_PROCESSOR_PATH": {
+      "path": null,
+      "present": false,
+      "kind": "directory",
+      "required_children": {}
+    },
+    "G05_ACTION_TOKENIZER_CKPT": {
+      "path": null,
+      "present": false,
+      "kind": "non-empty file"
+    },
+    "ROBODOJO_LEROBOT_V30_ROOT": {
+      "path": null,
+      "present": false,
+      "kind": "directory",
+      "required_children": {
+        "meta": false,
+        "data": false,
+        "videos": false
+      }
+    }
+  },
+  "ready_for_full_gpu_smoke_test": false,
+  "scope": "Presence/environment check only. It does not load checkpoint weights, verify tokenizer compatibility, read a LeRobot sample, or run the simulator."
+}

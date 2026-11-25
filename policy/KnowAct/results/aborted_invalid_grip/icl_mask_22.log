@@ -1,0 +1,3 @@
+flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+22 mask 50 4.788859175741672
+22 mask 100 0.2080930857360363

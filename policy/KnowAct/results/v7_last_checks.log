@@ -1,0 +1,28 @@
+test_history_indices_actual_strides_and_loss_mask (test_v7.DataTest.test_history_indices_actual_strides_and_loss_mask) ... ok
+test_hold_pad_no_future_dependency (test_v7.DataTest.test_hold_pad_no_future_dependency) ... ok
+test_invalid_stride (test_v7.DataTest.test_invalid_stride) ... ok
+test_codec_failure_no_mutation (test_v7.ExecutedHistory.test_codec_failure_no_mutation) ... flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+/mnt/data/knowact_v7/policy/KnowAct/G05/src/g05/tokenizer/interface/vq_base.py:509: UserWarning: CUDA is not available or torch_xla is imported. Disabling autocast.
+  with torch.autocast("cuda", dtype=torch.float32, enabled=True):
+ok
+test_full_replay_training_layout (test_v7.ExecutedHistory.test_full_replay_training_layout) ... ok
+test_future_commands_do_not_enter_context (test_v7.ExecutedHistory.test_future_commands_do_not_enter_context) ... ok
+test_invalid_receipt_rollback (test_v7.ExecutedHistory.test_invalid_receipt_rollback) ... ok
+test_mask_ce_backward (test_v7.ExecutedHistory.test_mask_ce_backward) ... ok
+test_mask_only_fixed_fields (test_v7.ExecutedHistory.test_mask_only_fixed_fields) ... ok
+test_no_gt_in_proposal (test_v7.ExecutedHistory.test_no_gt_in_proposal) ... ok
+test_only_committed_cache_retained (test_v7.ExecutedHistory.test_only_committed_cache_retained) ... ok
+test_zero_execution (test_v7.ExecutedHistory.test_zero_execution) ... ok
+test_applied_receipt_real_policy_adapter (test_v7.LayoutTest.test_applied_receipt_real_policy_adapter) ... /mnt/data/knowact_v7/policy/KnowAct/G05/src/g05/tokenizer/interface/vq_base.py:509: UserWarning: CUDA is not available or torch_xla is imported. Disabling autocast.
+  with torch.autocast("cuda", dtype=torch.float32, enabled=True):
+ok
+test_real_robodojo_grouped_padding (test_v7.LayoutTest.test_real_robodojo_grouped_padding) ... ok
+test_optional_mem_current_and_interval (test_comparison.ComparisonTest.test_optional_mem_current_and_interval) ... ok
+test_paired_manifest (test_comparison.ComparisonTest.test_paired_manifest) ... ok
+test_paired_score (test_comparison.ComparisonTest.test_paired_score) ... ok
+test_unpaired_rejected (test_comparison.ComparisonTest.test_unpaired_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 1.864s
+
+OK

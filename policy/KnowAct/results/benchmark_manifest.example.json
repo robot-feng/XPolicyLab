@@ -1,0 +1,110 @@
+{
+  "protocol": {
+    "benchmark": "RoboDojo",
+    "environment_config": "arx_x5",
+    "g05_action_source": "fm",
+    "g05_execution_steps": 16,
+    "knowact_action_source": "ar",
+    "knowact_replan_steps": 16,
+    "matched_execution_interval": true,
+    "note": "Portable example only. Paths are placeholders; compare.py generates absolute paths for the local XPolicyLab checkout."
+  },
+  "runs": [
+    {
+      "model": "G05",
+      "task": "stack_bowls",
+      "seed": 11,
+      "checkpoint": "/path/to/g05_robodojo_fm_checkpoint",
+      "action_source": "fm",
+      "observation_offsets": "0",
+      "keep_history": null,
+      "execution_steps": 16,
+      "matched_execution_interval": true,
+      "environment": {
+        "G05_CKPT_PATH": "/path/to/g05_robodojo_fm_checkpoint",
+        "ROBODOJO_G05_ACTION_SOURCE": "fm",
+        "ROBODOJO_G05_OBS_OFFSETS": "0"
+      },
+      "command": [
+        "bash",
+        "/path/to/XPolicyLab/policy/G05/eval.sh",
+        "RoboDojo",
+        "stack_bowls",
+        "G05",
+        "arx_x5",
+        "joint",
+        "11",
+        "0",
+        "0",
+        "/path/to/g05-env/bin/python",
+        "robodojo"
+      ]
+    },
+    {
+      "model": "KnowAct",
+      "task": "stack_bowls",
+      "seed": 11,
+      "checkpoint": "/path/to/knowact_bar16_checkpoint",
+      "action_source": "ar",
+      "observation_offsets": null,
+      "keep_history": true,
+      "execution_steps": 16,
+      "matched_execution_interval": true,
+      "environment": {
+        "KNOWACT_CKPT_PATH": "/path/to/knowact_bar16_checkpoint",
+        "KNOWACT_NATIVE_CONTEXT": "true",
+        "KNOWACT_KEEP_HISTORY": "true",
+        "KNOWACT_REPLAN_STEPS": "16",
+        "ROBODOJO_KNOWACT_ACTION_SOURCE": "ar",
+        "KNOWACT_ALLOW_STRIDE_SHIFT": "false"
+      },
+      "command": [
+        "bash",
+        "/path/to/XPolicyLab/policy/KnowAct/eval.sh",
+        "RoboDojo",
+        "stack_bowls",
+        "KnowAct",
+        "arx_x5",
+        "joint",
+        "11",
+        "0",
+        "0",
+        "/path/to/knowact-env/bin/python",
+        "robodojo"
+      ]
+    },
+    {
+      "model": "KnowAct_reset",
+      "task": "stack_bowls",
+      "seed": 11,
+      "checkpoint": "/path/to/knowact_bar16_checkpoint",
+      "action_source": "ar",
+      "observation_offsets": null,
+      "keep_history": false,
+      "execution_steps": 16,
+      "matched_execution_interval": true,
+      "environment": {
+        "KNOWACT_CKPT_PATH": "/path/to/knowact_bar16_checkpoint",
+        "KNOWACT_NATIVE_CONTEXT": "true",
+        "KNOWACT_KEEP_HISTORY": "false",
+        "KNOWACT_REPLAN_STEPS": "16",
+        "ROBODOJO_KNOWACT_ACTION_SOURCE": "ar",
+        "KNOWACT_ALLOW_STRIDE_SHIFT": "false"
+      },
+      "command": [
+        "bash",
+        "/path/to/XPolicyLab/policy/KnowAct/eval.sh",
+        "RoboDojo",
+        "stack_bowls",
+        "KnowAct_reset",
+        "arx_x5",
+        "joint",
+        "11",
+        "0",
+        "0",
+        "/path/to/knowact-env/bin/python",
+        "robodojo"
+      ]
+    }
+  ]
+}

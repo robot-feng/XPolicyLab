@@ -1,0 +1,5 @@
+# Portable example only; paths below are placeholders.
+G05_CKPT_PATH=/path/to/g05_robodojo_fm_checkpoint ROBODOJO_G05_ACTION_SOURCE=fm ROBODOJO_G05_OBS_OFFSETS=0 \
+  bash /path/to/XPolicyLab/policy/G05/eval.sh RoboDojo stack_bowls G05 arx_x5 joint 11 0 0 /path/to/g05-env/bin/python robodojo
+KNOWACT_CKPT_PATH=/path/to/knowact_bar16_checkpoint KNOWACT_NATIVE_CONTEXT=true KNOWACT_KEEP_HISTORY=true KNOWACT_REPLAN_STEPS=16 ROBODOJO_KNOWACT_ACTION_SOURCE=ar KNOWACT_ALLOW_STRIDE_SHIFT=false \
+  bash /path/to/XPolicyLab/policy/KnowAct/eval.sh RoboDojo stack_bowls KnowAct arx_x5 joint 11 0 0 /path/to/knowact-env/bin/python robodojo

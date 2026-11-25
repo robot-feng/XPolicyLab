@@ -1,0 +1,496 @@
+--- a/configs/tokenizer/actioncodec.yaml
++++ b/configs/tokenizer/actioncodec.yaml
+@@ -1,10 +1,11 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # Single ActionCodec tokenizer config for G0.5 post-training.
+ _target_: g05.tokenizer.interface.vq_base.VQActionTokenizer
+ vq_config:
+   vqvae_type: g05.tokenizer.models.actioncodec2_v2.wrapper.ActionCodecV2Wrapper
+   block_wise_autoregressive: true
+   use_extra_tokens: true
+-  block_size: 4
++  block_size: 16  # new training default; preserve checkpoint config for old weights
+   parts_meta:
+     left_control: 9
+     left_gripper: 1
+--- a/src/g05/models/g05/g05_model.py
++++ b/src/g05/models/g05/g05_model.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # SPDX-License-Identifier: LicenseRef-G0.5-Community-1.0
+ # Copyright (c) 2026 Galaxea
+ 
+@@ -316,13 +317,19 @@
+         """
+         bsz, seq_len = input_ids.shape
+         device = input_ids.device
+-        # Image features
+-        image_features = self._forward_vision(pixel_values)
+-        _, _, embed_dim = image_features.shape
+-        dtype = image_features.dtype  # use vision output dtype (may be bf16 under autocast)
+-
+-        # Text embeddings (with √d scaling via vlm.embed)
+-        inputs_embeds = self.vlm.embed(input_ids).to(dtype)
++        # Text/state/action-only events do not need a vision forward.
++        inputs_embeds = self.vlm.embed(input_ids)
++        has_images = bool((attention_mask == TOKEN_INDEX.IMAGE_TOKEN_INDEX).any())
++        if has_images:
++            if pixel_values is None or (isinstance(pixel_values, dict) and not pixel_values):
++                raise ValueError("image placeholders require pixel_values")
++            image_features = self._forward_vision(pixel_values)
++            _, _, embed_dim = image_features.shape
++            dtype = image_features.dtype
++            inputs_embeds = inputs_embeds.to(dtype)
++        else:
++            dtype = inputs_embeds.dtype
++            embed_dim = inputs_embeds.shape[-1]
+ 
+         # Merge: put image features where input_ids == image_token_index
+         final_embedding = torch.full(
+@@ -351,39 +358,40 @@
+ 
+         final_embedding[text_mask] = inputs_embeds[text_mask]
+ 
+-        # Vectorized image feature assignment
+-        image_feature_indices = image_mask.long().cumsum(dim=1) - 1
+-        image_feature_indices = image_feature_indices.clamp(min=0)
+-
+-        # Guard: detect image token count vs vision output mismatch before CUDA assert
+-        n_vis = image_features.shape[1]
+-        max_img_idx = image_feature_indices[image_mask].max().item() if image_mask.any() else 0
+-        if max_img_idx >= n_vis:
+-            import os
+-
+-            rank = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", -1)))
+-            n_img_per_sample = image_mask.sum(dim=1).tolist()
+-            pv_info = (
+-                {k: list(v.shape) for k, v in pixel_values.items()}
+-                if isinstance(pixel_values, dict)
+-                else f"Tensor{list(pixel_values.shape)}"
+-            )
+-            raise RuntimeError(
+-                f"\n{'=' * 70}\n"
+-                f"[RANK {rank}] IMAGE TOKEN MISMATCH in _forward_embed\n"
+-                f"  max_gather_idx={max_img_idx} >= image_features.shape[1]={n_vis}\n"
+-                f"  batch_size={bsz}, seq_len={seq_len}\n"
+-                f"  per_sample_img_tokens={n_img_per_sample}\n"
+-                f"  pixel_values={pv_info}\n"
+-                f"{'=' * 70}"
+-            )
+-
+-        gathered_features = torch.gather(
+-            image_features,
+-            1,
+-            image_feature_indices.unsqueeze(-1).expand(-1, -1, embed_dim),
+-        )
+-        final_embedding[image_mask] = gathered_features[image_mask]
++        if has_images:
++            # Vectorized image feature assignment
++            image_feature_indices = image_mask.long().cumsum(dim=1) - 1
++            image_feature_indices = image_feature_indices.clamp(min=0)
++
++            # Guard: detect image token count vs vision output mismatch before CUDA assert
++            n_vis = image_features.shape[1]
++            max_img_idx = image_feature_indices[image_mask].max().item() if image_mask.any() else 0
++            if max_img_idx >= n_vis:
++                import os
++
++                rank = int(os.environ.get("RANK", os.environ.get("LOCAL_RANK", -1)))
++                n_img_per_sample = image_mask.sum(dim=1).tolist()
++                pv_info = (
++                    {k: list(v.shape) for k, v in pixel_values.items()}
++                    if isinstance(pixel_values, dict)
++                    else f"Tensor{list(pixel_values.shape)}"
++                )
++                raise RuntimeError(
++                    f"\n{'=' * 70}\n"
++                    f"[RANK {rank}] IMAGE TOKEN MISMATCH in _forward_embed\n"
++                    f"  max_gather_idx={max_img_idx} >= image_features.shape[1]={n_vis}\n"
++                    f"  batch_size={bsz}, seq_len={seq_len}\n"
++                    f"  per_sample_img_tokens={n_img_per_sample}\n"
++                    f"  pixel_values={pv_info}\n"
++                    f"{'=' * 70}"
++                )
++
++            gathered_features = torch.gather(
++                image_features,
++                1,
++                image_feature_indices.unsqueeze(-1).expand(-1, -1, embed_dim),
++            )
++            final_embedding[image_mask] = gathered_features[image_mask]
+ 
+         # State scatter (proprio -> proprio_embedder -> replace <state> token positions).
+         # Runs when proprio_embedder.state_token_id exists (mlp mode) and proprio is
+--- a/src/g05/models/g05/g05_model_qwen35.py
++++ b/src/g05/models/g05/g05_model_qwen35.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ """
+ G05ModelQwen35 — Qwen3.5 variant of G05Model.
+ 
+@@ -354,6 +355,67 @@
+             is_action_block=is_action_block,
+         )
+ 
++    def encode_context_segment(self, input_ids, attention_mask, pixel_values=None, proprio=None):
++        """Encode a complete chronological event with the original modality encoders.
++
++        Images must be in placeholder order (camera dictionary insertion order).
++        Disable legacy temporal fusion: each camera contributes one observed frame.
++        Return embeddings and the corresponding MRoPE grid metadata.
++        """
++        if input_ids.shape != attention_mask.shape or not bool((attention_mask > 0).all()):
++            raise ValueError("expected an unpadded aligned segment")
++        if pixel_values and not bool((attention_mask == TOKEN_INDEX.IMAGE_TOKEN_INDEX).any()):
++            raise ValueError("pixel_values supplied without image placeholders")
++        if pixel_values and (self.vision_tower.temporal_freq or any(x.shape[1] != 1 for x in pixel_values.values())):
++            raise ValueError("encode each observed frame independently; legacy MEM fusion must be off")
++        states = (attention_mask == TOKEN_INDEX.PROPRIO_TOKEN_INDEX).sum(-1)
++        if self.proprio_embedder is not None:
++            if proprio is None and bool(states.any()):
++                raise ValueError("missing proprio features")
++            if proprio is not None and (proprio.ndim != 3 or not bool((states == proprio.shape[1]).all())):
++                raise ValueError("state feature/token count mismatch")
++        embeddings = self._forward_embed(input_ids, attention_mask, pixel_values, proprio)
++        # One residual-stream dtype for every modality, even under autocast.
++        embeddings = embeddings.to(self.vlm.input_proj.weight.dtype)
++        grids = self._cached_image_grid_thw.tolist() if pixel_values else []
++        # Validate the exact mapping, including the number and sizes of image runs.
++        self.mask_helper._spatial_merge_size = self.vision_tower.spatial_merge_size
++        self.mask_helper.build_context_layout(attention_mask, grids, dtype=embeddings.dtype)
++        return embeddings, grids
++
++    def forward_context(self, inputs_embeds, attention_mask, image_grid_thw=(), kv_cache=None):
++        """Same native VLM for full-episode training and incremental appends.
++
++        inputs_embeds contains only the new suffix; attention_mask and grids
++        describe the entire committed context, including that suffix. The old
++        cache is not modified; commit the returned cache only after success.
++        Use the original ARHelper.cal_ce_loss on complete training episodes.
++        This is the AR/BAR path, not a replacement for the FM action expert.
++        """
++        prefix = 0 if kv_cache is None else kv_cache.num_items()
++        if inputs_embeds.shape[:2] != (attention_mask.shape[0], attention_mask.shape[1] - prefix):
++            raise ValueError("context/cache/embedding length mismatch")
++        grids = tuple(tuple(map(int, g)) for g in image_grid_thw)
++        if kv_cache is not None:
++            if kv_cache.context_layout is None:
++                raise ValueError("replay legacy caches before native-context append")
++            old_mask, old_grids = kv_cache.context_layout
++            if not torch.equal(old_mask, attention_mask[:, :prefix]) or grids[:len(old_grids)] != old_grids:
++                raise ValueError("committed context layout changed; replay instead of append")
++        self.mask_helper._spatial_merge_size = self.vision_tower.spatial_merge_size
++        mask, positions = self.mask_helper.build_context_layout(
++            attention_mask, grids, kv_len=prefix, dtype=inputs_embeds.dtype,
++        )
++        cache = self._build_vlm_sparse_cache() if kv_cache is None else kv_cache.fork()
++        hidden, cache = self.vlm(
++            inputs_embeds=inputs_embeds, attention_mask=mask,
++            position_ids=positions[..., prefix:], kv_cache=cache,
++            return_kv_cache=True, attn_implementation=self.attn_implementation,
++            mixture_name="vlm",
++        )
++        cache.context_layout = (attention_mask.detach().clone(), grids)
++        return hidden, cache, positions
++
+     # ------------------------------------------------------------------
+     # MEM: mask history state tokens on frame drop
+     # ------------------------------------------------------------------
+--- a/src/g05/models/g05/helpers/mask_helper.py
++++ b/src/g05/models/g05/helpers/mask_helper.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # SPDX-License-Identifier: LicenseRef-G0.5-Community-1.0 AND Apache-2.0
+ # Copyright (c) 2026 Galaxea
+ # Copyright 2024 Big Vision Authors.
+@@ -476,32 +477,24 @@
+         min_value = torch.finfo(dtype).min
+ 
+         if kv_len == 0:
+-            input_mask = attention_mask > 0
+-            mask_ar = torch.zeros_like(input_mask).float()
+-
+-            # Block-wise autoregressive
+-            block_action_mask = (torch.floor(attention_mask) == TOKEN_INDEX.ACTION_TOKEN_INDEX) & (
+-                attention_mask != TOKEN_INDEX.ACTION_TOKEN_INDEX
+-            )
+-            if block_action_mask.any():
+-                block_vals = attention_mask[block_action_mask]
+-                _, inverse_indices = torch.unique(block_vals, sorted=True, return_inverse=True)
+-                mask_ar[block_action_mask] = (inverse_indices + 2).float()
+-            mask_ar[:, 1:] = mask_ar[:, 1:] != mask_ar[:, :-1]
+-
+-            # Qwen3.5: ALL non-padding tokens are causal (including IMAGE)
+-            is_non_pad_non_block = (attention_mask != TOKEN_INDEX.PADDING_TOKEN_INDEX) & (
+-                ~block_action_mask
+-            )
+-            mask_ar[is_non_pad_non_block] = 1
+-
+-            causal_mask_bool = ~make_attn_mask(input_mask, mask_ar).bool()
+-            causal_mask = causal_mask_bool.long() * min_value
++            groups = self._context_groups(attention_mask)
++            valid = attention_mask > 0
++            allowed = (groups[:, None, :] <= groups[:, :, None])
++            allowed = allowed & valid[:, None, :] & valid[:, :, None]
+         else:
+-            _causal_mask = (attention_mask == 0) * min_value
+-            causal_mask = torch.full((bsz, q_len, kv_len + q_len), 0, dtype=dtype, device=device)
+-            for q in range(q_len):
+-                causal_mask[:, q, :kv_len] = _causal_mask[:, :kv_len]
++            # Legacy decode: the current input is either a single known BAR
++            # block or ordinary causal tokens. The old path made every
++            # multi-token append bidirectional, including text.
++            valid = attention_mask > 0
++            allowed = valid[:, None, :].expand(-1, q_len, -1).clone()
++            allowed &= valid[:, -q_len:, None]
++            if not is_action_block:
++                causal = torch.arange(kv_len + q_len, device=device)[None, :] <= (
++                    kv_len + torch.arange(q_len, device=device)[:, None]
++                )
++                allowed &= causal[None, :, :]
++        causal_mask = torch.zeros(allowed.shape, device=device, dtype=dtype)
++        causal_mask.masked_fill_(~allowed, min_value)
+ 
+         causal_mask = causal_mask.unsqueeze(1)
+ 
+@@ -521,6 +514,59 @@
+             )
+ 
+         return causal_mask, position_ids
++
++    @staticmethod
++    def _context_groups(attention_mask: torch.Tensor) -> torch.Tensor:
++        """One causal group per token, except adjacent tokens of a known BAR block."""
++        block = (attention_mask.floor() == TOKEN_INDEX.ACTION_TOKEN_INDEX) & (
++            attention_mask != TOKEN_INDEX.ACTION_TOKEN_INDEX
++        )
++        starts = torch.ones_like(block)
++        starts[:, 1:] = ~(block[:, 1:] & (attention_mask[:, 1:] == attention_mask[:, :-1]))
++        return starts.long().cumsum(-1)
++
++    def build_context_layout(self, attention_mask, image_grid_thw, kv_len=0, dtype=torch.float32):
++        """Canonical full/suffix layout for native context, using the existing MRoPE.
++
++        Initially supports unpadded episodes with identical image-grid layout
++        across the batch, deterministic positions, and complete image/BAR segments.
++        The caller owns the complete typed mask and ordered grid metadata.
++        Recomputes position metadata (not backbone activations) on append.
++        """
++        if attention_mask.ndim != 2 or not bool((attention_mask > 0).all()):
++            raise ValueError("Native context requires an unpadded [B,S] mask")
++        if self.position_ids_type not in ("pi0fast", "lyc"):
++            raise ValueError("Native context requires deterministic positions")
++        size = attention_mask.size(1)
++        if not 0 <= kv_len < size:
++            raise ValueError("invalid context suffix length")
++        grids = [] if image_grid_thw is None else [tuple(map(int, g)) for g in image_grid_thw]
++        merge = self._spatial_merge_size
++        if any(len(g) != 3 or min(g) <= 0 or g[1] % merge or g[2] % merge for g in grids):
++            raise ValueError("invalid image grid")
++        expected = [t * (h // merge) * (w // merge) for t, h, w in grids]
++        import itertools
++        for row in attention_mask.tolist():
++            actual = [sum(1 for _ in seg) for kind, seg in itertools.groupby(row)
++                      if kind == TOKEN_INDEX.IMAGE_TOKEN_INDEX]
++            if actual != expected:
++                raise ValueError(f"image token/grid mismatch: {actual} != {expected}")
++            if kv_len and row[kv_len-1] == row[kv_len] and (
++                row[kv_len] == TOKEN_INDEX.IMAGE_TOKEN_INDEX or self._is_bar_block_segment(row[kv_len])
++            ):
++                raise ValueError("cannot split an image or BAR group across appends")
++        # Keep the old single-turn helper state separate from this explicit API.
++        previous = self._image_grid_thw, self._mrope_position_deltas, self._last_T_pos
++        try:
++            self._image_grid_thw = grids
++            positions = self._build_mrope_position_ids(attention_mask, attention_mask.device)
++        finally:
++            self._image_grid_thw, self._mrope_position_deltas, self._last_T_pos = previous
++        groups = self._context_groups(attention_mask)
++        allowed = groups[:, None, :] <= groups[:, kv_len:, None]
++        additive = torch.zeros(allowed.shape, dtype=dtype, device=attention_mask.device)
++        additive.masked_fill_(~allowed, torch.finfo(dtype).min)
++        return additive[:, None], positions
+ 
+     def build_action_mask(
+         self,
+--- a/src/g05/models/g05/io/input_preprocessor.py
++++ b/src/g05/models/g05/io/input_preprocessor.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # SPDX-License-Identifier: LicenseRef-G0.5-Community-1.0
+ # Copyright (c) 2026 Galaxea
+ 
+@@ -1668,6 +1669,8 @@
+                 f"an <action_action> placeholder, such as SubtaskCoTBuilderFMOnly."
+             )
+ 
++        if is_masked:
++            labels = [IGNORE_INDEX] * len(action_tokens)
+         return action_tokens, labels, attn
+ 
+ 
+--- a/src/g05/models/g05/qwen35/gated_deltanet.py
++++ b/src/g05/models/g05/qwen35/gated_deltanet.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ """
+ Qwen3.5 GatedDeltaNet — linear attention with gated delta rule.
+ 
+@@ -25,7 +26,7 @@
+ 
+ def apply_mask_to_padding_states(hidden_states, attention_mask):
+     """Zero out hidden states for padding tokens."""
+-    if attention_mask is not None and attention_mask.shape[1] > 1 and attention_mask.shape[0] > 1:
++    if attention_mask is not None:
+         dtype = hidden_states.dtype
+         hidden_states = (hidden_states * attention_mask[:, :, None]).to(dtype)
+     return hidden_states
+@@ -367,17 +368,14 @@
+ 
+         batch_size, seq_len, _ = hidden_states.shape
+ 
+-        use_precomputed_states = (
+-            cache_params is not None
+-            and hasattr(cache_params, "has_previous_state")
+-            and cache_params.has_previous_state
+-            and seq_len == 1
+-            and cache_position is not None
+-        )
+-
+-        if cache_params is not None:
+-            conv_state = cache_params.conv_states[self.layer_idx]
+-            recurrent_state = cache_params.recurrent_states[self.layer_idx]
++        # Per-layer state is authoritative. The last linear layer may not have
++        # been visited yet, and a chunk may contain more than one new token.
++        conv_state = None if cache_params is None else cache_params.conv_states[self.layer_idx]
++        recurrent_state = None if cache_params is None else cache_params.recurrent_states[self.layer_idx]
++        # Some FM callers intentionally supply recurrent state only. Do not
++        # interpret that as a complete convolution history.
++        has_conv_history = conv_state is not None
++        use_recurrent_step = recurrent_state is not None and seq_len == 1
+ 
+         mixed_qkv = self.in_proj_qkv(hidden_states)
+         mixed_qkv = mixed_qkv.transpose(1, 2)
+@@ -388,18 +386,30 @@
+         b = self.in_proj_b(hidden_states)
+         a = self.in_proj_a(hidden_states)
+ 
+-        if use_precomputed_states:
+-            mixed_qkv = self.causal_conv1d_update(
+-                mixed_qkv,
+-                conv_state,
+-                self.conv1d.weight.squeeze(1),
+-                self.conv1d.bias,
+-                self.activation,
+-            )
++        if has_conv_history:
++            # Both single-token and multi-token appends use the same causal
++            # convolution history. Avoid in-place writes to a prefix cache;
++            # this also permits differentiable chunked training.
++            if seq_len == 1 and not torch.is_grad_enabled():
++                next_conv_state = conv_state.clone()
++                mixed_qkv = self.causal_conv1d_update(
++                    mixed_qkv, next_conv_state, self.conv1d.weight.squeeze(1),
++                    self.conv1d.bias, self.activation,
++                )
++            else:
++                conv_input = torch.cat([conv_state, mixed_qkv], dim=-1)
++                next_conv_state = conv_input[..., -self.conv_kernel_size:].contiguous()
++                mixed_qkv = F.silu(F.conv1d(
++                    conv_input, self.conv1d.weight, self.conv1d.bias,
++                    groups=self.conv_dim,
++                )[..., -seq_len:])
++            if return_kv_cache:
++                cache_params.conv_states[self.layer_idx] = next_conv_state
+         else:
+             if cache_params is not None and return_kv_cache:
+-                conv_state = F.pad(mixed_qkv, (self.conv_kernel_size - mixed_qkv.shape[-1], 0))
+-                cache_params.conv_states[self.layer_idx] = conv_state
++                cache_params.conv_states[self.layer_idx] = F.pad(
++                    mixed_qkv, (self.conv_kernel_size - mixed_qkv.shape[-1], 0)
++                )
+             if self.causal_conv1d_fn is not None:
+                 mixed_qkv = self.causal_conv1d_fn(
+                     x=mixed_qkv,
+@@ -431,7 +441,7 @@
+             query = query.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
+             key = key.repeat_interleave(self.num_v_heads // self.num_k_heads, dim=2)
+ 
+-        if not use_precomputed_states:
++        if not use_recurrent_step:
+             init_state = recurrent_state if cache_params is not None else None
+             # Full-sequence chunk: VLM output is UNCHANGED regardless of split_idx
+             core_attn_out, last_recurrent_state = self.chunk_gated_delta_rule(
+--- a/src/g05/models/kv_cache.py
++++ b/src/g05/models/kv_cache.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # SPDX-License-Identifier: LicenseRef-G0.5-Community-1.0
+ # Copyright (c) 2026 Galaxea
+ 
+@@ -45,6 +46,8 @@
+         self.split_recurrent_states: Dict[int, torch.Tensor] = _DefaultNoneDict()
+         # Index of the last linear_attention layer (for has_previous_state check)
+         self.last_linear_layer = last_linear_layer
++        # Explicit native-context API metadata (None for legacy caches).
++        self.context_layout = None
+ 
+     @property
+     def has_previous_state(self) -> bool:
+@@ -106,10 +109,25 @@
+             value_cache={idx: v.detach() for idx, v in self.value_cache.items()},
+             last_linear_layer=self.last_linear_layer,
+         )
++        new.context_layout = self.context_layout
++        for idx, cs in self.conv_states.items():
++            new.conv_states[idx] = cs.detach()
+         for idx, rs in self.recurrent_states.items():
+             new.recurrent_states[idx] = rs.detach()
+         for idx, rs in self.split_recurrent_states.items():
+             new.split_recurrent_states[idx] = rs.detach()
++        return new
++
++    def fork(self):
++        """Independent dictionaries; KV append replaces tensors, not their storage.
++
++        Recurrent/conv tensors are cloned to protect speculative branches.
++        Preserve gradients; this is not detach().
++        """
++        new = SparseKVCache(dict(self.key_cache), dict(self.value_cache), self.last_linear_layer)
++        new.context_layout = self.context_layout
++        for name in ("conv_states", "recurrent_states", "split_recurrent_states"):
++            getattr(new, name).update({k: v.clone() for k, v in getattr(self, name).items()})
+         return new
+ 
+     def repeat_batch(self, n: int) -> "SparseKVCache":
+--- a/src/g05/tokenizer/interface/bar_builder.py
++++ b/src/g05/tokenizer/interface/bar_builder.py
+@@ -1,3 +1,4 @@
++# Modified for KnowAct Native Context research integration (2026-11-25).
+ # SPDX-License-Identifier: LicenseRef-G0.5-Community-1.0
+ # Copyright (c) 2026 Galaxea
+ 
+@@ -76,6 +77,11 @@
+         else:
+             num_block = int(self.num_block)
+ 
++        if len(action_ids) > num_block * self.block_size:
++            raise ValueError("BAR capacity would truncate action codes")
++        if max(0, num_block - self.ar_block_num) > 98:
++            raise ValueError("BAR fractional group IDs support at most 98 generated blocks")
++
+         blocks: List[List[int]] = []
+         for i in range(num_block):
+             start_idx = i * self.block_size
+@@ -146,6 +152,11 @@
+             num_block = int(math.ceil(len(action_ids) / self.block_size))
+         else:
+             num_block = int(self.num_block)
++
++        if len(action_ids) > num_block * self.block_size:
++            raise ValueError("BAR capacity would truncate action codes")
++        if max(0, num_block - self.ar_block_num) > 98:
++            raise ValueError("BAR fractional group IDs support at most 98 generated blocks")
+ 
+         blocks: List[List[int]] = []
+         for i in range(num_block):

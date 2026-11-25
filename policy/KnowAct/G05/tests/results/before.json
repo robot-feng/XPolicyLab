@@ -1,0 +1,8 @@
+{
+  "gdn_hidden_error": 0.5658478140830994,
+  "gdn_conv_error": 0.0,
+  "gdn_state_error": 3.8586556911468506e-05,
+  "incremental_future_edges": 6,
+  "historical_supervised_labels": 51,
+  "length": 51
+}

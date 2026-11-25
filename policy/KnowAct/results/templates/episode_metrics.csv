@@ -1,0 +1,1 @@
+task,seed,episode_id,model,success,steps,wall_time_s,replans,recovery_attempts,collision,drop,gripper_failure,timeout,policy_latency_p50_ms,policy_latency_p95_ms,peak_vram_mb,context_tokens,notes

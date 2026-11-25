@@ -1,0 +1,45 @@
+experiment_id: TODO
+created_at: TODO
+source:
+  xpolicylab_snapshot: 4a9e3afd73b86a48c5db076f5cf9dbfbef1a180e
+  knowact_revision: TODO
+assets:
+  g05_checkpoint: TODO
+  g05_checkpoint_sha256: TODO
+  hf_processor: TODO
+  hf_processor_sha256: TODO
+  action_codec: TODO
+  action_codec_sha256: TODO
+data:
+  benchmark: RoboDojo
+  dataset_version: TODO
+  split: TODO
+  task: TODO
+  embodiment: arx_x5
+  action_type: joint
+  data_fps: 30
+  control_fps: 30
+model:
+  native_context: true
+  action_source: ar
+  bar_block_size: 16
+  action_horizon: 32
+  native_context_turns: 4
+  native_replan_steps: 16
+training:
+  seed: TODO
+  max_steps: TODO
+  batch_size: TODO
+  grad_accumulation_steps: TODO
+  effective_batch_size: TODO
+  learning_rate: TODO
+  supervised_tokens: TODO
+  gpu_hours: TODO
+evaluation:
+  evaluation_seeds: []
+  episodes_per_task_seed: TODO
+  execution_steps: 16
+  checkpoint: TODO
+  paired_score_csv: TODO
+  manifest: TODO
+notes: TODO

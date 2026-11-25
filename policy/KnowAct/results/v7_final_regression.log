@@ -1,0 +1,78 @@
+test_optional_mem_current_and_interval (test_comparison.ComparisonTest.test_optional_mem_current_and_interval) ... ok
+test_paired_manifest (test_comparison.ComparisonTest.test_paired_manifest) ... ok
+test_paired_score (test_comparison.ComparisonTest.test_paired_score) ... ok
+test_unpaired_rejected (test_comparison.ComparisonTest.test_unpaired_rejected) ... ok
+test_bar_future_target_isolation (test_native_context.TestSource.test_bar_future_target_isolation) ... ok
+test_bar_labels (test_native_context.TestSource.test_bar_labels) ... ok
+test_bar_overflow (test_native_context.TestSource.test_bar_overflow) ... ok
+test_branch_isolation_and_replay (test_native_context.TestSource.test_branch_isolation_and_replay) ... flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+ok
+test_changed_prefix_rejected (test_native_context.TestSource.test_changed_prefix_rejected) ... ok
+test_detach_conv (test_native_context.TestSource.test_detach_conv) ... ok
+test_dtype_consistency (test_native_context.TestSource.test_dtype_consistency) ... ok
+test_encoder_gradients (test_native_context.TestSource.test_encoder_gradients) ... ok
+test_full_stream_vision_state_bar (test_native_context.TestSource.test_full_stream_vision_state_bar) ... ok
+test_future_isolation (test_native_context.TestSource.test_future_isolation) ... ok
+test_gdn_multichunk (test_native_context.TestSource.test_gdn_multichunk) ... ok
+test_gradients_actual_ce (test_native_context.TestSource.test_gradients_actual_ce) ... ok
+test_history_labels (test_native_context.TestSource.test_history_labels) ... ok
+test_legacy_causal_mask (test_native_context.TestSource.test_legacy_causal_mask) ... ok
+test_legacy_prefill_layout (test_native_context.TestSource.test_legacy_prefill_layout) ... ok
+test_legacy_single_turn_prefill (test_native_context.TestSource.test_legacy_single_turn_prefill) ... ok
+test_missing_image_rejected (test_native_context.TestSource.test_missing_image_rejected) ... ok
+test_missing_state_rejected (test_native_context.TestSource.test_missing_state_rejected) ... ok
+test_multicamera_batch (test_native_context.TestSource.test_multicamera_batch) ... ok
+test_native_api_multisession (test_native_context.TestSource.test_native_api_multisession) ... ok
+test_padding_rejected (test_native_context.TestSource.test_padding_rejected) ... ok
+test_read_only_gdn (test_native_context.TestSource.test_read_only_gdn) ... ok
+test_reject_legacy_cache (test_native_context.TestSource.test_reject_legacy_cache) ... ok
+test_temporal_fusion_rejected (test_native_context.TestSource.test_temporal_fusion_rejected) ... ok
+test_wrong_boundary (test_native_context.TestSource.test_wrong_boundary) ... ok
+test_wrong_grid (test_native_context.TestSource.test_wrong_grid) ... ok
+test_wrong_state_count (test_native_context.TestSource.test_wrong_state_count) ... ok
+test_bounds_and_padded_history (test_native_policy.EpisodeTest.test_bounds_and_padded_history) ... ok
+test_collate (test_native_policy.EpisodeTest.test_collate) ... ok
+test_indices (test_native_policy.EpisodeTest.test_indices) ... ok
+test_budget_rollback (test_native_policy.NativePolicyTest.test_budget_rollback) ... ok
+test_codec_noncausal_probe (test_native_policy.NativePolicyTest.test_codec_noncausal_probe) ... /mnt/data/knowact_v7/policy/KnowAct/G05/src/g05/tokenizer/interface/vq_base.py:509: UserWarning: CUDA is not available or torch_xla is imported. Disabling autocast.
+  with torch.autocast("cuda", dtype=torch.float32, enabled=True):
+ok
+test_decode_failure_rollback (test_native_policy.NativePolicyTest.test_decode_failure_rollback) ... ok
+test_dual_rule_marker_offsets (test_native_policy.NativePolicyTest.test_dual_rule_marker_offsets) ... ok
+test_duplicate_generation_rejected (test_native_policy.NativePolicyTest.test_duplicate_generation_rejected) ... ok
+test_exact_replay (test_native_policy.NativePolicyTest.test_exact_replay) ... ok
+test_invalid_decode_rollback (test_native_policy.NativePolicyTest.test_invalid_decode_rollback) ... ok
+test_multi_episode_grad (test_native_policy.NativePolicyTest.test_multi_episode_grad) ... ok
+test_no_suffix_target_leak (test_native_policy.NativePolicyTest.test_no_suffix_target_leak) ... ok
+test_real_codec_policy (test_native_policy.NativePolicyTest.test_real_codec_policy) ... ok
+test_receipt_template (test_native_policy.NativePolicyTest.test_receipt_template) ... ok
+test_rule_field_offsets (test_native_policy.NativePolicyTest.test_rule_field_offsets) ... ok
+test_text_failed_stop_transaction (test_native_policy.NativePolicyTest.test_text_failed_stop_transaction) ... ok
+test_text_then_action (test_native_policy.NativePolicyTest.test_text_then_action) ... ok
+test_two_stream_isolation (test_native_policy.NativePolicyTest.test_two_stream_isolation) ... ok
+test_two_turn_replay (test_native_policy.NativePolicyTest.test_two_turn_replay) ... ok
+test_history_indices_actual_strides_and_loss_mask (test_v7.DataTest.test_history_indices_actual_strides_and_loss_mask) ... ok
+test_hold_pad_no_future_dependency (test_v7.DataTest.test_hold_pad_no_future_dependency) ... ok
+test_invalid_stride (test_v7.DataTest.test_invalid_stride) ... ok
+test_codec_failure_no_mutation (test_v7.ExecutedHistory.test_codec_failure_no_mutation) ... ok
+test_full_replay_training_layout (test_v7.ExecutedHistory.test_full_replay_training_layout) ... ok
+test_future_commands_do_not_enter_context (test_v7.ExecutedHistory.test_future_commands_do_not_enter_context) ... ok
+test_invalid_receipt_rollback (test_v7.ExecutedHistory.test_invalid_receipt_rollback) ... ok
+test_mask_ce_backward (test_v7.ExecutedHistory.test_mask_ce_backward) ... ok
+test_mask_only_fixed_fields (test_v7.ExecutedHistory.test_mask_only_fixed_fields) ... ok
+test_no_gt_in_proposal (test_v7.ExecutedHistory.test_no_gt_in_proposal) ... ok
+test_only_committed_cache_retained (test_v7.ExecutedHistory.test_only_committed_cache_retained) ... ok
+test_zero_execution (test_v7.ExecutedHistory.test_zero_execution) ... ok
+test_applied_receipt_real_policy_adapter (test_v7.LayoutTest.test_applied_receipt_real_policy_adapter) ... ok
+test_real_robodojo_grouped_padding (test_v7.LayoutTest.test_real_robodojo_grouped_padding) ... ok
+test_batch_atomic_failure (test_xpl_integration.TestIntegration.test_batch_atomic_failure) ... ok
+test_batch_deploy_dropouts (test_xpl_integration.TestIntegration.test_batch_deploy_dropouts) ... ok
+test_real_adapter_and_inferencer (test_xpl_integration.TestIntegration.test_real_adapter_and_inferencer) ... ok
+test_receipt_replay_rejected (test_xpl_integration.TestIntegration.test_receipt_replay_rejected) ... ok
+test_reset_ablation (test_xpl_integration.TestIntegration.test_reset_ablation) ... ok
+
+----------------------------------------------------------------------
+Ran 69 tests in 4.738s
+
+OK
+codec_prefix_perturbation 0.0016345679759979248

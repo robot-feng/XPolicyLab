@@ -1,0 +1,56 @@
+[
+  {
+    "seed": 11,
+    "amp_bf16": false,
+    "hidden_max": 5.125999450683594e-06,
+    "logits_max": 4.184246063232422e-05,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 7.62939453125e-06
+  },
+  {
+    "seed": 11,
+    "amp_bf16": true,
+    "hidden_max": 0.03296659141778946,
+    "logits_max": 0.265625,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 0.0234375
+  },
+  {
+    "seed": 22,
+    "amp_bf16": false,
+    "hidden_max": 2.175569534301758e-06,
+    "logits_max": 1.52587890625e-05,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 3.427267074584961e-06
+  },
+  {
+    "seed": 22,
+    "amp_bf16": true,
+    "hidden_max": 0.07593324035406113,
+    "logits_max": 0.625,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 0.076171875
+  },
+  {
+    "seed": 33,
+    "amp_bf16": false,
+    "hidden_max": 1.430511474609375e-06,
+    "logits_max": 1.049041748046875e-05,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 1.3113021850585938e-06
+  },
+  {
+    "seed": 33,
+    "amp_bf16": true,
+    "hidden_max": 0.08294132351875305,
+    "logits_max": 0.625,
+    "position_equal": true,
+    "top1_equal": 1.0,
+    "cache_max": 0.1015625
+  }
+]

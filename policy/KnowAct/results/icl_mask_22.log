@@ -1,0 +1,8 @@
+flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+22 mask 50 4.858663694262504
+22 mask 100 0.2387373811006546
+22 mask 150 0.12849906153976917
+22 mask 200 0.07292815320193767
+/mnt/data/knowact_v7/policy/KnowAct/G05/src/g05/tokenizer/interface/vq_base.py:509: UserWarning: CUDA is not available or torch_xla is imported. Disabling autocast.
+  with torch.autocast("cuda", dtype=torch.float32, enabled=True):
+RESULT 22 mask {'train': {'rule_correct': 0.3333333333333333, 'exact': 0.0, 'variable_acc': 0.8431372549019608, 'n': 12}, 'heldout': {'rule_correct': 0.3333333333333333, 'exact': 0.0, 'variable_acc': 0.8431372549019608, 'n': 18}, 'reset': {'rule_correct': 0.3333333333333333, 'exact': 0.0, 'variable_acc': 0.8137254901960784, 'n': 18}}

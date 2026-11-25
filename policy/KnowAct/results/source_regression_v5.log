@@ -1,0 +1,33 @@
+test_bar_future_target_isolation (__main__.TestSource.test_bar_future_target_isolation) ... ok
+test_bar_labels (__main__.TestSource.test_bar_labels) ... ok
+test_bar_overflow (__main__.TestSource.test_bar_overflow) ... ok
+test_branch_isolation_and_replay (__main__.TestSource.test_branch_isolation_and_replay) ... flash_attn not installed — vision attention uses SDPA fallback. For Hopper/Blackwell GPUs (H100/B200), install FA4: pip install flash-attn-4. For Ampere/Ada (A100/RTX4090), install FA2: pip install flash-attn --no-build-isolation
+ok
+test_changed_prefix_rejected (__main__.TestSource.test_changed_prefix_rejected) ... ok
+test_detach_conv (__main__.TestSource.test_detach_conv) ... ok
+test_dtype_consistency (__main__.TestSource.test_dtype_consistency) ... ok
+test_encoder_gradients (__main__.TestSource.test_encoder_gradients) ... ok
+test_full_stream_vision_state_bar (__main__.TestSource.test_full_stream_vision_state_bar) ... ok
+test_future_isolation (__main__.TestSource.test_future_isolation) ... ok
+test_gdn_multichunk (__main__.TestSource.test_gdn_multichunk) ... ok
+test_gradients_actual_ce (__main__.TestSource.test_gradients_actual_ce) ... ok
+test_history_labels (__main__.TestSource.test_history_labels) ... ok
+test_legacy_causal_mask (__main__.TestSource.test_legacy_causal_mask) ... ok
+test_legacy_prefill_layout (__main__.TestSource.test_legacy_prefill_layout) ... ok
+test_legacy_single_turn_prefill (__main__.TestSource.test_legacy_single_turn_prefill) ... ok
+test_missing_image_rejected (__main__.TestSource.test_missing_image_rejected) ... ok
+test_missing_state_rejected (__main__.TestSource.test_missing_state_rejected) ... ok
+test_multicamera_batch (__main__.TestSource.test_multicamera_batch) ... ok
+test_native_api_multisession (__main__.TestSource.test_native_api_multisession) ... ok
+test_padding_rejected (__main__.TestSource.test_padding_rejected) ... ok
+test_read_only_gdn (__main__.TestSource.test_read_only_gdn) ... ok
+test_reject_legacy_cache (__main__.TestSource.test_reject_legacy_cache) ... ok
+test_temporal_fusion_rejected (__main__.TestSource.test_temporal_fusion_rejected) ... ok
+test_wrong_boundary (__main__.TestSource.test_wrong_boundary) ... ok
+test_wrong_grid (__main__.TestSource.test_wrong_grid) ... ok
+test_wrong_state_count (__main__.TestSource.test_wrong_state_count) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 1.237s
+
+OK

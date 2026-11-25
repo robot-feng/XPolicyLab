@@ -1,0 +1,16 @@
+{
+  "archive_sha256": "51d349a4da3fe1342f6dd03a26661f74ef2d808d6f80c6c5bea6dc0f18e93265",
+  "python": "3.13.5",
+  "torch": "2.10.0+cpu",
+  "cuda": false,
+  "source_files_modified": [
+    "configs/tokenizer/actioncodec.yaml",
+    "src/g05/models/g05/g05_model.py",
+    "src/g05/models/g05/g05_model_qwen35.py",
+    "src/g05/models/g05/helpers/mask_helper.py",
+    "src/g05/models/g05/io/input_preprocessor.py",
+    "src/g05/models/g05/qwen35/gated_deltanet.py",
+    "src/g05/models/kv_cache.py",
+    "src/g05/tokenizer/interface/bar_builder.py"
+  ]
+}

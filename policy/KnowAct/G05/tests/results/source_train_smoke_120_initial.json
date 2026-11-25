@@ -1,0 +1,63 @@
+{
+  "results": [
+    {
+      "seed": 11,
+      "steps": 120,
+      "initial": {
+        "action_exact": 0.0,
+        "eos_exact": 0.0,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "final": {
+        "action_exact": 0.0,
+        "eos_exact": 1.0,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "first_loss": 29.166873931884766,
+      "last_loss": 0.2746736407279968,
+      "vlm_vision_proprio_params": 77380
+    },
+    {
+      "seed": 22,
+      "steps": 120,
+      "initial": {
+        "action_exact": 0.0,
+        "eos_exact": 0.0,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "final": {
+        "action_exact": 0.0,
+        "eos_exact": 1.0,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "first_loss": 30.796491622924805,
+      "last_loss": 0.23580776154994965,
+      "vlm_vision_proprio_params": 77380
+    },
+    {
+      "seed": 33,
+      "steps": 120,
+      "initial": {
+        "action_exact": 0.0,
+        "eos_exact": 0.0,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "final": {
+        "action_exact": 0.0,
+        "eos_exact": 0.5,
+        "paired_counterfactual": 0.0,
+        "without_history_exact": 0.0
+      },
+      "first_loss": 28.799081802368164,
+      "last_loss": 0.2722903788089752,
+      "vlm_vision_proprio_params": 77380
+    }
+  ],
+  "wall_seconds": 17.125694244999977,
+  "notes": "Random-init reduced source model; synthetic code IDs, not real codec or robot actions."
+}
