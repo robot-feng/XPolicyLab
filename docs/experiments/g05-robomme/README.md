@@ -20,6 +20,12 @@ python "$EXP/prepare.py" ../datasets/robomme_data_h5 \
 
 基础训练包为 `OpenGalaxea/g05-robodojo@bb6cf7e45d0b2e8bd71c16c52961a93cc6125283` 中的 `g05_robodojo_train_base_assets.tar`，SHA256 `188fc8f092aa3ed2f67fcdb4a3e94ddbb44d4e0c41309e9f672a5a8594291218`。已对整包校验，并将其 `pretrained/` 内容解至 `$ART/base/`。其中 `action_tokenizer_hf/` 是第一阶段起点，`checkpoints/model_state_dict.pt` 是核心模型起点，`hf_processor/` 是匹配的视觉语言处理器。两阶段都从官方权重开始，不使用双臂 RoboDojo 成品模型做 Panda 初始化。
 
+## 已验证的第一阶段结果
+
+400 条轨迹共 70,038 个执行帧。核心训练集有 360 条轨迹、63,070 帧、15,896 个带图像的观测窗口；留出集有 40 条轨迹、6,968 帧、1,755 个带图像的观测窗口。每项任务的 10 条留出轨迹覆盖 5 个容易、2 个中等、3 个困难回合；它们与官方测试 seed 无交叉。
+
+已逐个将加载后的 208 个 ActionCodec 张量与基础 `model.safetensors` 对比，相同且无缺失。第一阶段完成 1024 次更新。在相同 384 个留出窗口上，基础模型的平均关节绝对误差是 0.005728 rad，最佳为第 256 步的 0.005618 rad，最后一步为 0.006501 rad。因此第二阶段读取第 256 步的 `action_tokenizer.pt`。误差降幅约 1.9%，这里只度量动作还原，不等于任务成功率。[各任务样本数和完整验证曲线](result-codec.json)。
+
 ## 训练、选模与仿真
 
 1. `codec.py` 从官方 ActionCodec 启动，适配编码器与解码器，固定量化字典以保留原有 token 编号。夹爪沿用上游二值规则。训练 1024 次，batch 24，AdamW 学习率 `2e-5`；每 128 步用同一组 384 个留出窗口评估 **两层残差码** 的七关节重建 MAE（弧度），在基础权重和历次训练权重中选误差最低的一次。
