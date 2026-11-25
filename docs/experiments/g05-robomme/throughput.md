@@ -94,6 +94,8 @@ CUDA_VISIBLE_DEVICES=0 PYTHONPATH="$ART/fla6:$PYTHONPATH" "$PY" "$EXP/bench_step
 
 第 5,132–5,133 步在 rank 0 用 PyTorch Profiler/CUPTI 采集 CPU 和 CUDA 时间线。两个完整优化更新共启动 **25,626** 个 GPU kernel，其中 **19,685 个短于 10 µs**，中位时长 **2.56 µs**。在 CPU 发起的前向调用中，视觉语言主干和动作专家分别启动 4,186 和 4,526 个 kernel；仅两者的 `aten::copy_` 就分别触发 1,350 和 1,206 次。反向计算也有大量逐元素乘、加和复制。短算子之间的发射空档是当前值得优先优化的部分。
 
-有一个具体的重复计算可供验证。本配置 `batchify_action=true`，`InputPreprocessor.encode_train` 对同一批样本的前缀、后缀各调用一次 `preprocess`，两次都进入动作 tokenizer。时间线在这两段分别记录到 744 和 724 次 kernel 启动。候选做法是在同一批次内只做一次确定性的动作编码，同时保留各分支的掩码和随机操作；尚无该改动的等价性及吞吐实测。
+本配置 `batchify_action=true`，`InputPreprocessor.encode_train` 对同一批样本的前缀、后缀各调用一次 `preprocess`，两次都进入动作 tokenizer。时间线在这两段分别记录到 744 和 724 次 kernel 启动。实际模板的动作占位符位于 `Action: <EOV><EOC><action_action>|<eos>` 的后缀。通用预处理函数依据整条样本里的 `action` 字段启动批量编码，随后才组装各自模板片段的 token、标签和掩码；前、后缀分别靠右和靠左对齐。[原版预处理](../../../policy/G05/G05/src/g05/models/g05/io/input_preprocessor.py)
+
+**一次与两次动作编码的等价性检查。** 在隔离的 CPU 进程按正式配置加载第一阶段选中的 ActionCodec，核心模型和数据处理器进入训练模式。取 MoveCube、PatternLock、RouteStick、InsertPeg 各自首、末两个训练窗口，组成四个 batch（每批两个样本）。同一批使用相同的初始 Python、NumPy 和 PyTorch 随机状态，比较原版两次调用与第二次返回第一次 token 副本。四批的动作 token、最终 `input_ids`、`labels`、`attention_mask` 和 `split_index` 均逐项一致；四批在编码结束时的随机状态均发生分歧。检查显示 codec 和残差量化器的 `training` 都为真，`no_grad` 编码路径仍执行量化器的 `rand` 和 `randint`。核心的 flow matching 随后会抽样时间和噪声。因此，直接复用 token 会改变同一 seed 下的训练轨迹。当前 30K 训练继续使用原版两次编码。本次检查覆盖预处理输出，未比较 CUDA 上的模型梯度或两种方案的任务成功率。[量化器的训练分支](../../../policy/G05/G05/src/g05/tokenizer/models/actioncodec2_v2/modular_actioncodec2v2.py) · [Flow matching 的采样](../../../policy/G05/G05/src/g05/models/g05/helpers/fm_helper.py)
 
 两个更新共记录 64 个 NCCL kernel。对 GPU 活动区间求并集后，有 232 ms 只观察到 NCCL 在运行，其中可能包含等待其他卡。Profiler 会放大 CPU 发射空档，这两步各用 947、718 ms；随后七个未采样的完整 25 步日志段中，单步中位数 632 ms，取批中位数 15.35 ms。采样中的时间比例仅用于定位，实际收益仍须使用未开启 profiler 的正式训练验证。[分项测量及绑核对照](result-utilization.json)
