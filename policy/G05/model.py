@@ -24,6 +24,7 @@ IMAGE_CANDIDATES = {
     "cam_high": ("cam_high", "cam_head", "cam_third_view"),
     "cam_left_wrist": ("cam_left_wrist",),
     "cam_right_wrist": ("cam_right_wrist",),
+    "cam_wrist": ("cam_wrist",),
 }
 BATCH_OBSERVATIONS_KEY = "__xpolicylab_batch_observations__"
 BATCH_ENV_INDICES_KEY = "__xpolicylab_batch_env_indices__"
@@ -410,24 +411,14 @@ class Model(ModelTemplate):
         action.pop("_absent_keys", None)
 
         parts = {key: _to_horizon_array(value) for key, value in action.items()}
-        left_key = "left_arm" if "left_arm" in parts else "left_control"
-        right_key = "right_arm" if "right_arm" in parts else "right_control"
-        required = [left_key, "left_gripper", right_key, "right_gripper"]
+        required = [k for k, _ in self._joint_parts("action")]
         missing = [key for key in required if key not in parts]
         if missing:
             raise KeyError(f"G05 action output missing keys {missing}; available={sorted(parts)}")
         horizon = min(self.action_steps, min(parts[key].shape[0] for key in required))
         result = []
         for t in range(horizon):
-            packed = np.concatenate(
-                [
-                    parts[left_key][t],
-                    parts["left_gripper"][t],
-                    parts[right_key][t],
-                    parts["right_gripper"][t],
-                ],
-                axis=-1,
-            ).astype(np.float32)
+            packed = np.concatenate([parts[key][t] for key in required]).astype(np.float32)
             result.append(
                 unpack_robot_state(
                     packed,
@@ -462,45 +453,40 @@ class Model(ModelTemplate):
             "embodiment_type": self.embodiment_type,
         }
 
+    def _schema(self, modality):
+        processor = getattr(self.processor, "processors", {}).get(self.embodiment_type, self.processor)
+        return processor.shape_meta[modality]
+
+    def _joint_parts(self, modality):
+        schema = {p["key"]: p for p in self._schema(modality)}
+        sides = [side for side in ("left", "right") if f"{side}_gripper" in schema]
+        dims = self.robot_action_dim_info
+        if len(sides) != len(dims["arm_dim"]):
+            raise ValueError(f"G05 checkpoint arms {sides} do not match robot dimensions {dims}")
+        parts = []
+        for side, arm, gripper in zip(sides, dims["arm_dim"], dims["ee_dim"]):
+            key = f"{side}_arm" if f"{side}_arm" in schema else f"{side}_control"
+            for name, size in ((key, arm), (f"{side}_gripper", gripper)):
+                if name not in schema or schema[name]["raw_shape"] != size:
+                    raise ValueError(f"G05 checkpoint has incompatible joint field {name}, expected {size}")
+                parts.append((name, size))
+        return parts
+
     def _build_raw_state(self, packed_state: np.ndarray) -> dict[str, np.ndarray]:
-        """Map RoboDojo joint-state names to the state keys expected by the active G05 processor."""
-        shape_meta = getattr(self.processor, "shape_meta", {}) or {}
-        expected = {m.get("key") for m in shape_meta.get("state", []) if isinstance(m, dict)}
-        if {"left_control", "left_gripper", "right_control", "right_gripper"}.issubset(expected):
-            return {
-                "left_control": packed_state[0:6],
-                "left_gripper": packed_state[6:7],
-                "right_control": packed_state[7:13],
-                "right_gripper": packed_state[13:14],
-            }
-        return {
-            "left_arm": packed_state[0:6],
-            "left_gripper": packed_state[6:7],
-            "right_arm": packed_state[7:13],
-            "right_gripper": packed_state[13:14],
-        }
+        parts = self._joint_parts("state")
+        offsets = np.cumsum([size for _, size in parts])[:-1]
+        return dict(zip((name for name, _ in parts), np.split(packed_state, offsets)))
 
     def _build_raw_images(self, obs: dict[str, Any]) -> dict[str, np.ndarray]:
-        """Map RoboDojo camera names to the image keys expected by the active G05 processor.
-
-        Older G05 runs used RoboDojo-native keys:
-          cam_high, cam_left_wrist, cam_right_wrist
-        G05 checkpoints use canonical schema keys:
-          exterior_rgb, left_wrist_rgb, right_wrist_rgb
-        """
-        shape_meta = getattr(self.processor, "shape_meta", {}) or {}
-        expected = {m.get("key") for m in shape_meta.get("images", []) if isinstance(m, dict)}
-        if {"exterior_rgb", "left_wrist_rgb", "right_wrist_rgb"}.issubset(expected):
-            return {
-                "exterior_rgb": self._extract_image(obs, "cam_high"),
-                "left_wrist_rgb": self._extract_image(obs, "cam_left_wrist"),
-                "right_wrist_rgb": self._extract_image(obs, "cam_right_wrist"),
-            }
-        return {
-            "cam_high": self._extract_image(obs, "cam_high"),
-            "cam_left_wrist": self._extract_image(obs, "cam_left_wrist"),
-            "cam_right_wrist": self._extract_image(obs, "cam_right_wrist"),
-        }
+        cameras = {"exterior": "cam_high", "wrist_left": "cam_left_wrist", "wrist_right": "cam_right_wrist"}
+        single = len(self.robot_action_dim_info["arm_dim"]) == 1
+        images = {}
+        for view in self._schema("images"):
+            key = cameras[view["camera_type"]]
+            if single and key != "cam_high" and "cam_wrist" in obs["vision"]:
+                key = "cam_wrist"
+            images[view["key"]] = self._extract_image(obs, key)
+        return images
 
     def _extract_image(self, obs: dict[str, Any], g05_key: str) -> np.ndarray:
         vision = obs.get("vision") or {}

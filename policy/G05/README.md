@@ -1,8 +1,10 @@
-# G05 RoboDojo Policy Adapter
+# G05 Policy Adapter
 
 **Contributor:** OpenGalaxea | **Paper:** Not applicable | **arXiv:** Not applicable | **Original code:** See vendored `G05/`.
 
 This adapter serves G05 checkpoints through the XPolicyLab websocket policy-server interface. Integration scripts live at this directory level; the vendored public G05 implementation lives in `G05/`.
+
+The joint adapter reads the checkpoint schema and the registered robot dimensions. Single-arm checkpoints can use an exterior camera and `cam_wrist`; dual-arm RoboDojo checkpoints retain their three cameras. See the [Panda training and evaluation experiment](../../docs/experiments/g05-robomme/README.md) for the matching checkpoint and commands.
 
 Shared conventions — argument meanings, checkpoint naming, split-machine deployment, and `EVAL_ENV_TYPE` — are documented in the [XPolicyLab README](../../README.md). Official results: [RoboDojo LeaderBoard](https://robodojo-benchmark.com/LeaderBoard).
 

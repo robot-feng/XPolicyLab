@@ -11,6 +11,8 @@
 
 从官方 `pi05_base` 微调并与基础权重在同一独立回合对照的命令、参数验证和结果见[MoveCube 微调实验](experiments/pi05-robomme/README.md)。
 
+[G05 四任务训练](experiments/g05-robomme/README.md)记录了 Panda 动作编解码器、核心模型和独立仿真对照的步骤。
+
 ## 环境目录与启动约定
 
 ```text
