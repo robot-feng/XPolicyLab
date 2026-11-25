@@ -46,3 +46,9 @@ done
 `run/dataset_stats.json`、`run/action_tokenizer.pt`、`run/.hydra/config.yaml` 和选中 checkpoint 是推理所需的配套文件。导出器将增量核心参数合回官方基础权重。官方 loader 会将基础模型 27 维接口的相应投影截到任务使用的 20 维内部布局；Panda 的真实动作占其中 8 维（右臂 7 维＋夹爪 1 维），其余维度均有 mask。观察历史长度为 1，因此本轮不测试记忆增强版 G05。
 
 已用真实样本验证两项核心 loss 的反向传播，并在单独的临时目录验证双卡优化、验证与保存。用实验分支的现有 `policy/G05/setup_eval_env_client.sh` 启动 `MoveCube/val/0`，预算 2，G05 通过 WebSocket 在真实模拟器执行 3 步并得到原生 `timeout`。这是通信与动作映射测试，不计入效果对照。32 项仓库回归通过，包括新加的单、双臂状态/动作往返及相机映射测试。
+
+## 本机训练跟踪
+
+三卡正式配置为每卡 batch 2、全局 batch 6，训练 7,948 次更新（47,688 个窗口位置）。查看本机进度用 `tail -f runs/robomme/g05-training/core.log`；只看固定验证集，读取 `$ART/run/core_metrics.jsonl`。`runs/robomme/g05-training/{base,tuned}/<任务>-<回合>/report.json` 是原生仿真记录。对应阶段完成后，分支中的 `result-base.json`、`result-core.json`、`result-tuned.json` 分别记录基础模型对照、选模曲线和最终逐任务配对成绩。每个任务只有三个测试回合，报告样本数与终止状态。
+
+另在第 256 步固定保存一次候选，在 `MoveCube/val/0` 与基础权重各跑一次（同一仿真 seed）。这是中途观察，不参与选模，也不混入 12 个测试回合。复现单独验证回合时给 `evaluate.sh` 设置 `ROBOMME_SPLIT=val ROBOMME_TASKS=MoveCube ROBOMME_EPISODE_IDS=0` 即可。正式评估不传这些覆盖值。

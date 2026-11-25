@@ -12,10 +12,12 @@ CUDA_VISIBLE_DEVICES=${POLICY_GPU:-2} PYTHONPATH="$PWD:$PWD/.." "$py" -u -c \
  bench_name=RoboMME task_name=MoveCube env_cfg_type=panda action_type=joint action_source=fm frequency=20 seed=7 >"$out/server.log" 2>&1 &
 pid=$!; trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
 bash utils/wait_for_policy_server.sh localhost "$port" "$pid" G05 900
-export EVAL_ENV_TYPE=sim ROBOMME_SPLIT=test ROBOMME_EPISODES=1 ROBOMME_ACTION_STEPS=16 ROBOMME_MAX_STEPS=1300
+export EVAL_ENV_TYPE=sim ROBOMME_SPLIT="${ROBOMME_SPLIT:-test}" ROBOMME_EPISODES=1 ROBOMME_ACTION_STEPS=16 ROBOMME_MAX_STEPS=1300
 export ROBOMME_EVALUATION_ID="$(basename "$out")"
-for task in MoveCube PatternLock RouteStick InsertPeg; do
-  for ep in 0 2 3; do
+read -r -a tasks <<< "${ROBOMME_TASKS:-MoveCube PatternLock RouteStick InsertPeg}"
+read -r -a episodes <<< "${ROBOMME_EPISODE_IDS:-0 2 3}"
+for task in "${tasks[@]}"; do
+  for ep in "${episodes[@]}"; do
     ROBOMME_START_EPISODE=$ep ROBOMME_OUTPUT_DIR="$out/$task-$ep" \
       bash policy/G05/setup_eval_env_client.sh RoboMME "$task" external panda joint 7 "${ENV_GPU:-3}" \
       "${SIM_ENV:-$PWD/../robomme_benchmark/.venv}" ckpt_name=external,action_type=joint "$port" localhost >"$out/$task-$ep.log" 2>&1
