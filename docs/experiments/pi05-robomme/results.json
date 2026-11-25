@@ -1,0 +1,98 @@
+{
+  "date": "2026-11-25",
+  "base": {
+    "source": "gs://openpi-assets/checkpoints/pi05_base",
+    "objects": 29,
+    "bytes": 12441749581,
+    "crc32c": "verified"
+  },
+  "train_split": "MoveCube/train",
+  "train_episodes": [
+    {
+      "episode": 0,
+      "seed": 14000,
+      "first_execution": 234,
+      "samples": 191
+    },
+    {
+      "episode": 1,
+      "seed": 14100,
+      "first_execution": 258,
+      "samples": 183
+    },
+    {
+      "episode": 2,
+      "seed": 14200,
+      "first_execution": 243,
+      "samples": 235
+    },
+    {
+      "episode": 3,
+      "seed": 14300,
+      "first_execution": 161,
+      "samples": 105
+    }
+  ],
+  "training": {
+    "updates": 32,
+    "global_batch": 4,
+    "example_positions": 128,
+    "first_loss": 0.0813,
+    "last_loss": 0.0505,
+    "mean_loss_first_four": 0.0903,
+    "mean_loss_last_four": 0.048925,
+    "gradient_norm_range": [
+      0.1718,
+      0.7085
+    ],
+    "randomly_filled_missing_tensors": 0,
+    "updated_tensors": 19,
+    "frozen_tensors_equal_after_bf16_cast": 32,
+    "action_out_proj.kernel": {
+      "trainable": true,
+      "elements": 32768,
+      "changed": 32768,
+      "max_abs_delta": 0.0002947987522929907
+    }
+  },
+  "evaluation": {
+    "base": {
+      "task": "MoveCube",
+      "split": "test",
+      "policy_seed": 0,
+      "action_steps": 16,
+      "max_steps": 1300,
+      "episode": {
+        "episode": 0,
+        "benchmark_seed": 640000,
+        "difficulty": "easy",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 247,
+        "terminated": false,
+        "truncated": true
+      },
+      "successes": 0,
+      "video_sha256": "5bd49c6e9ce73bd3f09d713e4b179552d3dd480f4927aa3220975aaf257a7267"
+    },
+    "tuned": {
+      "task": "MoveCube",
+      "split": "test",
+      "policy_seed": 0,
+      "action_steps": 16,
+      "max_steps": 1300,
+      "episode": {
+        "episode": 0,
+        "benchmark_seed": 640000,
+        "difficulty": "easy",
+        "status": "timeout",
+        "steps": 1301,
+        "initial_frames": 247,
+        "terminated": false,
+        "truncated": true
+      },
+      "successes": 0,
+      "video_sha256": "1fb07ea200ea6d2c86ab26670267bd6ccb5922280599861385ce3e120becd582"
+    }
+  }
+}

@@ -60,3 +60,58 @@ CUDA_VISIBLE_DEVICES=0,1 NCCL_P2P_DISABLE=1 XLA_PYTHON_CLIENT_MEM_FRACTION=0.88 
 实际训练前按 GCS 对象元数据逐个核验 CRC32C：29 个对象，合计 12,441,749,581 字节。初始化时未出现缺失权重。32 个训练 batch（共计 128 个样本位置）全部完成，梯度范数在 0.1718–0.7085 之间；前 4 / 后 4 个 batch 的平均训练 loss 分别为 0.0903 / 0.0489。它们来自不同 batch，只作为优化过程的记录。
 
 保存后逐个对比了全部 51 个参数张量：19 个可训练张量均有更新，其中 `action_out_proj.kernel` 的 32,768 个值全部变化，最大绝对差为 `2.948e-4`。其余 32 个冻结张量与基础权重按上游规则转换为 BF16 后逐元素相等。输出路径为 `$ART/checkpoints/pi05_baseline/movecube-train4/31/`，包含 `params/` 和 `assets/robomme/norm_stats.json`。再次运行请使用新的输出根目录。
+
+## 独立测试回合与复现
+
+在 `MoveCube/test/0` 上分别启动两个全新的策略进程，使用相同的 RoboMME 统计、模型随机种子 `0`、环境种子 `640000` 和 `action_steps=16`。只有权重变了。两次 reset 都返回 247 帧。下表保留模拟器的实际步数：传入预算为 1300，终止时原生计数为 1301。
+
+| 权重 | 成功回合 | 原生终止状态 | 步数 |
+| --- | ---: | --- | ---: |
+| 官方 `pi05_base` | 0/1 | `timeout` | 1301 |
+| 从同一权重微调 32 步 | 0/1 | `timeout` | 1301 |
+
+这次验证了优化器确实更新目标参数，保存的 checkpoint 也能重新加载并驱动仿真。这个测试回合没有观察到成功；单个回合估计不了成功率。尤其要区分历史能力：`MoveCube` 要求重现视频里的移动方式，而本实验用的是只根据当前观测预测的 `pi05_baseline`。调整任务表现时，可以先固定一组验证回合，再比较训练量及是否提供演示历史。
+
+复用的 Panda 模型服务来自已推送的实验提交 `59fe9968`。只在临时目录提取那份服务；环境始终从本分支的 `benchmarks/robomme/` 启动。以下命令沿用前文的 `ART`、`PY`、`RUNTIME` 和父工作区的 Panda 配置；本机示例用 GPU 2 跑推理、GPU 3 跑仿真，按可用设备调整。先将基础参数与训练使用的归一化统计放在同一推理入口下（软链接不复制权重）：
+
+```bash
+BASE="$ART/base-with-robomme-stats"
+mkdir -p "$BASE"
+ln -sfnT "$ART/openpi-assets/checkpoints/pi05_base/params" "$BASE/params"
+ln -sfnT "$ART/assets" "$BASE/assets"
+TUNED="$ART/checkpoints/pi05_baseline/movecube-train4/31"
+REF=$(mktemp -d)
+MODEL="$REF/XPolicyLab"
+mkdir "$MODEL"
+git fetch origin feat/robomme-g05-pi05
+git archive 59fe9968 XPolicyLab.py model_template.py setup_policy_server.py utils client_server \
+  policy/Pi_05/model.py policy/Pi_05/robomme.py policy/Pi_05/deploy.yml | tar -x -C "$MODEL"
+ln -s "$PWD/../env_cfg" "$REF/env_cfg"
+ln -s "$RUNTIME" "$MODEL/policy/Pi_05/robomme_runtime"
+```
+
+在同一终端运行以下函数。每次使用新结果目录；它等待策略服务就绪后才启动客户端，结束时关闭该进程。完整原生报告和 MP4 位于各自目录。
+
+```bash
+eval_one() (
+  set -e
+  ckpt=$1 out=$2
+  test ! -e "$out"
+  port=$(bash utils/get_free_port.sh)
+  CUDA_VISIBLE_DEVICES=2 XLA_PYTHON_CLIENT_MEM_FRACTION=0.45 PYTHONPATH="$MODEL:$REF" \
+    "$PY" "$MODEL/setup_policy_server.py" --config_path "$MODEL/policy/Pi_05/deploy.yml" \
+    --port "$port" --overrides "model_path=$ckpt" bench_name=RoboMME task_name=MoveCube \
+    env_cfg_type=panda action_type=joint seed=0 &
+  pid=$!
+  trap 'kill "$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true' EXIT
+  bash utils/wait_for_policy_server.sh localhost "$port" "$pid" Pi05 600
+  EVAL_ENV_TYPE=sim ROBOMME_SPLIT=test ROBOMME_START_EPISODE=0 ROBOMME_EPISODES=1 \
+    ROBOMME_MAX_STEPS=1300 ROBOMME_ACTION_STEPS=16 ROBOMME_OUTPUT_DIR="$out" \
+    bash policy/Pi_05/setup_eval_env_client.sh RoboMME MoveCube external panda joint 0 3 \
+    "$PWD/../robomme_benchmark/.venv" ckpt_name=external,action_type=joint "$port" localhost
+)
+eval_one "$BASE" "$PWD/runs/robomme/movecube-repeat-base"
+eval_one "$TUNED" "$PWD/runs/robomme/movecube-repeat-tuned"
+```
+
+[实验记录](results.json)摘自实际日志和原生 `report.json`。本机原始训练日志、逐张量对比、仿真报告和录像在 `runs/robomme/finetune-pi05-movecube/`。Git 仅同步脚本、文档和小型结果记录。

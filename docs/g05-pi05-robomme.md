@@ -9,6 +9,8 @@
 
 初版的 `deploy.py` 是环境端可调用的部署循环，`model.py` 是服务端的模型实现。新客户端把 Panda 封装为 `TASK_ENV`，按该策略的 `deploy.yml` 选择单环境或 batch 部署循环。batch 模式每次有一个活动环境，episode 按顺序运行。适配范围为 WebSocket、Panda 单臂、绝对关节控制以及使用标准观测和动作 RPC 的部署循环。
 
+从官方 `pi05_base` 微调并与基础权重在同一独立回合对照的命令、参数验证和结果见[MoveCube 微调实验](experiments/pi05-robomme/README.md)。
+
 ## 环境目录与启动约定
 
 ```text
