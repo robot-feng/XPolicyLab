@@ -42,3 +42,9 @@ EVAL_ENV_TYPE=sim KNOWACT_CKPT_PATH="$BASE" ROBOMME_SPLIT=val ROBOMME_START_EPIS
   ROBOMME_EPISODES=8 ROBOMME_MAX_STEPS=1300 ROBOMME_ACTION_STEPS=8 ROBOMME_OUTPUT_DIR="$WORK/base-val" \
   bash policy/KnowAct/eval.sh RoboMME PatternLock comparison panda joint 7 0 0 "$KNOWACT_PYTHON" "$(dirname "$(dirname "$ROBOMME_PYTHON")")"
 ```
+
+## 完整测试、跨任务和采样密度
+
+冻结上表同一模型头，继续测试剩余 38 个 PatternLock 官方 test 回合。合并 test/0–49 共 **50/50**：easy 26/26、medium 12/12、hard 12/12。原模型的配对结论仍限于 test/0–11 的 0/12；另外 38 个种子未跑原模型。将两种策略原样切换到另一个模仿任务 RouteStick，不在该任务重新拟合：val/0–5，原权重 **0/6**（5 次 fail、1 次 timeout），同一动作头 **6/6**。这是单任务动作头的迁移；其冻结基座的 30K 预训练阶段用过 RouteStick。[逐种子结果](context-transfer.csv) · [RouteStick 验证录像](routestick-demo-head-val2.mp4)。可复用上面的评估命令，替换任务名、split 和 episode 范围，并为每次实验指定新目录。
+
+另取上述相同的 8 个 PatternLock 验证种子，不使用模型，只改变公开示范中保留的关节观测数量。保存两端点并均匀抽帧，沿原时间轴在关节空间线性插值，使用相同执行时钟、固定夹爪和 1,300 步预算。只保留 4 帧成功 **4/8**，保留 16 帧 **8/8**，完整示范 **8/8**。[逐回合采样对照](context-sampling.csv)。这说明均匀 4 帧确实会丢失部分回合所需的路径细节；它不能区分关节信息与视觉的独立贡献，也不能证明增加神经网络输入就能得到回放成绩。复现时在 `demo_replay_control.py` 的命令中分别追加 `--demo-frames 4`、`--demo-frames 16` 或省略该参数。

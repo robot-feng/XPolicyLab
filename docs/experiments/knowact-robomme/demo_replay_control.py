@@ -9,6 +9,7 @@ import numpy as np
 from robomme.env_record_wrapper import BenchmarkEnvBuilder
 from XPolicyLab.benchmarks.robomme.client import Episode
 from XPolicyLab.utils.process_data import get_robot_action_dim_info
+from XPolicyLab.policy.KnowAct.demonstration import frame_indices
 
 
 def evaluate(args):
@@ -27,6 +28,11 @@ def evaluate(args):
             demo = [obs["state"]["arm_joint_state"] for obs in episode.demonstration]
             if not demo:
                 raise ValueError("Expected a public demonstration")
+            if args.demo_frames is not None:
+                # Same observed frames as the policy; reconstruct only the public demonstration.
+                keep = frame_indices(len(demo), args.demo_frames)
+                values = np.asarray(demo)[keep].T
+                demo = np.stack([np.interp(np.arange(len(demo)), keep, q) for q in values], axis=1).astype(np.float32)
             while not episode.is_episode_end():
                 q = demo[min(episode.steps + 1, len(demo) - 1)]
                 episode.take_action(
@@ -44,7 +50,7 @@ def evaluate(args):
                 )
             )
             print(index, results[-1]["status"], flush=True)
-    args.output.write_text(json.dumps({"episodes": results}, indent=2) + "\n")
+    args.output.write_text(json.dumps({"demo_frames": args.demo_frames, "episodes": results}, indent=2) + "\n")
 
 
 if __name__ == "__main__":
@@ -52,5 +58,9 @@ if __name__ == "__main__":
     p.add_argument("--split", choices=("train", "val", "test"), required=True)
     p.add_argument("--start", type=int, required=True)
     p.add_argument("--count", type=int, required=True)
+    p.add_argument("--demo-frames", type=int, help="Uniform public keyframes; linearly interpolate in joint space (default: full trajectory)")
     p.add_argument("--output", type=Path, required=True)
-    evaluate(p.parse_args())
+    args = p.parse_args()
+    if args.demo_frames is not None and args.demo_frames < 2:
+        p.error("--demo-frames must be at least two")
+    evaluate(args)

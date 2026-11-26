@@ -1,0 +1,25 @@
+frames,episode,seed,status,steps,target,touched
+16,16,1151600,success,54,target_7 target_6 target_3,target_7 target_6 target_3
+4,16,1151600,success,56,target_7 target_6 target_3,target_7 target_6 target_3
+full,16,1151600,success,54,target_7 target_6 target_3,target_7 target_6 target_3
+16,17,1151700,success,59,target_8 target_5 target_7,target_8 target_5 target_7
+4,17,1151700,fail,64,target_8 target_5 target_7,target_8 target_7
+full,17,1151700,success,58,target_8 target_5 target_7,target_8 target_5 target_7
+16,18,1151800,success,51,target_9 target_4 target_5,target_9 target_4 target_5
+4,18,1151800,fail,55,target_9 target_4 target_5,target_9 target_5
+full,18,1151800,success,51,target_9 target_4 target_5,target_9 target_4 target_5
+16,19,1151900,success,139,target_16 target_11 target_15 target_10 target_5,target_16 target_11 target_15 target_10 target_5
+4,19,1151900,fail,112,target_16 target_11 target_15 target_10 target_5,target_16 target_10
+full,19,1151900,success,139,target_16 target_11 target_15 target_10 target_5,target_16 target_11 target_15 target_10 target_5
+16,20,1152000,success,27,target_0 target_3,target_0 target_3
+4,20,1152000,success,30,target_0 target_3,target_0 target_3
+full,20,1152000,success,27,target_0 target_3,target_0 target_3
+16,21,1152100,success,58,target_6 target_4 target_5,target_6 target_4 target_5
+4,21,1152100,success,62,target_6 target_4 target_5,target_6 target_4 target_5
+full,21,1152100,success,58,target_6 target_4 target_5,target_6 target_4 target_5
+16,22,1152200,success,57,target_1 target_6 target_7,target_1 target_6 target_7
+4,22,1152200,success,61,target_1 target_6 target_7,target_1 target_6 target_7
+full,22,1152200,success,57,target_1 target_6 target_7,target_1 target_6 target_7
+16,23,1152300,success,140,target_15 target_20 target_21 target_16 target_17,target_15 target_20 target_21 target_16 target_17
+4,23,1152300,fail,140,target_15 target_20 target_21 target_16 target_17,target_15 target_20 target_17
+full,23,1152300,success,137,target_15 target_20 target_21 target_16 target_17,target_15 target_20 target_21 target_16 target_17
