@@ -34,5 +34,505 @@
     "action_window_anchors": 12,
     "output_steps": 16,
     "first_five_rgb_mae": 0.0017079671223958334
+  },
+  "native_patternlock": {
+    "val-original": {
+      "successes": 0,
+      "episodes": 4,
+      "correct_first_segment": 0,
+      "trials": [
+        {
+          "episode": 0,
+          "seed": 1150000,
+          "difficulty": "easy",
+          "demo_episode": 0,
+          "demo_frames_sent": 65,
+          "steps": 68,
+          "status": "fail",
+          "target": [
+            8,
+            5,
+            7
+          ],
+          "touched": [
+            8,
+            1
+          ]
+        },
+        {
+          "episode": 1,
+          "seed": 1150100,
+          "difficulty": "easy",
+          "demo_episode": 1,
+          "demo_frames_sent": 96,
+          "steps": 25,
+          "status": "fail",
+          "target": [
+            0,
+            4,
+            2,
+            1
+          ],
+          "touched": [
+            0,
+            1
+          ]
+        },
+        {
+          "episode": 2,
+          "seed": 1150200,
+          "difficulty": "medium",
+          "demo_episode": 2,
+          "demo_frames_sent": 63,
+          "steps": 136,
+          "status": "fail",
+          "target": [
+            14,
+            11,
+            10
+          ],
+          "touched": [
+            14,
+            1
+          ]
+        },
+        {
+          "episode": 3,
+          "seed": 1150300,
+          "difficulty": "hard",
+          "demo_episode": 3,
+          "demo_frames_sent": 231,
+          "steps": 26,
+          "status": "fail",
+          "target": [
+            12,
+            13,
+            19,
+            23,
+            22,
+            21,
+            17,
+            16
+          ],
+          "touched": [
+            12,
+            7
+          ]
+        }
+      ]
+    },
+    "val-matched": {
+      "successes": 0,
+      "episodes": 4,
+      "correct_first_segment": 1,
+      "trials": [
+        {
+          "episode": 0,
+          "seed": 1150000,
+          "difficulty": "easy",
+          "demo_episode": 0,
+          "demo_frames_sent": 65,
+          "steps": 67,
+          "status": "fail",
+          "target": [
+            8,
+            5,
+            7
+          ],
+          "touched": [
+            8,
+            6
+          ]
+        },
+        {
+          "episode": 1,
+          "seed": 1150100,
+          "difficulty": "easy",
+          "demo_episode": 1,
+          "demo_frames_sent": 96,
+          "steps": 22,
+          "status": "fail",
+          "target": [
+            0,
+            4,
+            2,
+            1
+          ],
+          "touched": [
+            0,
+            1
+          ]
+        },
+        {
+          "episode": 2,
+          "seed": 1150200,
+          "difficulty": "medium",
+          "demo_episode": 2,
+          "demo_frames_sent": 63,
+          "steps": 379,
+          "status": "fail",
+          "target": [
+            14,
+            11,
+            10
+          ],
+          "touched": [
+            14,
+            11,
+            6
+          ]
+        },
+        {
+          "episode": 3,
+          "seed": 1150300,
+          "difficulty": "hard",
+          "demo_episode": 3,
+          "demo_frames_sent": 231,
+          "steps": 68,
+          "status": "fail",
+          "target": [
+            12,
+            13,
+            19,
+            23,
+            22,
+            21,
+            17,
+            16
+          ],
+          "touched": [
+            12,
+            8
+          ]
+        }
+      ]
+    },
+    "val-other": {
+      "successes": 0,
+      "episodes": 4,
+      "correct_first_segment": 0,
+      "trials": [
+        {
+          "episode": 0,
+          "seed": 1150000,
+          "difficulty": "easy",
+          "demo_episode": 1,
+          "demo_frames_sent": 96,
+          "steps": 120,
+          "status": "fail",
+          "target": [
+            8,
+            5,
+            7
+          ],
+          "touched": [
+            8,
+            6
+          ]
+        },
+        {
+          "episode": 1,
+          "seed": 1150100,
+          "difficulty": "easy",
+          "demo_episode": 2,
+          "demo_frames_sent": 63,
+          "steps": 18,
+          "status": "fail",
+          "target": [
+            0,
+            4,
+            2,
+            1
+          ],
+          "touched": [
+            0,
+            1
+          ]
+        },
+        {
+          "episode": 2,
+          "seed": 1150200,
+          "difficulty": "medium",
+          "demo_episode": 3,
+          "demo_frames_sent": 231,
+          "steps": 267,
+          "status": "fail",
+          "target": [
+            14,
+            11,
+            10
+          ],
+          "touched": [
+            14,
+            4
+          ]
+        },
+        {
+          "episode": 3,
+          "seed": 1150300,
+          "difficulty": "hard",
+          "demo_episode": 4,
+          "demo_frames_sent": 93,
+          "steps": 56,
+          "status": "fail",
+          "target": [
+            12,
+            13,
+            19,
+            23,
+            22,
+            21,
+            17,
+            16
+          ],
+          "touched": [
+            12,
+            7
+          ]
+        }
+      ]
+    },
+    "val-none": {
+      "successes": 0,
+      "episodes": 4,
+      "correct_first_segment": 1,
+      "trials": [
+        {
+          "episode": 0,
+          "seed": 1150000,
+          "difficulty": "easy",
+          "demo_episode": null,
+          "demo_frames_sent": 0,
+          "steps": 98,
+          "status": "fail",
+          "target": [
+            8,
+            5,
+            7
+          ],
+          "touched": [
+            8,
+            7
+          ]
+        },
+        {
+          "episode": 1,
+          "seed": 1150100,
+          "difficulty": "easy",
+          "demo_episode": null,
+          "demo_frames_sent": 0,
+          "steps": 84,
+          "status": "fail",
+          "target": [
+            0,
+            4,
+            2,
+            1
+          ],
+          "touched": [
+            0,
+            4,
+            3
+          ]
+        },
+        {
+          "episode": 2,
+          "seed": 1150200,
+          "difficulty": "medium",
+          "demo_episode": null,
+          "demo_frames_sent": 0,
+          "steps": 259,
+          "status": "fail",
+          "target": [
+            14,
+            11,
+            10
+          ],
+          "touched": [
+            14,
+            6
+          ]
+        },
+        {
+          "episode": 3,
+          "seed": 1150300,
+          "difficulty": "hard",
+          "demo_episode": null,
+          "demo_frames_sent": 0,
+          "steps": 29,
+          "status": "fail",
+          "target": [
+            12,
+            13,
+            19,
+            23,
+            22,
+            21,
+            17,
+            16
+          ],
+          "touched": [
+            12,
+            6
+          ]
+        }
+      ]
+    },
+    "train-matched": {
+      "successes": 0,
+      "episodes": 3,
+      "correct_first_segment": 0,
+      "trials": [
+        {
+          "episode": 1,
+          "seed": 15100,
+          "difficulty": "easy",
+          "demo_episode": 1,
+          "demo_frames_sent": 63,
+          "steps": 20,
+          "status": "fail",
+          "target": [
+            4,
+            5,
+            1
+          ],
+          "touched": [
+            4,
+            1
+          ]
+        },
+        {
+          "episode": 2,
+          "seed": 15200,
+          "difficulty": "medium",
+          "demo_episode": 2,
+          "demo_frames_sent": 130,
+          "steps": 115,
+          "status": "fail",
+          "target": [
+            7,
+            3,
+            2,
+            6,
+            1
+          ],
+          "touched": [
+            7,
+            2
+          ]
+        },
+        {
+          "episode": 3,
+          "seed": 15300,
+          "difficulty": "hard",
+          "demo_episode": 3,
+          "demo_frames_sent": 153,
+          "steps": 114,
+          "status": "fail",
+          "target": [
+            16,
+            22,
+            21,
+            17,
+            11
+          ],
+          "touched": [
+            16,
+            17
+          ]
+        }
+      ]
+    }
+  },
+  "heldout_first_action": {
+    "episodes": [
+      0,
+      11,
+      22,
+      33,
+      44,
+      55,
+      66,
+      77,
+      88,
+      99
+    ],
+    "other_demonstration": "next held-out episode, circular",
+    "metric": "MAE in radians on seven joints and the first 16 commands after reset",
+    "means": {
+      "correct_mae": 0.039113,
+      "other_mae": 0.03874,
+      "none_mae": 0.037339,
+      "hold_mae": 0.031418,
+      "correct_other_difference": 0.029402,
+      "correct_none_difference": 0.034656
+    }
+  },
+  "trained_checkpoint_input_check": {
+    "task": "PatternLock",
+    "episode": 0,
+    "seed": 15001,
+    "demonstration_indices": [
+      0,
+      15,
+      31,
+      47
+    ],
+    "native_context_appends": 5,
+    "action_window_anchors": 12,
+    "output_steps": 16,
+    "first_five_rgb_mae": 0.0017079671223958334
+  },
+  "teacher_forced_full_vs_incremental": {
+    "context": "first control window after the four observed demonstration frames",
+    "top1_matching_positions": 236,
+    "action_positions": 240,
+    "per_episode": [
+      {
+        "split": "train",
+        "episode": 1,
+        "action_positions": 48,
+        "hidden_cosine": 0.9992593663434187,
+        "argmax_agreement": 0.9791666666666666,
+        "full_top1": 0.7083333333333334,
+        "incremental_top1": 0.7083333333333334
+      },
+      {
+        "split": "train",
+        "episode": 2,
+        "action_positions": 48,
+        "hidden_cosine": 0.999164288242658,
+        "argmax_agreement": 1.0,
+        "full_top1": 1.0,
+        "incremental_top1": 1.0
+      },
+      {
+        "split": "train",
+        "episode": 3,
+        "action_positions": 48,
+        "hidden_cosine": 0.9992901769777139,
+        "argmax_agreement": 0.9583333333333334,
+        "full_top1": 0.8333333333333334,
+        "incremental_top1": 0.8333333333333334
+      },
+      {
+        "split": "holdout",
+        "episode": 0,
+        "action_positions": 48,
+        "hidden_cosine": 0.9992862989505132,
+        "argmax_agreement": 0.9791666666666666,
+        "full_top1": 0.7291666666666666,
+        "incremental_top1": 0.7083333333333334
+      },
+      {
+        "split": "holdout",
+        "episode": 11,
+        "action_positions": 48,
+        "hidden_cosine": 0.9992964727183183,
+        "argmax_agreement": 1.0,
+        "full_top1": 0.9166666666666666,
+        "incremental_top1": 0.9166666666666666
+      }
+    ]
   }
 }
