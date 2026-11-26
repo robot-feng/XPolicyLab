@@ -1,0 +1,313 @@
+{
+  "prior_run": "RoboMME-knowact08-state-panda-joint-7",
+  "holdout_episodes_per_task": [
+    0,
+    11,
+    22,
+    33
+  ],
+  "control_horizon": 16,
+  "random_seed_per_window": 7,
+  "history": "reset before each prediction",
+  "units": "mean absolute error, radians, seven arm joints",
+  "checkpoints": {
+    "6912": {
+      "recorded_same_row": {
+        "all": {
+          "model": 0.050584,
+          "hold": 0.042077,
+          "codec": 0.00565,
+          "matching_pixels_state_and_prefix": 48,
+          "windows": 48
+        },
+        "MoveCube": {
+          "model": 0.051555,
+          "hold": 0.040656,
+          "codec": 0.005501,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "PatternLock": {
+          "model": 0.040501,
+          "hold": 0.035093,
+          "codec": 0.004899,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "RouteStick": {
+          "model": 0.053261,
+          "hold": 0.059941,
+          "codec": 0.006407,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "InsertPeg": {
+          "model": 0.057021,
+          "hold": 0.032617,
+          "codec": 0.005794,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        }
+      },
+      "following_action": {
+        "all": {
+          "model": 0.053595,
+          "hold": 0.046904,
+          "codec": 0.005635,
+          "matching_pixels_state_and_prefix": 48,
+          "windows": 48
+        },
+        "MoveCube": {
+          "model": 0.054374,
+          "hold": 0.045314,
+          "codec": 0.005344,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "PatternLock": {
+          "model": 0.046953,
+          "hold": 0.040512,
+          "codec": 0.004927,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "RouteStick": {
+          "model": 0.059287,
+          "hold": 0.066947,
+          "codec": 0.005699,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "InsertPeg": {
+          "model": 0.053766,
+          "hold": 0.034843,
+          "codec": 0.006573,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        }
+      }
+    },
+    "30000": {
+      "recorded_same_row": {
+        "all": {
+          "model": 0.044021,
+          "hold": 0.042077,
+          "codec": 0.00565,
+          "matching_pixels_state_and_prefix": 48,
+          "windows": 48
+        },
+        "MoveCube": {
+          "model": 0.040878,
+          "hold": 0.040656,
+          "codec": 0.005501,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "PatternLock": {
+          "model": 0.022556,
+          "hold": 0.035093,
+          "codec": 0.004899,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "RouteStick": {
+          "model": 0.05999,
+          "hold": 0.059941,
+          "codec": 0.006407,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "InsertPeg": {
+          "model": 0.05266,
+          "hold": 0.032617,
+          "codec": 0.005794,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        }
+      },
+      "following_action": {
+        "all": {
+          "model": 0.045432,
+          "hold": 0.046904,
+          "codec": 0.005635,
+          "matching_pixels_state_and_prefix": 48,
+          "windows": 48
+        },
+        "MoveCube": {
+          "model": 0.041252,
+          "hold": 0.045314,
+          "codec": 0.005344,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "PatternLock": {
+          "model": 0.024243,
+          "hold": 0.040512,
+          "codec": 0.004927,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "RouteStick": {
+          "model": 0.065706,
+          "hold": 0.066947,
+          "codec": 0.005699,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        },
+        "InsertPeg": {
+          "model": 0.050528,
+          "hold": 0.034843,
+          "codec": 0.006573,
+          "matching_pixels_state_and_prefix": 12,
+          "windows": 12
+        }
+      }
+    }
+  },
+  "replay": {
+    "raw_expert": [
+      {
+        "task": "PatternLock",
+        "episode": 0,
+        "seed": 15001,
+        "action_source": "expert",
+        "steps": 42,
+        "status": "success",
+        "environment_ended": true,
+        "pre_step_state_mae": 0.0032438216730952263,
+        "post_step_state_mae": 5.630125087918714e-05,
+        "first20_pre": 0.0035263996105641127,
+        "first20_post": 1.962429774238217e-09,
+        "mean_pixel_abs_error_0_to_255": {
+          "cam_head": {
+            "pre_step": 0.5441675821940104,
+            "post_step": 0.0
+          },
+          "cam_wrist": {
+            "pre_step": 6.497129313151042,
+            "post_step": 0.0
+          }
+        }
+      },
+      {
+        "task": "RouteStick",
+        "episode": 0,
+        "seed": 16000,
+        "action_source": "expert",
+        "steps": 94,
+        "status": "success",
+        "environment_ended": true,
+        "pre_step_state_mae": 0.0057461801916360855,
+        "post_step_state_mae": 6.405409658327699e-05,
+        "first20_pre": 0.005211998242884874,
+        "first20_post": 2.9270137424930454e-09,
+        "mean_pixel_abs_error_0_to_255": {
+          "cam_head": {
+            "pre_step": 1.0972574869791667,
+            "post_step": 1.1189778645833334e-05
+          },
+          "cam_wrist": {
+            "pre_step": 12.898029581705728,
+            "post_step": 0.0016057332356770831
+          }
+        }
+      },
+      {
+        "task": "InsertPeg",
+        "episode": 0,
+        "seed": 13000,
+        "action_source": "expert",
+        "steps": 226,
+        "status": "success",
+        "environment_ended": true,
+        "pre_step_state_mae": 0.007179136388003826,
+        "post_step_state_mae": 4.112426904612221e-05,
+        "first20_pre": 0.003049037652090192,
+        "first20_post": 1.7104980543081183e-08,
+        "mean_pixel_abs_error_0_to_255": {
+          "cam_head": {
+            "pre_step": 0.00322113037109375,
+            "post_step": 0.0
+          },
+          "cam_wrist": {
+            "pre_step": 9.216354370117188,
+            "post_step": 0.0011586507161458332
+          }
+        }
+      },
+      {
+        "task": "MoveCube",
+        "episode": 0,
+        "seed": 14000,
+        "action_source": "expert",
+        "steps": 186,
+        "status": "success",
+        "environment_ended": true,
+        "pre_step_state_mae": 0.0053173149935901165,
+        "post_step_state_mae": 2.2650830544534983e-07,
+        "first20_pre": 0.002689886372536421,
+        "first20_post": 9.648351451119197e-09,
+        "mean_pixel_abs_error_0_to_255": {
+          "cam_head": {
+            "pre_step": 0.02991485595703125,
+            "post_step": 0.0
+          },
+          "cam_wrist": {
+            "pre_step": 8.791207377115885,
+            "post_step": 0.0017496744791666665
+          }
+        }
+      }
+    ],
+    "expert_codec_round_trip": [
+      {
+        "task": "PatternLock",
+        "episode": 0,
+        "seed": 15001,
+        "action_source": "codec",
+        "steps": 44,
+        "status": "success",
+        "environment_ended": true
+      },
+      {
+        "task": "RouteStick",
+        "episode": 0,
+        "seed": 16000,
+        "action_source": "codec",
+        "steps": 94,
+        "status": "success",
+        "environment_ended": true
+      },
+      {
+        "task": "InsertPeg",
+        "episode": 0,
+        "seed": 13000,
+        "action_source": "codec",
+        "steps": 226,
+        "status": "success",
+        "environment_ended": true
+      },
+      {
+        "task": "MoveCube",
+        "episode": 0,
+        "seed": 14000,
+        "action_source": "codec",
+        "steps": 186,
+        "status": "success",
+        "environment_ended": true
+      }
+    ],
+    "rgb_sample_steps_per_episode": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      28,
+      32,
+      36
+    ]
+  }
+}
