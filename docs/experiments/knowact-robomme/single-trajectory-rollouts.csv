@@ -44,3 +44,15 @@ single-grafts,train,1,15100,easy,replace_0,success,54,4 5 1,4 5 1
 single-grafts,train,1,15100,easy,replace_16,success,54,4 5 1,4 5 1
 single-grafts,train,1,15100,easy,replace_32,success,54,4 5 1,4 5 1
 single-grafts,train,1,15100,easy,replace_48,success,57,4 5 1,4 5 1
+pilot-paired,train,2,15200,medium,forget_16,fail,130,7 3 2 6 1,7 2
+pilot-paired,train,2,15200,medium,full_16,fail,384,7 3 2 6 1,7 3 2 4
+pilot-paired,train,3,15300,hard,forget_16,fail,269,16 22 21 17 11,16 22 21 20
+pilot-paired,train,3,15300,hard,full_16,fail,38,16 22 21 17 11,16 17
+pilot-paired,val,0,1150000,easy,forget_16,timeout,1301,8 5 7,8 5
+pilot-paired,val,0,1150000,easy,full_16,fail,64,8 5 7,8 5 1
+pilot-paired,val,1,1150100,easy,forget_16,fail,33,0 4 2 1,0 1
+pilot-paired,val,1,1150100,easy,full_16,fail,84,0 4 2 1,0 4 5
+pilot-paired,val,2,1150200,medium,forget_16,fail,530,14 11 10,14 11 7
+pilot-paired,val,2,1150200,medium,full_16,fail,104,14 11 10,14 7
+pilot-paired,val,3,1150300,hard,forget_16,timeout,1301,12 13 19 23 22 21 17 16,12 13
+pilot-paired,val,3,1150300,hard,full_16,fail,261,12 13 19 23 22 21 17 16,12 13 8

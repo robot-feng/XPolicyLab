@@ -217,12 +217,12 @@ def main(a):
             stats.symlink_to(data / "run/dataset_stats.json")
         cfg.run_dir = str(run)
         OmegaConf.save(cfg, run / ".hydra/config.yaml", resolve=True)
-        print(
-            json.dumps(
-                dict(plan=plan, train=len(train), probe_pool=len(val), probe_metric=metric_name, start=start)
-            ),
-            flush=True,
-        )
+        summary = dict(plan=plan, train=len(train), start=start)
+        if a.all_train_demos:
+            summary.update(probe_pool=len(val), probe_metric=metric_name)
+        else:
+            summary["validation"] = len(val)
+        print(json.dumps(summary), flush=True)
     dist.barrier()
 
     @torch.no_grad()
@@ -316,7 +316,7 @@ def main(a):
                 )
                 with (run / "metrics.jsonl").open("a") as f:
                     print(json.dumps({"step": step, metric_name: metric}), file=f)
-                print(metric_name, step, metric, flush=True)
+                print(metric_name if a.all_train_demos else "validation", step, metric, flush=True)
             dist.barrier()
             since = step
             tick = time.monotonic()
