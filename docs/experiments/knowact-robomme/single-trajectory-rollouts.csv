@@ -1,0 +1,46 @@
+run,split,episode,seed,difficulty,condition,status,steps,target,touched
+reference,train,1,15100,easy,expert,success,54,4 5 1,4 5 1
+reference,train,2,15200,medium,expert,success,120,7 3 2 6 1,7 3 2 6 1
+reference,train,3,15300,hard,expert,success,141,16 22 21 17 11,16 22 21 17 11
+pilot-paired,train,1,15100,easy,forget_16,fail,159,4 5 1,4 2
+pilot-paired,train,1,15100,easy,full_16,fail,26,4 5 1,4 1
+pilot-paired,train,1,15100,easy,full_32,fail,108,4 5 1,4 2
+pilot-paired,train,1,15100,easy,full_4,fail,52,4 5 1,4 1
+pilot-paired,train,1,15100,easy,full_8,fail,19,4 5 1,4 1
+pilot-paired,train,1,15100,easy,repeat_16,fail,26,4 5 1,4 1
+single-paired,train,1,15100,easy,forget_16,fail,51,4 5 1,4 1
+single-paired,train,1,15100,easy,full_16,fail,56,4 5 1,4 1
+single-paired,train,1,15100,easy,full_32,success,68,4 5 1,4 5 1
+single-paired,train,1,15100,easy,full_4,fail,125,4 5 1,4 3
+single-paired,train,1,15100,easy,full_8,success,44,4 5 1,4 5 1
+single-paired,train,1,15100,easy,repeat_16,fail,56,4 5 1,4 1
+fresh-pilot,train,1,15100,easy,full_8,fail,148,4 5 1,4 2
+fresh-pilot,val,4,1150400,easy,full_16,fail,754,0 1 4 3,0 1 4 1
+fresh-pilot,val,4,1150400,easy,full_8,fail,106,0 1 4 3,0 1 5
+fresh-pilot,val,5,1150500,easy,full_16,fail,82,6 4 1,6 5
+fresh-pilot,val,5,1150500,easy,full_8,fail,78,6 4 1,6 4 5
+fresh-pilot,val,6,1150600,medium,full_16,fail,243,7 3 2 6,7 2
+fresh-pilot,val,6,1150600,medium,full_8,fail,160,7 3 2 6,7 4
+fresh-pilot,val,7,1150700,hard,full_16,fail,35,9 13 7 1 5 0,9 8
+fresh-pilot,val,7,1150700,hard,full_8,fail,18,9 13 7 1 5 0,9 8
+fresh-single,train,1,15100,easy,full_8,fail,50,4 5 1,4 1
+fresh-single,val,4,1150400,easy,full_16,fail,420,0 1 4 3,0 1 3
+fresh-single,val,4,1150400,easy,full_8,success,218,0 1 4 3,0 1 4 3
+fresh-single,val,5,1150500,easy,full_16,fail,81,6 4 1,6 2
+fresh-single,val,5,1150500,easy,full_8,fail,313,6 4 1,6 4 3
+fresh-single,val,6,1150600,medium,full_16,fail,57,7 3 2 6,7 2
+fresh-single,val,6,1150600,medium,full_8,fail,26,7 3 2 6,7 2
+fresh-single,val,7,1150700,hard,full_16,fail,27,9 13 7 1 5 0,9 8
+fresh-single,val,7,1150700,hard,full_8,fail,46,9 13 7 1 5 0,9 3
+pilot-grafts,train,1,15100,easy,all_predicted_on_expert_obs,success,57,4 5 1,4 5 1
+pilot-grafts,train,1,15100,easy,expert_codec,success,57,4 5 1,4 5 1
+pilot-grafts,train,1,15100,easy,replace_0,success,54,4 5 1,4 5 1
+pilot-grafts,train,1,15100,easy,replace_16,success,54,4 5 1,4 5 1
+pilot-grafts,train,1,15100,easy,replace_32,success,54,4 5 1,4 5 1
+pilot-grafts,train,1,15100,easy,replace_48,success,57,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,all_predicted_on_expert_obs,success,57,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,expert_codec,success,57,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,replace_0,success,54,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,replace_16,success,54,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,replace_32,success,54,4 5 1,4 5 1
+single-grafts,train,1,15100,easy,replace_48,success,57,4 5 1,4 5 1

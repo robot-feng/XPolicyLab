@@ -7,12 +7,14 @@ import os
 from pathlib import Path
 import random
 import time
+from itertools import islice
 
 import numpy as np
 from omegaconf import OmegaConf
 import torch
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.data.distributed import DistributedSampler
 
 from initialize import REPO
 from core import atomic_save, on_device
@@ -63,10 +65,20 @@ class Episodes(Windows):
         return dict(self[index], native_history=history)
 
 
-def batch_from(dataset, rng, size):
+def full_pass_indices(dataset, world, rank, seed, offset):
+    sampler = DistributedSampler(dataset, world, rank, seed=seed)
+    epoch, skip = divmod(offset, len(sampler))
+    while True:
+        sampler.set_epoch(epoch)
+        yield from islice(sampler, skip, None)
+        epoch += 1
+        skip = 0
+
+
+def batch_from(dataset, rng, size, indices=None):
     items, rows = [], []
     for _ in range(size):
-        index = int(rng.integers(len(dataset)))
+        index = next(indices) if indices is not None else int(rng.integers(len(dataset)))
         rows.append(dataset.index[index][0])
         items.append(dataset.episode(index, int(rng.integers(1, 5))))
     # native.train reads only the B=1 turns, not the legacy collated current batch.
@@ -153,6 +165,10 @@ def main(a):
     best = float("inf")
     if a.task or a.warm_start:
         plan.update(task=a.task, warm_start=str(warm_start))
+    if a.train_episode is not None:
+        plan["train_episode"] = a.train_episode
+    if a.all_train_demos:
+        plan["all_train_demos"] = True
     if a.resume or a.warm_start:
         saved = torch.load(checkpoint, mmap=True, map_location="cpu", weights_only=True)
         if a.resume and saved["plan"] != plan:
@@ -178,8 +194,16 @@ def main(a):
     train_proc.train()
     validate_history_processor(train_proc)
     tasks = (a.task,) if a.task else TASKS
-    train = Episodes(data, "train", train_proc, tasks)
-    val = Episodes(data, "holdout", procs["panda"], tasks)
+    train = Episodes(data, "all" if a.all_train_demos else "train", train_proc, tasks)
+    val = Episodes(data, "all" if a.all_train_demos else "holdout", procs["panda"], tasks)
+    metric_name = "train_probe_ce" if a.all_train_demos else "holdout_ce"
+    indices = full_pass_indices(train, world, rank, a.seed, start * a.batch) if a.all_train_demos else None
+    if a.train_episode is not None:
+        train.index = [
+            (row, t) for row, t in train.index if train.rows[row][1]["episode"] == a.train_episode
+        ]
+        if not train.index:
+            raise ValueError(f"Episode {a.train_episode} is absent from the training split")
     if train.demo_limit != val.demo_limit:
         raise ValueError("Train and holdout demonstration sampling differ")
     if not train.demo_limit and not (a.legacy_execution_only or a.resume):
@@ -195,7 +219,7 @@ def main(a):
         OmegaConf.save(cfg, run / ".hydra/config.yaml", resolve=True)
         print(
             json.dumps(
-                dict(plan=plan, train=len(train), validation=len(val), start=start)
+                dict(plan=plan, train=len(train), probe_pool=len(val), probe_metric=metric_name, start=start)
             ),
             flush=True,
         )
@@ -224,7 +248,7 @@ def main(a):
         model.train()
         seed = a.seed + step * world + rank
         seed_all(seed)
-        batch = batch_from(train, np.random.default_rng(seed), a.batch)
+        batch = batch_from(train, np.random.default_rng(seed), a.batch, indices)
         lr = (
             a.lr
             * min(1.0, step / 100)
@@ -270,7 +294,7 @@ def main(a):
                 improved = metric < best
                 best = min(metric, best)
                 state = model.state_dict()
-                record = dict(step=step, best=best, holdout_ce=metric, plan=plan)
+                record = {"step": step, "best": best, metric_name: metric, "plan": plan}
                 milestone = step in (10000, 20000, 30000)
                 # Keep a single resumable master. Serving snapshots omit Adam state.
                 if improved or milestone:
@@ -291,8 +315,8 @@ def main(a):
                     run / "last.pt",
                 )
                 with (run / "metrics.jsonl").open("a") as f:
-                    print(json.dumps(dict(step=step, holdout_ce=metric)), file=f)
-                print("validation", step, metric, flush=True)
+                    print(json.dumps({"step": step, metric_name: metric}), file=f)
+                print(metric_name, step, metric, flush=True)
             dist.barrier()
             since = step
             tick = time.monotonic()
@@ -312,6 +336,12 @@ if __name__ == "__main__":
     p.add_argument("--val-windows", type=int, default=32)
     p.add_argument("--resume", action="store_true")
     p.add_argument("--task", choices=TASKS)
+    selection = p.add_mutually_exclusive_group()
+    selection.add_argument("--train-episode", type=int, help="Fit one trajectory from the training split")
+    selection.add_argument("--all-train-demos", action="store_true", help="Shuffle every official training window once per epoch, with DDP padding")
     p.add_argument("--warm-start", type=Path, help="Seed policy weights and start a fresh optimizer")
     p.add_argument("--legacy-execution-only", action="store_true", help="Reproduce the original execution-only run")
-    main(p.parse_args())
+    args = p.parse_args()
+    if args.train_episode is not None and not args.task:
+        p.error("--train-episode requires --task")
+    main(args)

@@ -16,7 +16,8 @@ def episodes(root, split, tasks=TASKS):
         records = [(p.parent, json.loads(p.read_text())) for p in paths]
         assert {r["episode"] for _, r in records} == set(range(100)), f"incomplete task: {task}"
         rows.extend(
-            (p, r) for p, r in records if ("holdout" if r["episode"] % 11 == 0 else "train") == split
+            (p, r) for p, r in records
+            if split == "all" or ("holdout" if r["episode"] % 11 == 0 else "train") == split
         )
     return rows
 
