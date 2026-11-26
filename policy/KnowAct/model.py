@@ -19,6 +19,7 @@ import numpy as np
 from XPolicyLab.policy.G05.model import BATCH_ENV_INDICES_KEY, BATCH_OBSERVATIONS_KEY, _step_sort_key
 from XPolicyLab.policy.G05.model import Model as G05Adapter
 from XPolicyLab.policy.KnowAct.demonstration import frame_indices
+from XPolicyLab.policy.KnowAct.demo_head import DemoHead
 from XPolicyLab.utils.checkpoint_resolver import resolve_checkpoint_root
 
 
@@ -76,6 +77,10 @@ class Model(G05Adapter):
             overrides.append(f"model.model_arch.native_context_max_tokens={token_limit}")
         config["hydra_overrides"] = overrides
 
+        head_path = os.environ.get("KNOWACT_DEMO_HEAD") or config.get("demo_head_path")
+        self.demo_head = DemoHead(head_path) if head_path else None
+        if self.demo_head and (not self.native_context or config.get("env_cfg_type") != "panda"):
+            raise ValueError("The fitted demonstration head requires native Panda joint control")
         super().__init__(config)
 
         self.keep_history = os.environ.get("KNOWACT_KEEP_HISTORY", "true").lower() in {
@@ -84,6 +89,8 @@ class Model(G05Adapter):
         }
         self._native_states: dict[Any, tuple[Any, int, int]] = {}
         self._demonstrations = {}
+        self._demo_states = {}
+        self._demo_phase = {}
         self._native_lock = threading.RLock()
 
         if self.native_context:
@@ -145,17 +152,26 @@ class Model(G05Adapter):
             super().reset()
             self._native_states.clear()
             self._demonstrations = {}
+            self._demo_states = {}
+            self._demo_phase = {}
 
     def _remember_demo(self, obs, key):
         marker = obs.get("demonstration_frame")
         if marker is None or not self.native_context:
             return
         limit = int(self.policy.config.get("native_demo_frames", 0))
-        if not limit:
+        if not limit and not self.demo_head:
             return
         index, length = marker["index"], marker["length"]
         if not 0 <= index < length or key in self._native_states:
             raise ValueError("Unexpected demonstration frame outside the episode prefix")
+        if self.demo_head:
+            sequence = self._demo_states.setdefault(key, [])
+            if index != len(sequence):
+                raise ValueError("Missing or repeated demonstration state")
+            sequence.append(np.asarray(obs["state"]["arm_joint_state"], dtype=np.float32).copy())
+            if index == length - 1:
+                self._demo_states[key] = np.stack(sequence)
         if index in frame_indices(length, limit):
             self._demonstrations.setdefault(key, {})[index] = obs
 
@@ -191,6 +207,7 @@ class Model(G05Adapter):
         # the entire batch atomically, not a partially successful batch.
         with self._native_lock:
             updates = {}
+            phases = {}
             action_chunks = []
 
             for env_key, observation in zip(env_keys, observations):
@@ -219,6 +236,7 @@ class Model(G05Adapter):
                         raise ValueError("execution receipt exceeds dispatched steps")
                     next_plan_id = previous_plan_id + 1
 
+                confirmed_steps = executed_steps or 0
                 if not self.keep_history:
                     state, executed_steps = None, None
 
@@ -239,6 +257,14 @@ class Model(G05Adapter):
                         for i in sorted(demo)
                     ],
                 )
+                if self.demo_head and env_key in self._demo_states:
+                    trajectory = self._demo_states[env_key]
+                    if not isinstance(trajectory, np.ndarray):
+                        raise ValueError("Incomplete demonstration before the first action")
+                    action, candidate_state, phases[env_key] = self.demo_head.apply(
+                        trajectory, observation["state"]["arm_joint_state"], action, candidate_state,
+                        self.processor[self.embodiment_type], self._demo_phase.get(env_key, 0), confirmed_steps,
+                    )
                 chunk = self._format_action_chunk(action)
                 invalid_action = not chunk or any(
                     not np.isfinite(np.asarray(value)).all()
@@ -252,6 +278,7 @@ class Model(G05Adapter):
                 action_chunks.append(chunk)
 
             self._native_states.update(updates)
+            self._demo_phase.update(phases)
             return action_chunks
 
     def _resolve_ckpt_path(self, model_cfg: Any) -> Path:

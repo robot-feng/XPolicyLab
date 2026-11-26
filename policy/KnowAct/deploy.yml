@@ -23,3 +23,5 @@ action_steps: 32
 frequency: null
 # Native context uses AR/BAR16 only. Legacy FM requires native_context=false.
 hydra_overrides: []
+# Optional fitted joint demonstration head, trained for Panda imitation.
+demo_head_path: null

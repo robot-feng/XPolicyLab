@@ -1,0 +1,49 @@
+variant,split,episode,seed,status,steps,first_segment,target,touched
+base,test,0,650000,fail,33,0,target_5 target_4 target_6 target_7,target_5 target_7
+base,test,1,650100,fail,30,0,target_1 target_0 target_4 target_2,target_1 target_5
+base,test,2,650200,fail,85,0,target_4 target_9 target_14 target_13 target_12,target_4 target_10
+base,test,3,650300,fail,114,0,target_8 target_13 target_14 target_19 target_24 target_18,target_8 target_11
+base,test,4,650400,fail,122,0,target_6 target_7 target_3 target_0,target_6 target_1
+base,test,5,650500,fail,20,0,target_1 target_5,target_1 target_4
+base,test,6,650600,fail,27,0,target_1 target_5 target_2 target_7 target_11,target_1 target_2
+base,test,7,650700,fail,27,0,target_7 target_6 target_11 target_12,target_7 target_13
+base,test,8,650800,timeout,1301,1,target_1 target_4 target_3 target_0,target_1 target_4 target_3
+base,test,9,650900,fail,48,0,target_8 target_4 target_6,target_8 target_7
+base,test,10,651000,fail,24,0,target_10 target_11 target_7 target_6,target_10 target_9
+base,test,11,651100,fail,46,1,target_15 target_10 target_16 target_12,target_15 target_10 target_5
+base,val,16,1151600,fail,51,0,target_7 target_6 target_3,target_7 target_2
+base,val,17,1151700,fail,57,0,target_8 target_5 target_7,target_8 target_7
+base,val,18,1151800,fail,100,0,target_9 target_4 target_5,target_9 target_1
+base,val,19,1151900,fail,31,0,target_16 target_11 target_15 target_10 target_5,target_16 target_12
+base,val,20,1152000,success,59,1,target_0 target_3,target_0 target_3
+base,val,21,1152100,fail,60,0,target_6 target_4 target_5,target_6 target_8
+base,val,22,1152200,fail,786,0,target_1 target_6 target_7,target_1 target_8
+base,val,23,1152300,fail,354,0,target_15 target_20 target_21 target_16 target_17,target_15 target_13
+head,test,0,650000,success,78,1,target_5 target_4 target_6 target_7,target_5 target_4 target_6 target_7
+head,test,1,650100,success,85,1,target_1 target_0 target_4 target_2,target_1 target_0 target_4 target_2
+head,test,2,650200,success,115,1,target_4 target_9 target_14 target_13 target_12,target_4 target_9 target_14 target_13 target_12
+head,test,3,650300,success,190,1,target_8 target_13 target_14 target_19 target_24 target_18,target_8 target_13 target_14 target_19 target_24 target_18
+head,test,4,650400,success,91,1,target_6 target_7 target_3 target_0,target_6 target_7 target_3 target_0
+head,test,5,650500,success,28,1,target_1 target_5,target_1 target_5
+head,test,6,650600,success,135,1,target_1 target_5 target_2 target_7 target_11,target_1 target_5 target_2 target_7 target_11
+head,test,7,650700,success,80,1,target_7 target_6 target_11 target_12,target_7 target_6 target_11 target_12
+head,test,8,650800,success,83,1,target_1 target_4 target_3 target_0,target_1 target_4 target_3 target_0
+head,test,9,650900,success,67,1,target_8 target_4 target_6,target_8 target_4 target_6
+head,test,10,651000,success,73,1,target_10 target_11 target_7 target_6,target_10 target_11 target_7 target_6
+head,test,11,651100,success,93,1,target_15 target_10 target_16 target_12,target_15 target_10 target_16 target_12
+head,val,16,1151600,success,49,1,target_7 target_6 target_3,target_7 target_6 target_3
+head,val,17,1151700,success,55,1,target_8 target_5 target_7,target_8 target_5 target_7
+head,val,18,1151800,success,49,1,target_9 target_4 target_5,target_9 target_4 target_5
+head,val,19,1151900,success,140,1,target_16 target_11 target_15 target_10 target_5,target_16 target_11 target_15 target_10 target_5
+head,val,20,1152000,success,25,1,target_0 target_3,target_0 target_3
+head,val,21,1152100,success,56,1,target_6 target_4 target_5,target_6 target_4 target_5
+head,val,22,1152200,success,55,1,target_1 target_6 target_7,target_1 target_6 target_7
+head,val,23,1152300,success,134,1,target_15 target_20 target_21 target_16 target_17,target_15 target_20 target_21 target_16 target_17
+replay,val,16,1151600,success,54,1,target_7 target_6 target_3,target_7 target_6 target_3
+replay,val,17,1151700,success,58,1,target_8 target_5 target_7,target_8 target_5 target_7
+replay,val,18,1151800,success,51,1,target_9 target_4 target_5,target_9 target_4 target_5
+replay,val,19,1151900,success,139,1,target_16 target_11 target_15 target_10 target_5,target_16 target_11 target_15 target_10 target_5
+replay,val,20,1152000,success,27,1,target_0 target_3,target_0 target_3
+replay,val,21,1152100,success,58,1,target_6 target_4 target_5,target_6 target_4 target_5
+replay,val,22,1152200,success,57,1,target_1 target_6 target_7,target_1 target_6 target_7
+replay,val,23,1152300,success,137,1,target_15 target_20 target_21 target_16 target_17,target_15 target_20 target_21 target_16 target_17
