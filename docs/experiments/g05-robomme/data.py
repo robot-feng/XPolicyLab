@@ -9,9 +9,9 @@ import torch
 from prepare import TASKS
 
 
-def episodes(root, split):
+def episodes(root, split, tasks=TASKS):
     rows = []
-    for task in TASKS:
+    for task in tasks:
         paths = sorted((root / "data" / task).glob("*/episode.json"))
         records = [(p.parent, json.loads(p.read_text())) for p in paths]
         assert {r["episode"] for _, r in records} == set(range(100)), f"incomplete task: {task}"
@@ -44,8 +44,8 @@ def statistics(root):
 
 
 class Windows:
-    def __init__(self, root, split, processor=None):
-        self.rows = episodes(root, split)
+    def __init__(self, root, split, processor=None, tasks=TASKS):
+        self.rows = episodes(root, split, tasks)
         self.proc = processor
         self.act = [np.load(p / "action.npy") for p, _ in self.rows]
         self.state = [np.load(p / "state.npy") for p, _ in self.rows] if processor else None
@@ -86,7 +86,7 @@ class Windows:
             action_is_pad=torch.from_numpy(indices >= end),
             state_is_pad=torch.zeros(1, dtype=torch.bool),
             image_is_pad=torch.zeros(1, dtype=torch.bool),
-            task=r["prompt"],
+            task=r.get("deployment_prompt", r["prompt"]),
             embodiment="panda",
             frequency=20.0,
             idx=index,

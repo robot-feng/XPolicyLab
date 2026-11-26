@@ -1,5 +1,7 @@
 # KnowAct V7.1 在 RoboMME 上的四卡训练
 
+针对原训练的 0/12 结果，后续 PatternLock 单任务实验修正了示范上下文和动作时序。[修复、独立训练和验证命令](patternlock-pilot.md)
+
 这次实验用官方 Qwen3.5-0.8B 初始化 KnowAct 的语言和视觉主干，用已经适配 Panda 的 ActionCodec 表示动作，再用四项 RoboMME 任务训练动作预测。目标为 30,000 次优化器更新。固定留出集的 CE 在第 4、256、512 步分别为 14.287、1.549、1.485。操作效果由原生仿真回合的终止状态衡量。[验收记录](preflight.json)
 
 ## 正式录像与零成功率核查
@@ -108,7 +110,7 @@ Qwen 初始化时，将全部 320 个唯一语言参数和 153 个视觉参数�
 
 ```bash
 # 新 run 的四步验收。steps 仍是 30000，因此后续续训与预热、余弦相位连续。
-bash policy/KnowAct/train.sh RoboMME knowact08-state panda joint 7 0,1,2,3 --stop-at 4
+bash policy/KnowAct/train.sh RoboMME knowact08-state panda joint 7 0,1,2,3 --stop-at 4 --legacy-execution-only
 # 从最近一次完整保存继续，10K / 20K / 30K 分段训练、评估并同步报告
 "$KNOWACT_PYTHON" -u "$EXP/milestones.py" --name knowact08-state \
   --sync-branch feat/g05-robomme-training

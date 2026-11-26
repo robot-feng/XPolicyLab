@@ -93,7 +93,9 @@ class EpisodeRPC:
         result = self.client.call(func_name=func_name, obs=obs)
         if func_name == "reset":
             update = "update_obs_batch" if self.batch else "update_obs"
-            for frame in self.episode.demonstration:
+            frames = self.episode.demonstration
+            for i, frame in enumerate(frames):
+                frame = {**frame, "demonstration_frame": {"index": i, "length": len(frames)}}
                 self.client.call(func_name=update, obs=[frame] if self.batch else frame)
         elif func_name in ("get_action", "get_action_batch"):
             chunks = result if func_name == "get_action_batch" else [result]
@@ -124,6 +126,8 @@ def main():
     parser.add_argument("--episodes", type=int, default=os.getenv("ROBOMME_EPISODES") or 1)
     parser.add_argument("--max-steps", type=int, default=os.getenv("ROBOMME_MAX_STEPS") or 1300)
     parser.add_argument("--action-steps", type=int, default=os.getenv("ROBOMME_ACTION_STEPS") or 16)
+    parser.add_argument("--demonstration", choices=("matched", "other", "none"),
+                        default=os.getenv("ROBOMME_DEMONSTRATION", "matched"))
     parser.add_argument("--output", type=Path, default=os.getenv("ROBOMME_OUTPUT_DIR") or None)
     parser.add_argument("--no-video", action="store_true")
     args = parser.parse_args()
@@ -154,6 +158,13 @@ def main():
     try:
         for index in range(args.start_episode, end):
             trial = f"{args.task}-{args.split}-{index}"
+            donor_index = None
+            if args.demonstration == "other":
+                donor_index = (index + 1) % builder.get_episode_num()
+                if donor_index == index:
+                    raise ValueError("A different demonstration requires at least two episodes")
+                with closing(builder.make_env_for_episode(donor_index)) as donor:
+                    donor_frames = Episode(donor, dimensions, None).demonstration
             with ExitStack() as stack:
                 client = stack.enter_context(WsModelClient(
                     url=f"ws://{args.host}:{args.port}", evaluation_id=evaluation_id,
@@ -165,14 +176,25 @@ def main():
                     import imageio.v2 as imageio
                     writer = stack.enter_context(closing(imageio.get_writer(output / f"{trial}.mp4", fps=20)))
                 episode = Episode(env, dimensions, writer)
+                native_frames = len(episode.demonstration)
+                if donor_index is not None:
+                    episode.demonstration = [{**f, "instruction": episode.obs["instruction"]} for f in donor_frames]
+                elif args.demonstration == "none":
+                    episode.demonstration = []
                 evaluate(episode, EpisodeRPC(client, episode, batch, args.action_steps))
                 if not episode.is_episode_end():
                     raise RuntimeError("Deployment loop returned before native episode termination")
                 seed, difficulty = builder.resolve_episode(index)
                 result = {"episode": index, "benchmark_seed": seed, "difficulty": difficulty,
                           "status": episode.info["status"], "steps": episode.steps,
-                          "initial_frames": len(episode.demonstration) + 1,
+                          "initial_frames": native_frames + 1, "demo_frames_sent": len(episode.demonstration),
+                          "demo_episode": donor_index if donor_index is not None else
+                                          (index if args.demonstration == "matched" else None),
                           "terminated": bool(episode.terminated), "truncated": bool(episode.truncated)}
+                if args.task == "PatternLock":
+                    # Read native scoring state only after termination for path diagnostics.
+                    result["target_buttons"] = [b.name for b in env.unwrapped.selected_buttons]
+                    result["touched_buttons"] = [b.name for b in env.unwrapped.achieved_list]
                 results.append(result)
                 print(f"{trial}: {result['status']} after {episode.steps} steps", flush=True)
         report["status"] = "completed"

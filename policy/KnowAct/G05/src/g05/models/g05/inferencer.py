@@ -208,7 +208,7 @@ class PolicyInferencer:
             action["_absent_keys"] = absent
         return action
 
-    def infer_stream(self, obs_dict, state=None, *, executed_steps=None):
+    def infer_stream(self, obs_dict, state=None, *, executed_steps=None, demonstration=()):
         """Native single-stream action; reuse all original preprocess/postprocess.
 
         No cache is published to caller until decoding AND postprocessing succeed.
@@ -226,6 +226,14 @@ class PolicyInferencer:
         self.policy.eval()
         with torch.no_grad(), torch.autocast('cuda', dtype=torch.bfloat16,
                                              enabled=str(self.device).startswith('cuda')):
+            if demonstration:
+                from g05.data.native_episodes import visual_turn
+
+                if state is not None or executed_steps is not None:
+                    raise ValueError("A demonstration must precede the first execution turn")
+                for images in demonstration:
+                    turn = visual_turn(prepared.sub_processor, images, batch["samples"][0])
+                    state = self.policy.append_context(state, turn["samples"], turn["pixel_values"])
             candidate = self.policy.append_context(state, batch['samples'], batch['pixel_values'],
                                                    executed_steps=executed_steps)
             if self.policy.predict_cot:

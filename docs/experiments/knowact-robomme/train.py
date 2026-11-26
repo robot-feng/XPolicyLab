@@ -17,17 +17,33 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from initialize import REPO
 from core import atomic_save, on_device
 from data import Windows
+from prepare import TASKS
 from g05.data.native_episodes import (
     collate_episodes,
     executed_turn,
     history_indices,
     validate_history_processor,
+    visual_turn,
 )
 from g05.utils.data.data_utils import collate_fn_pad_sequences
 from scripts.serve_policy import setup
 
 
 class Episodes(Windows):
+    def __init__(self, root, split, processor, tasks=TASKS):
+        super().__init__(root, split, processor, tasks)
+        limits = {r.get("demo_limit", 0) for _, r in self.rows}
+        if len(limits) != 1:
+            raise ValueError("Mixed demonstration sampling configurations")
+        self.demo_limit = limits.pop()
+        self.demo = {}
+        if self.demo_limit:
+            for i, (path, r) in enumerate(self.rows):
+                frames = np.load(path / "demo.npy", mmap_mode="r")
+                if r.get("observation_timing") != "before_action" or len(frames) != min(self.demo_limit, r["demo_length"]):
+                    raise ValueError(f"Incomplete or misaligned cache in {path}")
+                self.demo[i] = frames
+
     def episode(self, index, turns):
         row, current = self.index[index]
         info = self.rows[row][1]
@@ -48,12 +64,20 @@ class Episodes(Windows):
 
 
 def batch_from(dataset, rng, size):
-    items = [
-        dataset.episode(int(rng.integers(len(dataset))), int(rng.integers(1, 5)))
-        for _ in range(size)
-    ]
+    items, rows = [], []
+    for _ in range(size):
+        index = int(rng.integers(len(dataset)))
+        rows.append(dataset.index[index][0])
+        items.append(dataset.episode(index, int(rng.integers(1, 5))))
     # native.train reads only the B=1 turns, not the legacy collated current batch.
     batch = collate_episodes(items, collate_fn_pad_sequences)
+    for row, episode in zip(rows, batch["native_episodes"]):
+        prefix = []
+        for frame in dataset.demo.get(row, ()):
+            images = {key: torch.from_numpy(rgb.transpose(2, 0, 1).copy()).unsqueeze(0)
+                      for key, rgb in zip(("image", "wrist_image"), frame)}
+            prefix.append(visual_turn(dataset.proc, images, episode[-1]["samples"][0]))
+        episode[:0] = prefix
     return {"native_episodes": on_device(batch["native_episodes"])}
 
 
@@ -91,11 +115,12 @@ def main(a):
     dist.init_process_group("nccl", device_id=torch.device("cuda", local))
     rank, world = dist.get_rank(), dist.get_world_size()
     ini, run, data = a.initial.resolve(), a.output.resolve(), a.data.resolve()
+    warm_start = a.warm_start.resolve() if a.warm_start else ini / "model_state_dict.pt"
     source = REPO / "policy/KnowAct/G05"
     os.chdir(source)
     seed_all(a.seed)
     cfg = OmegaConf.load(ini / ".hydra/config.yaml")
-    checkpoint = run / "last.pt" if a.resume else ini / "model_state_dict.pt"
+    checkpoint = run / "last.pt" if a.resume else warm_start
     if not a.resume and (run / "last.pt").exists():
         raise FileExistsError("Existing training checkpoint; pass --resume")
     cfg.ckpt_path = str(checkpoint)
@@ -126,17 +151,20 @@ def main(a):
     )
     start = 0
     best = float("inf")
-    if a.resume:
+    if a.task or a.warm_start:
+        plan.update(task=a.task, warm_start=str(warm_start))
+    if a.resume or a.warm_start:
         saved = torch.load(checkpoint, mmap=True, map_location="cpu", weights_only=True)
-        if saved["plan"] != plan:
+        if a.resume and saved["plan"] != plan:
             raise ValueError("Run configuration changed on resume")
         # setup casts for serving. Recover the exact master parameters for optimizer continuity.
         with torch.no_grad():
             for name, p in model.named_parameters():
                 if p.requires_grad:
                     p.copy_(saved["model_state_dict"][name])
-        start, best = saved["step"], saved["best"]
-        optimizer.load_state_dict(saved["optimizer"])
+        if a.resume:
+            start, best = saved["step"], saved["best"]
+            optimizer.load_state_dict(saved["optimizer"])
         del saved
     net = DDP(
         model,
@@ -149,8 +177,14 @@ def main(a):
     train_proc = copy.deepcopy(procs["panda"])
     train_proc.train()
     validate_history_processor(train_proc)
-    train = Episodes(data, "train", train_proc)
-    val = Episodes(data, "holdout", procs["panda"])
+    tasks = (a.task,) if a.task else TASKS
+    train = Episodes(data, "train", train_proc, tasks)
+    val = Episodes(data, "holdout", procs["panda"], tasks)
+    if train.demo_limit != val.demo_limit:
+        raise ValueError("Train and holdout demonstration sampling differ")
+    if not train.demo_limit and not (a.legacy_execution_only or a.resume):
+        raise ValueError("Prepare pre-action data with prepare_aligned.py or select --legacy-execution-only")
+    cfg.model.model_arch.native_demo_frames = train.demo_limit
     if rank == 0:
         (run / ".hydra").mkdir(parents=True, exist_ok=True)
         (run / "checkpoints").mkdir(exist_ok=True)
@@ -277,4 +311,7 @@ if __name__ == "__main__":
     p.add_argument("--save-every", type=int, default=256)
     p.add_argument("--val-windows", type=int, default=32)
     p.add_argument("--resume", action="store_true")
+    p.add_argument("--task", choices=TASKS)
+    p.add_argument("--warm-start", type=Path, help="Seed policy weights and start a fresh optimizer")
+    p.add_argument("--legacy-execution-only", action="store_true", help="Reproduce the original execution-only run")
     main(p.parse_args())

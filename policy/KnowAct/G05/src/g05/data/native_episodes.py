@@ -13,6 +13,20 @@ from typing import Any, Callable
 import torch
 
 
+def visual_turn(processor, images, reference):
+    """Use the execution processor's camera sizes, order and RGB transforms."""
+    sizes = {k: v for k, v in reference.items() if k.startswith("image") and k[5:].isdigit()}
+    if not sizes:
+        raise ValueError("Missing demonstration camera placeholders")
+    template = "Demonstration frame: " + "".join(f"<{key}_image_!>" for key in sizes)
+    pixels = processor.build_pixel_values(processor.process_images({"images": images}))
+    return {
+        "samples": [{**sizes, "template": template}],
+        "pixel_values": {k: v.unsqueeze(0) for k, v in pixels.items()},
+        "supervise": False,
+    }
+
+
 def history_indices(
     start: int,
     end: int,

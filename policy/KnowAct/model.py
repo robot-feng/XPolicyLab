@@ -16,8 +16,9 @@ from typing import Any
 
 import numpy as np
 
+from XPolicyLab.policy.G05.model import BATCH_ENV_INDICES_KEY, BATCH_OBSERVATIONS_KEY, _step_sort_key
 from XPolicyLab.policy.G05.model import Model as G05Adapter
-from XPolicyLab.policy.G05.model import _step_sort_key
+from XPolicyLab.policy.KnowAct.demonstration import frame_indices
 from XPolicyLab.utils.checkpoint_resolver import resolve_checkpoint_root
 
 
@@ -82,6 +83,7 @@ class Model(G05Adapter):
             "1",
         }
         self._native_states: dict[Any, tuple[Any, int, int]] = {}
+        self._demonstrations = {}
         self._native_lock = threading.RLock()
 
         if self.native_context:
@@ -142,6 +144,36 @@ class Model(G05Adapter):
         with self._native_lock:
             super().reset()
             self._native_states.clear()
+            self._demonstrations = {}
+
+    def _remember_demo(self, obs, key):
+        marker = obs.get("demonstration_frame")
+        if marker is None or not self.native_context:
+            return
+        limit = int(self.policy.config.get("native_demo_frames", 0))
+        if not limit:
+            return
+        index, length = marker["index"], marker["length"]
+        if not 0 <= index < length or key in self._native_states:
+            raise ValueError("Unexpected demonstration frame outside the episode prefix")
+        if index in frame_indices(length, limit):
+            self._demonstrations.setdefault(key, {})[index] = obs
+
+    def update_obs(self, obs):
+        with self._native_lock:
+            if BATCH_OBSERVATIONS_KEY in obs:
+                keys = obs.get(BATCH_ENV_INDICES_KEY)
+                for i, frame in enumerate(obs[BATCH_OBSERVATIONS_KEY]):
+                    self._remember_demo(frame, keys[i] if keys is not None else self._env_key_from_obs(frame, i))
+            else:
+                self._remember_demo(obs, self._env_key_from_obs(obs, 0))
+            super().update_obs(obs)
+
+    def update_obs_batch(self, obs_list):
+        with self._native_lock:
+            for i, obs in enumerate(obs_list):
+                self._remember_demo(obs, self._env_key_from_obs(obs, i))
+            super().update_obs_batch(obs_list)
 
     def _predict_chunks(self, observations: list[dict[str, Any]], env_keys=None):
         if not self.native_context:
@@ -192,10 +224,20 @@ class Model(G05Adapter):
 
                 raw_observation = self._to_g05_raw_obs(observation)
                 observation_dict = self._build_obs_dict(raw_observation, self.processor)
+                demo = self._demonstrations.get(env_key, {}) if state is None else {}
+                if demo:
+                    length = next(iter(demo.values()))["demonstration_frame"]["length"]
+                    expected = frame_indices(length, self.policy.config["native_demo_frames"])
+                    if sorted(demo) != expected:
+                        raise ValueError("Incomplete demonstration before the first action")
                 action, candidate_state, _ = self.inferencer.infer_stream(
                     observation_dict,
                     state,
                     executed_steps=executed_steps,
+                    demonstration=[
+                        self._build_obs_dict(self._to_g05_raw_obs(demo[i]), self.processor)["images"]
+                        for i in sorted(demo)
+                    ],
                 )
                 chunk = self._format_action_chunk(action)
                 invalid_action = not chunk or any(

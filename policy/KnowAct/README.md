@@ -23,6 +23,8 @@ XPolicyLab/
 
 ## RoboMME / Panda
 
+带开场示范的策略可使用 `process_data.sh aligned` 生成与执行前观测配对的训练窗口。训练与部署按相同顺序保留示范图像，采样数量保存在权重目录的 Hydra 配置中。[PatternLock 复现与原生验证](../../docs/experiments/knowact-robomme/patternlock-pilot.md)
+
 已接入四任务 Panda 关节控制训练，支持官方 Qwen3.5-0.8B 和 G05 两种初始化。环境客户端位于仓库的 `benchmarks/robomme/`。数据准备、两阶段权重、四卡启动命令、原生评估、检查点结构与实测记录见 [RoboMME 训练手册](../../docs/experiments/knowact-robomme/README.md)。
 
 ## V7.1 原始发布状态

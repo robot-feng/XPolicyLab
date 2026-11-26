@@ -44,6 +44,8 @@ class RoboMMETests(unittest.TestCase):
                 self.assertEqual((episode.steps, client.inferences, episode.info["status"]), (5, 3, "timeout"))
                 self.assertEqual([o["vision"]["cam_head"]["color"][0, 0, 0] for o in client.frames], list(range(7)))
                 first = client.frames[0]
+                self.assertEqual([o.get("demonstration_frame") for o in client.frames[:3]],
+                                 [{"index": 0, "length": 2}, {"index": 1, "length": 2}, None])
                 np.testing.assert_array_equal(first["vision"]["cam_wrist"]["color"][0, 0], [1, 5, 10])
                 np.testing.assert_allclose(first["state"]["ee_joint_state"], [0.03])
                 self.assertEqual(first["instruction"], "pick")
