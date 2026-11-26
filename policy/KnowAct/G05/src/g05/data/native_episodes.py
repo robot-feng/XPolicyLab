@@ -13,15 +13,21 @@ from typing import Any, Callable
 import torch
 
 
-def visual_turn(processor, images, reference):
+def visual_turn(processor, images, reference, state=None):
     """Use the execution processor's camera sizes, order and RGB transforms."""
     sizes = {k: v for k, v in reference.items() if k.startswith("image") and k[5:].isdigit()}
     if not sizes:
         raise ValueError("Missing demonstration camera placeholders")
     template = "Demonstration frame: " + "".join(f"<{key}_image_!>" for key in sizes)
+    sample = {**sizes, "template": template}
+    if state is not None:
+        # The normalizer replaces entries in the mapping. Keep cached observation values raw.
+        data = processor.preprocess_action_state({"state": dict(state)})
+        sample["proprio"] = {"value": data["state"], "proprio_dim_is_pad": data["proprio_dim_is_pad"]}
+        sample["template"] += " State: <proprio_proprio_!>;"
     pixels = processor.build_pixel_values(processor.process_images({"images": images}))
     return {
-        "samples": [{**sizes, "template": template}],
+        "samples": [sample],
         "pixel_values": {k: v.unsqueeze(0) for k, v in pixels.items()},
         "supervise": False,
     }

@@ -48,3 +48,38 @@ EVAL_ENV_TYPE=sim KNOWACT_CKPT_PATH="$BASE" ROBOMME_SPLIT=val ROBOMME_START_EPIS
 冻结上表同一模型头，继续测试剩余 38 个 PatternLock 官方 test 回合。合并 test/0–49 共 **50/50**：easy 26/26、medium 12/12、hard 12/12。原模型的配对结论仍限于 test/0–11 的 0/12；另外 38 个种子未跑原模型。将两种策略原样切换到另一个模仿任务 RouteStick，不在该任务重新拟合：val/0–5，原权重 **0/6**（5 次 fail、1 次 timeout），同一动作头 **6/6**。这是单任务动作头的迁移；其冻结基座的 30K 预训练阶段用过 RouteStick。[逐种子结果](context-transfer.csv) · [RouteStick 验证录像](routestick-demo-head-val2.mp4)。可复用上面的评估命令，替换任务名、split 和 episode 范围，并为每次实验指定新目录。
 
 另取上述相同的 8 个 PatternLock 验证种子，不使用模型，只改变公开示范中保留的关节观测数量。保存两端点并均匀抽帧，沿原时间轴在关节空间线性插值，使用相同执行时钟、固定夹爪和 1,300 步预算。只保留 4 帧成功 **4/8**，保留 16 帧 **8/8**，完整示范 **8/8**。[逐回合采样对照](context-sampling.csv)。这说明均匀 4 帧确实会丢失部分回合所需的路径细节；它不能区分关节信息与视觉的独立贡献，也不能证明增加神经网络输入就能得到回放成绩。复现时在 `demo_replay_control.py` 的命令中分别追加 `--demo-frames 4`、`--demo-frames 16` 或省略该参数。
+
+## 原生 KnowAct 能不能学会使用示范关节？
+
+两组均关闭 `KNOWACT_DEMO_HEAD`，由原生 BAR 和 Panda ActionCodec 生成整段动作。固定 `knowact-pattern-full100` 起点、训练数据和打乱顺序，四张 RTX 4090 各 batch 1、全局 batch 4、种子 7、学习率上限 `2e-5`、256 次优化器更新。训练池是 PatternLock 的 100 条官方训练轨迹，共 2,638 个 RGB 窗口，256 步只使用其中 1,024 个窗口。固定配置只训练原有 342,333,408 个参数；不重新训练编解码器。所有组训练历史步长为 16，推理/执行每 8 步重规划；这项已有差异未随消融变化。CE 是最后断点在固定 **16 个训练窗口**上的动作 token 损失，不能代替原生成功率。
+
+| 示范输入（神经网络生成动作） | 训练探针 CE | val 完整成功 | val 首段正确 | test 完整成功 | test 首段正确 |
+|---|---:|---:|---:|---:|---:|
+| 4 帧 RGB | 0.16482 | 1/8 | 2/8 | 0/12 | 1/12 |
+| 4 帧 RGB + 4 个关节观测 | 0.17163 | 1/8 | 3/8 | 0/12 | 1/12 |
+
+验证和测试与前两节完全相同。首段正确要求前两个触碰按钮按顺序匹配；中途超时仍然算完整任务失败。四关节版本在验证集多走对了一个首段，未带来更多完整成功。[逐回合数据](context-native.csv)。
+
+**一次应当剔除的试验。** 接入新示范状态时，归一化器会替换传入字典中的值。第一次取数据与部署逐项相同，第二次取同一条缓存却读到了归一化后的关节，train/0 首帧 7 个轴全变，最大绝对差 2.04221。已修正为使用独立的映射，并加入“重复取样不改变缓存”的校验。试跑所得 CE 0.19213 和验证 0/8 均不用于结论；上表四关节成绩是从原始权重重新训练的独立结果。这个错误是本轮原型引入的，不是此前 RGB 基线低成功率的原因。
+
+训练输入只从 `t < first_execution` 的 HDF5 示范观测读取关节，不读动作标签作为输入。部署只读取当前 reset 时环境按帧送来的观测。更密的关节采样按时间分组附在原来的四个图像锚点上，不增加送入视觉编码器的图像数。每组使用已有的 proprio encoder，checkpoint 保存采样配置；旧权重继续走原来的 RGB 示范路径。
+
+```bash
+# 前文的 BASE、H5、EXP、WORK、两个 Python 和已有归一化资产均保持不变。
+unset KNOWACT_DEMO_HEAD
+for mode in rgb proprio4 proprio16; do
+  extra=()
+  if [[ $mode != rgb ]]; then extra+=(--demo-state-h5 "$H5"); fi
+  if [[ $mode == proprio16 ]]; then extra+=(--demo-state-frames 16); fi
+  "$KNOWACT_PYTHON" -m torch.distributed.run --standalone --nproc_per_node=4 "$EXP/train.py" \
+    --initial "$KNOWACT_INITIAL" --data "$KNOWACT_ROBOMME_DATA" --output "$WORK/$mode" \
+    --task PatternLock --all-train-demos --warm-start "$BASE" --steps 256 --batch 1 --seed 7 \
+    --save-every 256 --val-windows 16 "${extra[@]}"
+done
+# 用前文模拟器命令分别指定 KNOWACT_CKPT_PATH="$WORK/<mode>/best.pt" 和新的输出目录。
+# 严格核对 train/0 的重复读取、归一化值、掩码、示范像素以及真实模型输出。
+# 此检查用断点原生 16 步，闭环成功率对照才选择 8 步。
+env -u KNOWACT_REPLAN_STEPS -u KNOWACT_ALLOW_STRIDE_SHIFT "$KNOWACT_PYTHON" "$EXP/verify_aligned.py" check \
+  --data "$KNOWACT_ROBOMME_DATA" --capture "$PILOT/capture.npz" \
+  --weights "$WORK/proprio4/best.pt" --demo-state-h5 "$H5"
+```

@@ -59,6 +59,8 @@ def check(a):
     from XPolicyLab.policy.KnowAct.model import Model
     from g05.models.g05 import native_context
 
+    root = a.data.resolve()
+    demo_state_h5 = a.demo_state_h5.resolve() if a.demo_state_h5 else None
     data = np.load(a.capture)
     cfg = yaml.safe_load((REPO / "policy/KnowAct/deploy.yml").read_text())
     cfg.update(
@@ -71,7 +73,10 @@ def check(a):
     if a.demo_frames is not None:
         cfg["hydra_overrides"] = [f"model.model_arch.native_demo_frames={a.demo_frames}"]
     m = Model(cfg)
-    ds = Episodes(a.data, "holdout", m.processor["panda"], ("PatternLock",))
+    ds = Episodes(root, "holdout", m.processor["panda"], ("PatternLock",), demo_state_h5,
+                  m.policy.config.get("native_demo_state_frames"))
+    with_proprio = bool(m.policy.config.get("native_demo_proprio", False))
+    assert with_proprio == bool(a.demo_state_h5)
     assert m.policy.config.get("native_demo_frames") == ds.demo_limit
     row = next(i for i, (_, r) in enumerate(ds.rows) if r["episode"] == 0)
     folder, info = ds.rows[row]
@@ -122,13 +127,19 @@ def check(a):
         def integers(self, *args):
             return 1 if len(args) == 2 else ds.index.index((row, 0))
 
+    if with_proprio:
+        before = [{k: v.clone() for k, v in frame.items()} for frame in ds.demo_states[row]]
+        batch_from(ds, FirstWindow(), 1)
+        for raw, cached in zip(before, ds.demo_states[row]):
+            for k, original in raw.items():
+                torch.testing.assert_close(cached[k], original, rtol=0, atol=0)
     (episode,) = batch_from(ds, FirstWindow(), 1)["native_episodes"]
     demo_turns, current = episode[:-1], episode[-1]
     assert len(demo_turns) == len(info["demo_indices"]) and "executed_steps" not in current
     assert all(
         turn["supervise"] is False
         and "action" not in turn["samples"][0]
-        and "proprio" not in turn["samples"][0]
+        and ("proprio" in turn["samples"][0]) == with_proprio
         for turn in demo_turns
     )
 
@@ -139,7 +150,14 @@ def check(a):
         i = len(calls)
         if i < len(demo_turns):
             train_turn = demo_turns[i]
-            assert samples == train_turn["samples"]
+            got, expected = samples[0], train_turn["samples"][0]
+            assert got.keys() == expected.keys()
+            for key in got:
+                if key == "proprio":
+                    for field in ("value", "proprio_dim_is_pad"):
+                        torch.testing.assert_close(got[key][field].cpu(), expected[key][field].cpu(), rtol=0, atol=0)
+                else:
+                    assert got[key] == expected[key]
             assert all(
                 torch.equal(p.cpu(), train_turn["pixel_values"][k].cpu()) for k, p in pixels.items()
             )
@@ -171,6 +189,8 @@ def check(a):
                 task="PatternLock",
                 episode=0,
                 seed=info["seed"],
+                demo_proprio=with_proprio,
+                demonstrated_state_tokens=sum(t["samples"][0]["proprio"]["value"].shape[0] for t in demo_turns) if with_proprio else 0,
                 demonstration_indices=info["demo_indices"],
                 native_context_appends=len(calls),
                 action_window_anchors=len(range(0, len(actions), info["rgb_stride"])),
@@ -188,6 +208,7 @@ if __name__ == "__main__":
     p.add_argument("--data", required=True, type=Path)
     p.add_argument("--capture", required=True, type=Path)
     p.add_argument("--weights", type=Path)
+    p.add_argument("--demo-state-h5", type=Path, help="Training source for checkpoints that use demonstrated joint observations")
     p.add_argument("--demo-frames", type=int, help="Override only when preflighting historical weights")
     args = p.parse_args()
     if args.mode == "check" and args.weights is None:

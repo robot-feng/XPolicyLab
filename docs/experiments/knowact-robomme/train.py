@@ -9,6 +9,7 @@ import random
 import time
 from itertools import islice
 
+import h5py
 import numpy as np
 from omegaconf import OmegaConf
 import torch
@@ -17,6 +18,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.data.distributed import DistributedSampler
 
 from initialize import REPO
+from XPolicyLab.policy.KnowAct.demonstration import state_groups
 from core import atomic_save, on_device
 from data import Windows
 from prepare import TASKS
@@ -32,19 +34,40 @@ from scripts.serve_policy import setup
 
 
 class Episodes(Windows):
-    def __init__(self, root, split, processor, tasks=TASKS):
+    def __init__(self, root, split, processor, tasks=TASKS, demo_state_h5=None, state_frames=None):
         super().__init__(root, split, processor, tasks)
         limits = {r.get("demo_limit", 0) for _, r in self.rows}
         if len(limits) != 1:
             raise ValueError("Mixed demonstration sampling configurations")
         self.demo_limit = limits.pop()
         self.demo = {}
+        self.demo_states = {}
         if self.demo_limit:
             for i, (path, r) in enumerate(self.rows):
                 frames = np.load(path / "demo.npy", mmap_mode="r")
                 if r.get("observation_timing") != "before_action" or len(frames) != min(self.demo_limit, r["demo_length"]):
                     raise ValueError(f"Incomplete or misaligned cache in {path}")
                 self.demo[i] = frames
+
+        if demo_state_h5 is not None:
+            if not self.demo_limit or len(tasks) != 1:
+                raise ValueError("One task with a prepared demonstration cache is required")
+            with h5py.File(demo_state_h5, "r") as h5:
+                for i, (_, r) in enumerate(self.rows):
+                    ep = h5[f"episode_{r['episode']}"]
+                    if ep["setup/seed"][()] != r["seed"] or r["demo_length"] != r["first_execution"]:
+                        raise ValueError("Cached images and HDF5 demonstration prefix disagree")
+                    groups = state_groups(r["demo_length"], self.demo_limit, state_frames or self.demo_limit)
+                    if list(groups) != r["demo_indices"]:
+                        raise ValueError("Cached RGB and state anchors disagree")
+                    states = []
+                    for indices in groups.values():
+                        observations = [ep[f"timestep_{t}/obs"] for t in indices]
+                        states.append({
+                            "right_arm": torch.from_numpy(np.stack([o["joint_state"][()] for o in observations])).float(),
+                            "right_gripper": torch.from_numpy(np.stack([o["gripper_state"][:1] for o in observations])).float(),
+                        })
+                    self.demo_states[i] = states
 
     def episode(self, index, turns):
         row, current = self.index[index]
@@ -85,10 +108,11 @@ def batch_from(dataset, rng, size, indices=None):
     batch = collate_episodes(items, collate_fn_pad_sequences)
     for row, episode in zip(rows, batch["native_episodes"]):
         prefix = []
-        for frame in dataset.demo.get(row, ()):
+        for j, frame in enumerate(dataset.demo.get(row, ())):
             images = {key: torch.from_numpy(rgb.transpose(2, 0, 1).copy()).unsqueeze(0)
                       for key, rgb in zip(("image", "wrist_image"), frame)}
-            prefix.append(visual_turn(dataset.proc, images, episode[-1]["samples"][0]))
+            state = dataset.demo_states[row][j] if row in dataset.demo_states else None
+            prefix.append(visual_turn(dataset.proc, images, episode[-1]["samples"][0], state))
         episode[:0] = prefix
     return {"native_episodes": on_device(batch["native_episodes"])}
 
@@ -128,6 +152,7 @@ def main(a):
     rank, world = dist.get_rank(), dist.get_world_size()
     ini, run, data = a.initial.resolve(), a.output.resolve(), a.data.resolve()
     warm_start = a.warm_start.resolve() if a.warm_start else ini / "model_state_dict.pt"
+    demo_state_h5 = a.demo_state_h5.resolve() if a.demo_state_h5 else None
     source = REPO / "policy/KnowAct/G05"
     os.chdir(source)
     seed_all(a.seed)
@@ -165,6 +190,10 @@ def main(a):
     best = float("inf")
     if a.task or a.tasks or a.warm_start:
         plan.update(task=a.task, warm_start=str(warm_start))
+    if demo_state_h5:
+        plan["demo_state_h5"] = str(demo_state_h5)
+    if a.demo_state_frames is not None:
+        plan["demo_state_frames"] = a.demo_state_frames
     if a.tasks:
         plan["tasks"] = a.tasks
     if a.train_episode is not None:
@@ -196,8 +225,8 @@ def main(a):
     train_proc.train()
     validate_history_processor(train_proc)
     tasks = a.tasks or ((a.task,) if a.task else TASKS)
-    train = Episodes(data, "all" if a.all_train_demos else "train", train_proc, tasks)
-    val = Episodes(data, "all" if a.all_train_demos else "holdout", procs["panda"], tasks)
+    train = Episodes(data, "all" if a.all_train_demos else "train", train_proc, tasks, demo_state_h5, a.demo_state_frames)
+    val = Episodes(data, "all" if a.all_train_demos else "holdout", procs["panda"], tasks, demo_state_h5, a.demo_state_frames)
     metric_name = "train_probe_ce" if a.all_train_demos else "holdout_ce"
     indices = full_pass_indices(train, world, rank, a.seed, start * a.batch) if a.all_train_demos else None
     if a.train_episode is not None:
@@ -211,6 +240,9 @@ def main(a):
     if not train.demo_limit and not (a.legacy_execution_only or a.resume):
         raise ValueError("Prepare pre-action data with prepare_aligned.py or select --legacy-execution-only")
     cfg.model.model_arch.native_demo_frames = train.demo_limit
+    cfg.model.model_arch.native_demo_proprio = demo_state_h5 is not None
+    if a.demo_state_frames is not None:
+        cfg.model.model_arch.native_demo_state_frames = a.demo_state_frames
     if rank == 0:
         (run / ".hydra").mkdir(parents=True, exist_ok=True)
         (run / "checkpoints").mkdir(exist_ok=True)
@@ -344,8 +376,12 @@ if __name__ == "__main__":
     selection.add_argument("--train-episode", type=int, help="Fit one trajectory from the training split")
     selection.add_argument("--all-train-demos", action="store_true", help="Shuffle every official training window once per epoch, with DDP padding")
     p.add_argument("--warm-start", type=Path, help="Seed policy weights and start a fresh optimizer")
+    p.add_argument("--demo-state-h5", type=Path, help="Pair the selected demonstration RGB frames with their observed joints from the official training HDF5")
+    p.add_argument("--demo-state-frames", type=int, help="Number of demonstrated joint samples; default: match the stored RGB anchors")
     p.add_argument("--legacy-execution-only", action="store_true", help="Reproduce the original execution-only run")
     args = p.parse_args()
+    if args.demo_state_frames is not None and (not args.demo_state_h5 or args.demo_state_frames < 1):
+        p.error("--demo-state-frames requires --demo-state-h5 and a positive count")
     if args.tasks and len(set(args.tasks)) != len(args.tasks):
         p.error("--tasks contains a duplicate")
     if args.train_episode is not None and not args.task:

@@ -18,7 +18,7 @@ import numpy as np
 
 from XPolicyLab.policy.G05.model import BATCH_ENV_INDICES_KEY, BATCH_OBSERVATIONS_KEY, _step_sort_key
 from XPolicyLab.policy.G05.model import Model as G05Adapter
-from XPolicyLab.policy.KnowAct.demonstration import frame_indices
+from XPolicyLab.policy.KnowAct.demonstration import frame_indices, state_groups
 from XPolicyLab.policy.KnowAct.demo_head import DemoHead
 from XPolicyLab.utils.checkpoint_resolver import resolve_checkpoint_root
 
@@ -172,8 +172,26 @@ class Model(G05Adapter):
             sequence.append(np.asarray(obs["state"]["arm_joint_state"], dtype=np.float32).copy())
             if index == length - 1:
                 self._demo_states[key] = np.stack(sequence)
-        if index in frame_indices(length, limit):
+        state_limit = int(self.policy.config.get("native_demo_state_frames", limit))
+        if index in frame_indices(length, limit) or index in frame_indices(length, state_limit):
             self._demonstrations.setdefault(key, {})[index] = obs
+
+    def _demo_inputs(self, demo):
+        if not demo:
+            return []
+        import torch
+
+        length = next(iter(demo.values()))["demonstration_frame"]["length"]
+        limit = self.policy.config["native_demo_frames"]
+        groups = state_groups(length, limit, self.policy.config.get("native_demo_state_frames", limit))
+        if set(demo) != {t for indices in groups.values() for t in indices}:
+            raise ValueError("Incomplete demonstration before the first action")
+        frames = {i: self._build_obs_dict(self._to_g05_raw_obs(obs), self.processor) for i, obs in demo.items()}
+        for end, indices in groups.items():
+            if len(indices) > 1:
+                frames[end]["state"] = {k: torch.cat([frames[t]["state"][k] for t in indices])
+                                        for k in frames[end]["state"]}
+        return [frames[end] for end in groups]
 
     def update_obs(self, obs):
         with self._native_lock:
@@ -243,19 +261,11 @@ class Model(G05Adapter):
                 raw_observation = self._to_g05_raw_obs(observation)
                 observation_dict = self._build_obs_dict(raw_observation, self.processor)
                 demo = self._demonstrations.get(env_key, {}) if state is None else {}
-                if demo:
-                    length = next(iter(demo.values()))["demonstration_frame"]["length"]
-                    expected = frame_indices(length, self.policy.config["native_demo_frames"])
-                    if sorted(demo) != expected:
-                        raise ValueError("Incomplete demonstration before the first action")
                 action, candidate_state, _ = self.inferencer.infer_stream(
                     observation_dict,
                     state,
                     executed_steps=executed_steps,
-                    demonstration=[
-                        self._build_obs_dict(self._to_g05_raw_obs(demo[i]), self.processor)["images"]
-                        for i in sorted(demo)
-                    ],
+                    demonstration=self._demo_inputs(demo),
                 )
                 if self.demo_head and env_key in self._demo_states:
                     trajectory = self._demo_states[env_key]

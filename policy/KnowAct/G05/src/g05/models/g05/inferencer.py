@@ -231,8 +231,11 @@ class PolicyInferencer:
 
                 if state is not None or executed_steps is not None:
                     raise ValueError("A demonstration must precede the first execution turn")
-                for images in demonstration:
-                    turn = visual_turn(prepared.sub_processor, images, batch["samples"][0])
+                with_proprio = self.policy.config.get("native_demo_proprio", False)
+                for frame in demonstration:
+                    # Earlier image-only callers passed the camera mapping directly.
+                    turn = visual_turn(prepared.sub_processor, frame.get("images", frame),
+                                       batch["samples"][0], frame["state"] if with_proprio else None)
                     state = self.policy.append_context(state, turn["samples"], turn["pixel_values"])
             candidate = self.policy.append_context(state, batch['samples'], batch['pixel_values'],
                                                    executed_steps=executed_steps)
