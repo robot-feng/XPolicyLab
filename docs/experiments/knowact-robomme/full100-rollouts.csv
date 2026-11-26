@@ -1,0 +1,65 @@
+weights,split,stride,episode,seed,difficulty,steps,status,correct_first_segment,prefix_len,target,touched
+pilot,train,8,0,15001,easy,42,fail,0,1,5 4 3,5 1
+pilot,train,8,1,15100,easy,47,fail,0,1,4 5 1,4 0
+pilot,train,8,2,15200,medium,49,fail,0,1,7 3 2 6 1,7 5
+pilot,train,8,3,15300,hard,28,fail,0,1,16 22 21 17 11,16 17
+pilot,train,8,4,15400,easy,19,success,1,2,2 1,2 1
+pilot,train,8,5,15500,easy,27,fail,0,1,6 3 4,6 4
+pilot,train,8,6,15600,medium,31,fail,0,1,5 10 14,5 6
+pilot,train,8,7,15700,hard,46,fail,1,2,9 8 12 17 22 18,9 8 7
+pilot,train,16,0,15001,easy,36,fail,0,1,5 4 3,5 1
+pilot,train,16,1,15100,easy,20,fail,0,1,4 5 1,4 1
+pilot,train,16,2,15200,medium,115,fail,0,1,7 3 2 6 1,7 2
+pilot,train,16,3,15300,hard,114,fail,0,1,16 22 21 17 11,16 17
+pilot,train,16,4,15400,easy,19,success,1,2,2 1,2 1
+pilot,train,16,5,15500,easy,139,fail,0,1,6 3 4,6 5
+pilot,train,16,6,15600,medium,199,fail,1,2,5 10 14,5 10 2
+pilot,train,16,7,15700,hard,62,fail,1,2,9 8 12 17 22 18,9 8 2
+pilot,val,8,8,1150800,easy,34,fail,0,1,2 5 8 7,2 1
+pilot,val,8,9,1150900,easy,91,fail,0,1,8 5 4 7,8 4
+pilot,val,8,10,1151000,medium,171,fail,0,1,5 4 0,5 2
+pilot,val,8,11,1151100,hard,54,fail,0,1,13 12 17 18 19,13 3
+pilot,val,8,12,1151200,easy,72,fail,0,1,7 3 6 4,7 8
+pilot,val,8,13,1151300,easy,149,fail,0,1,6 3 1,6 5
+pilot,val,8,14,1151400,medium,34,fail,0,1,8 9 14 10,8 5
+pilot,val,8,15,1151500,hard,26,fail,0,1,12 17 23 19 24 18 13,12 11
+pilot,val,16,8,1150800,easy,20,fail,0,1,2 5 8 7,2 1
+pilot,val,16,9,1150900,easy,64,fail,0,1,8 5 4 7,8 1
+pilot,val,16,10,1151000,medium,64,fail,0,1,5 4 0,5 9
+pilot,val,16,11,1151100,hard,1210,fail,0,1,13 12 17 18 19,13 10
+pilot,val,16,12,1151200,easy,32,fail,0,1,7 3 6 4,7 4
+pilot,val,16,13,1151300,easy,30,fail,0,1,6 3 1,6 4
+pilot,val,16,14,1151400,medium,44,fail,0,1,8 9 14 10,8 13
+pilot,val,16,15,1151500,hard,163,fail,0,1,12 17 23 19 24 18 13,12 6
+full100,train,8,0,15001,easy,56,success,1,3,5 4 3,5 4 3
+full100,train,8,1,15100,easy,89,fail,0,1,4 5 1,4 1
+full100,train,8,2,15200,medium,82,fail,0,1,7 3 2 6 1,7 2
+full100,train,8,3,15300,hard,24,fail,0,1,16 22 21 17 11,16 17
+full100,train,8,4,15400,easy,18,success,1,2,2 1,2 1
+full100,train,8,5,15500,easy,98,fail,0,1,6 3 4,6 7
+full100,train,8,6,15600,medium,146,fail,1,2,5 10 14,5 10 5
+full100,train,8,7,15700,hard,220,fail,1,2,9 8 12 17 22 18,9 8 6
+full100,train,16,0,15001,easy,66,fail,0,1,5 4 3,5 0
+full100,train,16,1,15100,easy,88,fail,0,1,4 5 1,4 8
+full100,train,16,2,15200,medium,51,fail,0,1,7 3 2 6 1,7 2
+full100,train,16,3,15300,hard,72,fail,0,1,16 22 21 17 11,16 17
+full100,train,16,4,15400,easy,19,success,1,2,2 1,2 1
+full100,train,16,5,15500,easy,1301,timeout,1,2,6 3 4,6 3
+full100,train,16,6,15600,medium,24,fail,0,1,5 10 14,5 6
+full100,train,16,7,15700,hard,72,fail,0,1,9 8 12 17 22 18,9 2
+full100,val,8,8,1150800,easy,18,fail,0,1,2 5 8 7,2 1
+full100,val,8,9,1150900,easy,63,fail,1,2,8 5 4 7,8 5 7
+full100,val,8,10,1151000,medium,740,fail,0,1,5 4 0,5 8
+full100,val,8,11,1151100,hard,56,fail,0,1,13 12 17 18 19,13 11
+full100,val,8,12,1151200,easy,29,fail,0,1,7 3 6 4,7 4
+full100,val,8,13,1151300,easy,29,fail,0,1,6 3 1,6 4
+full100,val,8,14,1151400,medium,1301,timeout,0,1,8 9 14 10,8
+full100,val,8,15,1151500,hard,20,fail,0,1,12 17 23 19 24 18 13,12 11
+full100,val,16,8,1150800,easy,20,fail,0,1,2 5 8 7,2 1
+full100,val,16,9,1150900,easy,64,fail,0,1,8 5 4 7,8 1
+full100,val,16,10,1151000,medium,32,fail,0,1,5 4 0,5 2
+full100,val,16,11,1151100,hard,52,fail,0,1,13 12 17 18 19,13 7
+full100,val,16,12,1151200,easy,39,fail,0,1,7 3 6 4,7 4
+full100,val,16,13,1151300,easy,29,fail,0,1,6 3 1,6 4
+full100,val,16,14,1151400,medium,113,fail,0,1,8 9 14 10,8 10
+full100,val,16,15,1151500,hard,159,fail,0,1,12 17 23 19 24 18 13,12 11
