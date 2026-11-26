@@ -163,8 +163,10 @@ def main(a):
     )
     start = 0
     best = float("inf")
-    if a.task or a.warm_start:
+    if a.task or a.tasks or a.warm_start:
         plan.update(task=a.task, warm_start=str(warm_start))
+    if a.tasks:
+        plan["tasks"] = a.tasks
     if a.train_episode is not None:
         plan["train_episode"] = a.train_episode
     if a.all_train_demos:
@@ -193,7 +195,7 @@ def main(a):
     train_proc = copy.deepcopy(procs["panda"])
     train_proc.train()
     validate_history_processor(train_proc)
-    tasks = (a.task,) if a.task else TASKS
+    tasks = a.tasks or ((a.task,) if a.task else TASKS)
     train = Episodes(data, "all" if a.all_train_demos else "train", train_proc, tasks)
     val = Episodes(data, "all" if a.all_train_demos else "holdout", procs["panda"], tasks)
     metric_name = "train_probe_ce" if a.all_train_demos else "holdout_ce"
@@ -335,13 +337,17 @@ if __name__ == "__main__":
     p.add_argument("--save-every", type=int, default=256)
     p.add_argument("--val-windows", type=int, default=32)
     p.add_argument("--resume", action="store_true")
-    p.add_argument("--task", choices=TASKS)
+    scope = p.add_mutually_exclusive_group()
+    scope.add_argument("--task", help="One prepared official task")
+    scope.add_argument("--tasks", nargs="+", help="Explicit list of prepared official tasks")
     selection = p.add_mutually_exclusive_group()
     selection.add_argument("--train-episode", type=int, help="Fit one trajectory from the training split")
     selection.add_argument("--all-train-demos", action="store_true", help="Shuffle every official training window once per epoch, with DDP padding")
     p.add_argument("--warm-start", type=Path, help="Seed policy weights and start a fresh optimizer")
     p.add_argument("--legacy-execution-only", action="store_true", help="Reproduce the original execution-only run")
     args = p.parse_args()
+    if args.tasks and len(set(args.tasks)) != len(args.tasks):
+        p.error("--tasks contains a duplicate")
     if args.train_episode is not None and not args.task:
         p.error("--train-episode requires --task")
     main(args)

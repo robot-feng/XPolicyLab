@@ -144,3 +144,24 @@ wait
 ```
 
 原 512 步在 train/1–3 与 val/0–3 上，每 16 步重规划，保留执行历史为 0/7，每次清空执行历史并重新输入匹配示范也为 0/7。[逐回合判分](single-trajectory-rollouts.csv)
+
+## 全任务输入验收
+
+原版 RoboMME 共 16 个任务、1,600 条训练轨迹。本机逐个启动了 16 个任务的官方 train/0，全部成功返回双路 256×256 RGB、关节和指令。9 个任务在这些回合中给出开场示范，另 7 个直接进入执行。所有任务官方 train 各有 100 个种子，val 各有 50 个种子。[逐任务原生 reset 记录](suite-reset.csv) · [官方 H5 清单](https://huggingface.co/datasets/Yinpei/robomme_data_h5)
+
+选 StopCube 检查没有开场视频的路径。使用原版官方 H5 的 100 条训练示范，共 31,614 个控制步、7,947 个 RGB 锚点，100 条均没有开场视频。转换后的状态、动作、示范数组和种子逐条核对。空示范数组保留时间轴和两个相机维度，执行初始帧仍来自官方 reset。若 H5 明确记录了视频前缀而 reset 缺失，转换会报错。已准备的本机缓存位于 `/data/haichao-knowact-robomme/preaction/data/StopCube`。源归档固定版本为 `a5e4e25ffe8af34f64944f9533d06455ce5f8337`，SHA-256 为 `b936e52b6f63dccadba998e83f3e480e5cb74130185c3b022826416469bf0565`。
+
+两个任务合计 200 条、10,585 个窗口。使用相同 512 步基础权重、独立优化器，进行了 1 次四卡混合更新。四张卡实际取到 StopCube/41、PatternLock/87、PatternLock/51 和 StopCube/37。原生损失前向、四卡反传、优化器步进和断点保存均完成，batch CE 为 1.05750。本次只检验有示范和无示范能否在同一训练入口工作；全 16 任务拟合与联合策略的成功率仍待评估。
+
+```bash
+# SRC 为执行段缓存根目录，SRC/run 提供本实验冻结的 Panda 归一化与编解码资产。
+# H5 为已解包官方 record_dataset_<Task>.h5 的目录。
+META="$PWD/../robomme_benchmark/src/robomme/env_metadata"
+"$ROBOMME_PYTHON" docs/experiments/g05-robomme/prepare.py "$H5" "$META" "$SRC/data" --tasks StopCube
+"$ROBOMME_PYTHON" "$EXP/prepare_aligned.py" --source "$SRC" --h5 "$H5" \
+  --output "$KNOWACT_ROBOMME_DATA" --task StopCube
+KNOWACT_MAX_STEPS=1 bash policy/KnowAct/train.sh RoboMME knowact-mixed-smoke panda joint 8 0,1,2,3 \
+  --all-train-demos --tasks PatternLock StopCube --warm-start "$NEW/last.pt" --save-every 1 --val-windows 4
+```
+
+准备更多任务时，将官方任务名显式传给转换和训练入口，每个任务分别运行一次时序对齐。全套任务名可从 `suite-reset.csv` 第一列取得。一个 epoch 的优化器步数等于所选任务 RGB 锚点总数除以全局 batch 后向上取整。完整轨迹数、离线拟合指标、逐任务自主执行成功率分别报告。本轮阶段性证据支持优先对比是否加入训练种子上的恢复示范，使用相同起点、更新预算和原生评测种子衡量收益。

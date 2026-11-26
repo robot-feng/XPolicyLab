@@ -51,7 +51,7 @@ def prepare(args):
             with closing(builder.make_env_for_episode(i)) as env:
                 raw, reset_info = env.reset()
                 *demo, reset = observations(raw, reset_info["task_goal"])
-            if not demo or not reset["instruction"].strip():
+            if (not demo and meta["first_execution"] > 0) or not reset["instruction"].strip():
                 raise ValueError(f"Missing or mismatched reset for {src}")
             indices = frame_indices(len(demo), args.demo_frames)
             group = h5[f"episode_{i}"]
@@ -60,7 +60,8 @@ def prepare(args):
             with TemporaryDirectory(dir=directory) as tmp:
                 work = Path(tmp) / "episode"
                 work.mkdir()
-                np.save(work / "demo.npy", np.stack([cameras(demo[j]) for j in indices]))
+                selected = np.asarray([cameras(demo[j]) for j in indices], dtype=np.uint8)
+                np.save(work / "demo.npy", selected.reshape(len(indices), *np.shape(cameras(reset))))
                 after = np.load(src / "state.npy")
                 first = np.concatenate(list(reset["state"].values()))
                 np.save(work / "state.npy", np.vstack((first, after[:-1])).astype(after.dtype))

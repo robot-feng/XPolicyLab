@@ -1,0 +1,17 @@
+task,official_train_episodes,official_val_episodes,train0_seed,train0_observed_demo_frames,native_action_dim
+BinFill,100,50,4000,0,8
+ButtonUnmask,100,50,8000,0,8
+ButtonUnmaskSwap,100,50,7000,0,8
+InsertPeg,100,50,13000,238,8
+MoveCube,100,50,14000,234,8
+PatternLock,100,50,15001,48,7
+PickHighlight,100,50,12000,0,8
+PickXtimes,100,50,1000,0,8
+RouteStick,100,50,16000,100,7
+StopCube,100,50,2000,0,8
+SwingXtimes,100,50,3000,0,8
+VideoPlaceButton,100,50,10000,765,8
+VideoPlaceOrder,100,50,11003,734,8
+VideoRepick,100,50,9000,321,8
+VideoUnmask,100,50,6000,66,8
+VideoUnmaskSwap,100,50,5000,168,8

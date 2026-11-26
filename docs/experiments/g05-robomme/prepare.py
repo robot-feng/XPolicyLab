@@ -78,6 +78,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     for name in ("h5_root", "metadata", "out"):
         p.add_argument(name, type=Path)
+    p.add_argument("--tasks", nargs="+", default=TASKS, help="Official tasks to convert")
     a = p.parse_args()
-    with ProcessPoolExecutor(len(TASKS)) as pool:
-        list(pool.map(convert, [(t, a.h5_root, a.metadata, a.out) for t in TASKS]))
+    with ProcessPoolExecutor(min(4, len(a.tasks))) as pool:
+        list(pool.map(convert, [(t, a.h5_root, a.metadata, a.out) for t in dict.fromkeys(a.tasks)]))
