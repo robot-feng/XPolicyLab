@@ -19,6 +19,26 @@ proprio-fixed,val,20,1152000,success,35,1,target_0 target_3,target_0 target_3
 proprio-fixed,val,21,1152100,fail,106,1,target_6 target_4 target_5,target_6 target_4 target_7
 proprio-fixed,val,22,1152200,timeout,1301,0,target_1 target_6 target_7,target_1
 proprio-fixed,val,23,1152300,fail,121,0,target_15 target_20 target_21 target_16 target_17,target_15 target_17
+proprio16,test,0,650000,fail,20,0,target_5 target_4 target_6 target_7,target_5 target_7
+proprio16,test,1,650100,fail,43,0,target_1 target_0 target_4 target_2,target_1 target_5
+proprio16,test,2,650200,fail,211,0,target_4 target_9 target_14 target_13 target_12,target_4 target_5
+proprio16,test,3,650300,fail,124,0,target_8 target_13 target_14 target_19 target_24 target_18,target_8 target_6
+proprio16,test,4,650400,fail,67,1,target_6 target_7 target_3 target_0,target_6 target_7 target_8
+proprio16,test,5,650500,fail,25,0,target_1 target_5,target_1 target_4
+proprio16,test,6,650600,fail,17,0,target_1 target_5 target_2 target_7 target_11,target_1 target_2
+proprio16,test,7,650700,fail,128,0,target_7 target_6 target_11 target_12,target_7 target_13
+proprio16,test,8,650800,timeout,1301,1,target_1 target_4 target_3 target_0,target_1 target_4 target_3
+proprio16,test,9,650900,fail,44,0,target_8 target_4 target_6,target_8 target_7
+proprio16,test,10,651000,fail,230,0,target_10 target_11 target_7 target_6,target_10 target_4
+proprio16,test,11,651100,fail,88,0,target_15 target_10 target_16 target_12,target_15 target_21
+proprio16,val,16,1151600,timeout,1301,1,target_7 target_6 target_3,target_7 target_6
+proprio16,val,17,1151700,fail,50,0,target_8 target_5 target_7,target_8 target_7
+proprio16,val,18,1151800,fail,253,0,target_9 target_4 target_5,target_9 target_6
+proprio16,val,19,1151900,fail,38,0,target_16 target_11 target_15 target_10 target_5,target_16 target_21
+proprio16,val,20,1152000,fail,185,0,target_0 target_3,target_0 target_1
+proprio16,val,21,1152100,fail,59,0,target_6 target_4 target_5,target_6 target_5
+proprio16,val,22,1152200,fail,158,0,target_1 target_6 target_7,target_1 target_2
+proprio16,val,23,1152300,fail,180,0,target_15 target_20 target_21 target_16 target_17,target_15 target_18
 rgb,test,0,650000,fail,42,0,target_5 target_4 target_6 target_7,target_5 target_7
 rgb,test,1,650100,fail,65,0,target_1 target_0 target_4 target_2,target_1 target_7
 rgb,test,2,650200,fail,60,0,target_4 target_9 target_14 target_13 target_12,target_4 target_5

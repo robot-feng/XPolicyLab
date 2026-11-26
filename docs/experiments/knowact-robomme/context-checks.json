@@ -1,0 +1,50 @@
+{
+  "task": "PatternLock",
+  "warm_start_sha256": "41aa0672ef58a2b663e3f4c0c211dbc4355d7abf3adc6e4b2f659fad90aaf6c4",
+  "replan_train": 16,
+  "replan_eval": 8,
+  "episode_step_limit": 1300,
+  "per_device_batch": 1,
+  "world_size": 4,
+  "seed": 7,
+  "updates": 256,
+  "checkpoints": {
+    "rgb": {
+      "best_pt_sha256": "c3572f3f9d1a7423b6c339ec66ea32bce586c696dcb966c3b446fde9263a4290",
+      "train_probe_ce": 0.16481775045394897
+    },
+    "proprio-fixed": {
+      "best_pt_sha256": "05e9bf401cdcb095982d508a884c3d900bc799bf3b1ce4e5a8364bff6d179c84",
+      "train_probe_ce": 0.17162534594535828
+    },
+    "proprio16": {
+      "best_pt_sha256": "e5b356fe0f6921639e379302c19b1485436c65285162d749397c19be45b80a10",
+      "train_probe_ce": 0.17445193231105804
+    }
+  },
+  "aligned_train_episode_0": {
+    "task": "PatternLock",
+    "episode": 0,
+    "seed": 15001,
+    "demo_proprio": true,
+    "demonstrated_state_tokens": 16,
+    "demonstration_indices": [
+      0,
+      15,
+      31,
+      47
+    ],
+    "native_context_appends": 5,
+    "action_window_anchors": 12,
+    "output_steps": 16,
+    "first_five_rgb_mae": 0.0017079671223958334
+  },
+  "regression_tests": {
+    "native_and_adapter": 75,
+    "repository": 32
+  },
+  "debug_ws_episode_completed": {
+    "raw_rgb": true,
+    "encoded_rgb": true
+  }
+}

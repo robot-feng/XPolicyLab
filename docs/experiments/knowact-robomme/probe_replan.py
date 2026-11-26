@@ -29,6 +29,8 @@ def main(a):
         seed=7,
     )
     model = Model(cfg)
+    if model.policy.config.get("native_demo_proprio", False) or model.demo_head:
+        raise ValueError("This historical RGB-only probe lacks demonstrated joint observations; use verify_aligned.py instead")
     first, result = None, {}
 
     def action(obs):
