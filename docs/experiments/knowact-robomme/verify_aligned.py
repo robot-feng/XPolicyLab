@@ -67,10 +67,12 @@ def check(a):
         bench_name="RoboMME",
         seed=7,
         ckpt_path=str(a.weights.resolve()),
-        hydra_overrides=["model.model_arch.native_demo_frames=4"],
     )
+    if a.demo_frames is not None:
+        cfg["hydra_overrides"] = [f"model.model_arch.native_demo_frames={a.demo_frames}"]
     m = Model(cfg)
     ds = Episodes(a.data, "holdout", m.processor["panda"], ("PatternLock",))
+    assert m.policy.config.get("native_demo_frames") == ds.demo_limit
     row = next(i for i, (_, r) in enumerate(ds.rows) if r["episode"] == 0)
     folder, info = ds.rows[row]
     assert str(data["instruction"]) == info["deployment_prompt"]
@@ -186,6 +188,7 @@ if __name__ == "__main__":
     p.add_argument("--data", required=True, type=Path)
     p.add_argument("--capture", required=True, type=Path)
     p.add_argument("--weights", type=Path)
+    p.add_argument("--demo-frames", type=int, help="Override only when preflighting historical weights")
     args = p.parse_args()
     if args.mode == "check" and args.weights is None:
         p.error("--weights is required for the policy check")

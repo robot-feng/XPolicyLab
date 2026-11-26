@@ -34,7 +34,7 @@ PYTHONPATH="$PWD:$PWD/.." "$ROBOMME_PYTHON" "$EXP/verify_aligned.py" capture \
   --data "$KNOWACT_ROBOMME_DATA" --capture "$PILOT/capture.npz"
 PYTHONPATH="$PWD/policy/KnowAct/G05/src:$PWD/policy/KnowAct/G05:$PWD:$PWD/.." \
   "$KNOWACT_PYTHON" "$EXP/verify_aligned.py" check \
-  --data "$KNOWACT_ROBOMME_DATA" --capture "$PILOT/capture.npz" --weights "$OLD"
+  --data "$KNOWACT_ROBOMME_DATA" --capture "$PILOT/capture.npz" --weights "$OLD" --demo-frames 4
 ```
 
 验收程序在留出的 train/0 用专家动作跑到原生 success。它比较独立 reset 的示范像素、执行段开始的观测、训练窗口与真实专家动作，以及跨 16 步的历史。在真实权重的批量推理接口上拦截原生上下文追加，核对每个示范前缀的张量与训练路径逐项相同，再检查动作输出和回合重置。
@@ -42,6 +42,8 @@ PYTHONPATH="$PWD/policy/KnowAct/G05/src:$PWD/policy/KnowAct/G05:$PWD:$PWD/.." \
 本机已完成全部 100 个回合的缓存。train/0（种子 15001）的 48 帧示范选中第 0、15、31、47 帧。第一次动作请求向上下文追加 5 次，返回 16 条有效动作。12 个执行窗口均通过目标动作、填充及观测检查。独立专家回放的前 5 个缓存时刻，两路 RGB 平均绝对像素误差为 0.00171（范围 0–255）。留出验证和训练分别包含 267 和 2,371 个可选起点。
 
 ## 四卡训练与独立验证
+
+四卡已完成 512 次优化器更新。固定 32 个多轮留出样本的平均 CE 在第 256、512 步分别为 1.11805 和 1.11480。第 25–500 步训练日志的吞吐中位数为 6.87 个窗口/秒。闭环验证固定使用 512 步最终权重，并在同一批验证种子上额外评估原 30K 策略。[训练指标与检查记录](patternlock-results.json)
 
 ```bash
 KNOWACT_MAX_STEPS=512 bash policy/KnowAct/train.sh RoboMME knowact-pattern-demo panda joint 7 0,1,2,3 \

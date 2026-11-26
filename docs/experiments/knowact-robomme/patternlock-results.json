@@ -1,0 +1,38 @@
+{
+  "training": {
+    "starting_checkpoint_step": 30000,
+    "additional_steps": 512,
+    "world_size": 4,
+    "seed": 7,
+    "task": "PatternLock",
+    "demonstration_frames": 4,
+    "expert_training_episodes": 90,
+    "offline_holdout_episodes": 10,
+    "holdout": [
+      {
+        "step": 256,
+        "holdout_ce": 1.1180458068847656
+      },
+      {
+        "step": 512,
+        "holdout_ce": 1.11479914188385
+      }
+    ],
+    "median_windows_per_second_steps_25_to_500": 6.865
+  },
+  "train_episode_0_input_check": {
+    "task": "PatternLock",
+    "episode": 0,
+    "seed": 15001,
+    "demonstration_indices": [
+      0,
+      15,
+      31,
+      47
+    ],
+    "native_context_appends": 5,
+    "action_window_anchors": 12,
+    "output_steps": 16,
+    "first_five_rgb_mae": 0.0017079671223958334
+  }
+}
