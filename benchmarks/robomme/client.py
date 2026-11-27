@@ -66,15 +66,17 @@ class Episode:
         return [self.get_obs(i) for i in env_idx_list]
 
     def is_episode_end(self):
-        return self.terminated or self.truncated
+        return self.terminated or self.truncated or self.info.get("status") == "error"
 
     def take_action(self, action):
         vector = pack_robot_state({"state": action}, "joint", self.dimensions)
         if vector.ndim != 1 or not np.isfinite(vector).all():
             raise ValueError("Expected a finite Panda joint action")
         raw, _, self.terminated, self.truncated, self.info = self.env.step(vector.astype(np.float32))
-        self.obs = observations(raw, self.goal)[-1]
         self.steps += 1
+        if self.info.get("status") == "error":
+            return  # RoboMME's FailAwareWrapper can return no terminal observation.
+        self.obs = observations(raw, self.goal)[-1]
         self.record()
 
     def take_action_batch(self, action_list, env_idx_list):
@@ -191,7 +193,9 @@ def main():
                           "demo_episode": donor_index if donor_index is not None else
                                           (index if args.demonstration == "matched" else None),
                           "terminated": bool(episode.terminated), "truncated": bool(episode.truncated)}
-                if args.task == "PatternLock":
+                if result["status"] == "error":
+                    result["error_message"] = episode.info.get("error_message")
+                elif args.task == "PatternLock":
                     # Read native scoring state only after termination for path diagnostics.
                     result["target_buttons"] = [b.name for b in env.unwrapped.selected_buttons]
                     result["touched_buttons"] = [b.name for b in env.unwrapped.achieved_list]

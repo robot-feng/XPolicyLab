@@ -1,4 +1,5 @@
 import unittest
+from unittest.mock import Mock
 
 import numpy as np
 
@@ -51,6 +52,21 @@ class RoboMMETests(unittest.TestCase):
                 self.assertEqual(first["instruction"], "pick")
                 for action in sim.actions:
                     np.testing.assert_array_equal(action, [0, 1, 2, 3, 4, 5, 6, 1])
+
+    def test_native_error_ends_episode_without_a_final_observation(self):
+        simulator, writer = Mock(), Mock()
+        simulator.reset.return_value = frames([0]), {"task_goal": ["pick"]}
+        error = {"status": "error", "error_message": "IK failed"}
+        for terminated in (True, False):
+            with self.subTest(terminated=terminated):
+                simulator.step.return_value = None, 0, terminated, False, error
+                writer.reset_mock()
+                episode = Episode(simulator, {"arm_dim": [7], "ee_dim": [1]}, writer)
+                episode.take_action({"arm_joint_state": np.zeros(7), "ee_joint_state": [1]})
+                self.assertTrue(episode.is_episode_end())
+                self.assertEqual(episode.steps, 1)
+                self.assertEqual(episode.info, error)
+                writer.append_data.assert_called_once()  # Only the initial frame exists.
 
     def test_reject_misaligned_demo_and_invalid_camera(self):
         raw = frames([0, 1])

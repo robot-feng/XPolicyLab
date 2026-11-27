@@ -67,6 +67,14 @@ bash policy/Pi_05/setup_eval_env_client.sh \
 
 环境端将前视和腕部的 RGB 映射到 `cam_head`、`cam_wrist`。状态是 7 个关节和第一根夹指的物理位置，动作是 7 个绝对关节目标和一个夹爪命令（−1 闭合，+1 张开）。策略 reset 后，先发送演示帧，再将当前帧交给部署循环。环境使用数据集的 episode seed，并按原生 `terminated`、`truncated` 和 `info["status"]` 记录结果。
 
+## 原版 RoboMME 的成功率口径
+
+1. **执行**。每个回合按官方清单新建环境，并重置策略历史。PatternLock 的开场示范视频给出了目标顺序。执行中，KnowAct 使用该回合的任务指令、示范 RGB、环境返回的实时双相机 RGB、关节与夹爪状态，以及自己的执行历史；每次重规划后逐个向 `env.step` 发送动作。训练集的专家动作、执行阶段的专家观测、模拟器内部的目标序列和 oracle 子目标均不作为这份自主策略的输入。报告列出重规划间隔。官方提交支持 `joint_angle`、`ee_pose`、`waypoint`，本客户端采用第一种。[官方环境格式](https://github.com/RoboMME/robomme_benchmark/blob/582ab30fa95ce5503261e03dbc7d4f37937dc39e/doc/env_format.md) · [PatternLock 任务说明](https://arxiv.org/html/2603.04639v1#A5.SS15)
+2. **判分**。每个官方测试回合在分母中占一次；环境终止时只有 `info["status"] == "success"` 计入分子。`fail`、`timeout`、环境返回的 `error` 都是未成功。官方 MME-VLA 设置 `max_steps=1300`。PatternLock 必须按顺序触碰全部目标，偏离顺序会提前失败。复跑某个种子、第一段正确、专家轨迹回放都单列。未完成的运行保留已完成回合和缺失数。[官方评估脚本](https://github.com/RoboMME/robomme_benchmark/blob/582ab30fa95ce5503261e03dbc7d4f37937dc39e/scripts/evaluation.py#L68-L111)
+3. **划分与汇总**。每个任务有 100 个 train、50 个 val、50 个 test 固定回合。单任务结果注明任务、权重、策略 seed、执行步长和分母；用 val 选配置，冻结配置后在 test/0–49 跑全。原版完整提交要求所有 16 项任务共用一份模型权重或 agent 配置，每个策略随机种子评 800 个测试回合，至少 3 次不同随机种子的运行。模板示例为 7、42、0，环境的种子固定。论文中作者自己的 MME-VLA 又对最后 3 个 checkpoint 取平均，共 9 次运行。[官方数据划分](https://github.com/RoboMME/robomme_benchmark/blob/582ab30fa95ce5503261e03dbc7d4f37937dc39e/readme.md#-evaluation) · [提交模板](https://github.com/RoboMME/robomme_benchmark/blob/582ab30fa95ce5503261e03dbc7d4f37937dc39e/doc/submission/model_example.md) · [论文 §5.1](https://arxiv.org/html/2603.04639v1#S5.SS1)
+
+本地评估脚本所用的 RoboMME 上游版本为 `582ab30f`。本次逐字节核对了官方评估脚本、提交模板、环境格式说明、原生错误包装器、PatternLock 任务和三个分割的回合清单。KnowAct 已有闭环结果和对应样本范围见[实验核查](experiments/knowact-robomme/action-failure-audit.md)。
+
 ## 对上一轮改动的复核
 
 下表记录环境分支首次提交 `f39a60dc` 时的取舍，复核范围为初版 `4a9e3afd` 到实验提交 `59fe9968` 之间的 55 个文件。完整逐文件 diff 和各阶段的原始记录保存在[实验分支的固定版本](https://github.com/robot-feng/XPolicyLab/tree/59fe99687c60568c78eb6f54c77b8062740664e9)。
