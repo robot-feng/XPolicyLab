@@ -1,0 +1,25 @@
+episode,alternative,condition,expected,touched,steps,correct,closest_expected_xy_mm,first_chunk_joint_mae_vs_matched
+1,20,matched,target_4,target_0 target_4,19,1,9.773,0.0
+1,20,swap,target_3,target_0 target_4,49,0,42.512,0.02688769
+1,20,repeat,target_4,target_0 target_4,19,1,9.773,0.0
+3,15,matched,target_13,target_12,96,0,66.38,0.0
+3,15,swap,target_17,target_12,96,0,88.274,0.05181421
+3,15,repeat,target_13,target_12,96,0,66.38,0.0
+12,16,matched,target_3,target_7 target_4,39,0,100.999,0.0
+12,16,swap,target_6,target_7 target_3,47,0,73.302,0.03551918
+12,16,repeat,target_3,target_7 target_4,39,0,100.999,0.0
+13,21,matched,target_3,target_6 target_4,29,0,63.231,0.0
+13,21,swap,target_4,target_6 target_5,66,0,12.367,0.00220099
+13,21,repeat,target_3,target_6 target_4,29,0,63.231,0.0
+15,3,matched,target_17,target_12,96,0,88.274,0.0
+15,3,swap,target_13,target_12,96,0,66.38,0.05181421
+15,3,repeat,target_17,target_12,96,0,88.274,0.0
+16,12,matched,target_6,target_7 target_3,38,0,89.232,0.0
+16,12,swap,target_3,target_7 target_4,41,0,100.725,0.03346237
+16,12,repeat,target_6,target_7 target_3,38,0,89.232,0.0
+20,1,matched,target_3,target_0 target_4,49,0,42.512,0.0
+20,1,swap,target_4,target_0 target_4,19,1,5.197,0.02688769
+20,1,repeat,target_3,target_0 target_4,49,0,42.512,0.0
+21,13,matched,target_4,target_6 target_5,62,0,12.367,0.0
+21,13,swap,target_3,target_6 target_4,29,0,63.231,0.00220099
+21,13,repeat,target_4,target_6 target_5,62,0,12.367,0.0

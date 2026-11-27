@@ -1,0 +1,33 @@
+run,episode,seed,difficulty,status,steps,first_segment,target,touched
+frozen-val-legacy,8,1150800,easy,fail,20,0,2 5 8 7,2 1
+frozen-val-legacy,9,1150900,easy,fail,64,0,8 5 4 7,8 1
+frozen-val-legacy,10,1151000,medium,fail,32,0,5 4 0,5 2
+frozen-val-legacy,11,1151100,hard,fail,52,0,13 12 17 18 19,13 7
+frozen-val-legacy,12,1151200,easy,fail,39,0,7 3 6 4,7 4
+frozen-val-legacy,13,1151300,easy,fail,29,0,6 3 1,6 4
+frozen-val-legacy,14,1151400,medium,fail,113,0,8 9 14 10,8 10
+frozen-val-legacy,15,1151500,hard,fail,159,0,12 17 23 19 24 18 13,12 11
+frozen-val-hf,8,1150800,easy,fail,37,0,2 5 8 7,2 1
+frozen-val-hf,9,1150900,easy,fail,122,0,8 5 4 7,8 3
+frozen-val-hf,10,1151000,medium,fail,145,0,5 4 0,5 1
+frozen-val-hf,11,1151100,hard,fail,114,0,13 12 17 18 19,13 10
+frozen-val-hf,12,1151200,easy,timeout,1301,1,7 3 6 4,7 3
+frozen-val-hf,13,1151300,easy,fail,65,1,6 3 1,6 3 4
+frozen-val-hf,14,1151400,medium,timeout,1301,0,8 9 14 10,8
+frozen-val-hf,15,1151500,hard,fail,68,0,12 17 23 19 24 18 13,12 1
+closed-loop-legacy,8,1150800,easy,fail,24,0,2 5 8 7,2 1
+closed-loop-legacy,9,1150900,easy,fail,66,1,8 5 4 7,8 5 1
+closed-loop-legacy,10,1151000,medium,fail,251,0,5 4 0,5 1
+closed-loop-legacy,11,1151100,hard,fail,402,0,13 12 17 18 19,13 11
+closed-loop-legacy,12,1151200,easy,timeout,1301,1,7 3 6 4,7 3
+closed-loop-legacy,13,1151300,easy,fail,36,0,6 3 1,6 4
+closed-loop-legacy,14,1151400,medium,fail,273,0,8 9 14 10,8 13
+closed-loop-legacy,15,1151500,hard,fail,435,1,12 17 23 19 24 18 13,12 17 18
+closed-loop-hf,8,1150800,easy,fail,195,0,2 5 8 7,2 1
+closed-loop-hf,9,1150900,easy,fail,74,0,8 5 4 7,8 7
+closed-loop-hf,10,1151000,medium,fail,146,0,5 4 0,5 6
+closed-loop-hf,11,1151100,hard,fail,58,0,13 12 17 18 19,13 2
+closed-loop-hf,12,1151200,easy,fail,51,0,7 3 6 4,7 4
+closed-loop-hf,13,1151300,easy,fail,82,0,6 3 1,6 8
+closed-loop-hf,14,1151400,medium,fail,152,0,8 9 14 10,8 5
+closed-loop-hf,15,1151500,hard,fail,34,0,12 17 23 19 24 18 13,12 6

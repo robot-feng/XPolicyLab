@@ -30,6 +30,7 @@ def configure_qwen(arch, snapshot):
                 dst[key] = src[key]
     arch.vocab_size = arch.padded_vocab_size = text["vocab_size"]
     arch.hf_processor_path = arch.pretrained_model_path = str(snapshot)
+    arch.vision.hf_image_patch_layout = True
 
 
 def verify_qwen(model, snapshot):

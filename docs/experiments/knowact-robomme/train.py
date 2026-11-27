@@ -30,6 +30,7 @@ from g05.data.native_episodes import (
     visual_turn,
 )
 from g05.utils.data.data_utils import collate_fn_pad_sequences
+from g05.utils.checkpoint.ckpt_utils import find_run_dir
 from scripts.serve_policy import setup
 
 
@@ -158,6 +159,17 @@ def main(a):
     seed_all(a.seed)
     cfg = OmegaConf.load(ini / ".hydra/config.yaml")
     checkpoint = run / "last.pt" if a.resume else warm_start
+    vision = cfg.model.model_arch.vision
+    if a.warm_start or a.resume:
+        # A run's weights and its saved visual preprocessing are a pair.
+        try:
+            source_run = find_run_dir(str(checkpoint))
+        except FileNotFoundError:
+            source_run = ini  # Standalone weight files use the supplied initialization config.
+        source_cfg = OmegaConf.load(source_run / ".hydra/config.yaml")
+        vision.hf_image_patch_layout = source_cfg.model.model_arch.vision.get("hf_image_patch_layout", False)
+    if a.hf_image_patches:
+        vision.hf_image_patch_layout = True
     if not a.resume and (run / "last.pt").exists():
         raise FileExistsError("Existing training checkpoint; pass --resume")
     cfg.ckpt_path = str(checkpoint)
@@ -188,6 +200,8 @@ def main(a):
     )
     start = 0
     best = float("inf")
+    if vision.get("hf_image_patch_layout", False):
+        plan["hf_image_patch_layout"] = True
     if a.task or a.tasks or a.warm_start:
         plan.update(task=a.task, warm_start=str(warm_start))
     if demo_state_h5:
@@ -369,6 +383,7 @@ if __name__ == "__main__":
     p.add_argument("--save-every", type=int, default=256)
     p.add_argument("--val-windows", type=int, default=32)
     p.add_argument("--resume", action="store_true")
+    p.add_argument("--hf-image-patches", action="store_true", help="Use Qwen's official still-image patch layout when adapting older weights")
     scope = p.add_mutually_exclusive_group()
     scope.add_argument("--task", help="One prepared official task")
     scope.add_argument("--tasks", nargs="+", help="Explicit list of prepared official tasks")

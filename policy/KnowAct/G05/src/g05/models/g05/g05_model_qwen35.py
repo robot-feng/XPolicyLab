@@ -226,7 +226,12 @@ class G05ModelQwen35(G05Model):
             images = einops.rearrange(cam_tensor, "b n c h w -> (b n) c h w")
             total_k = images.shape[0]
 
-            images_temporal = images.unsqueeze(2).expand(-1, -1, temporal_patch_size, -1, -1)
+            if getattr(self.cfg.vision, "hf_image_patch_layout", False):
+                # The reshape below expects [image, time, channel, height, width].
+                images_temporal = images.unsqueeze(1).expand(-1, temporal_patch_size, -1, -1, -1)
+            else:
+                # Preserve the input convention of previously trained G0.5/KnowAct weights.
+                images_temporal = images.unsqueeze(2).expand(-1, -1, temporal_patch_size, -1, -1)
             patches_k = (
                 images_temporal.reshape(
                     total_k,

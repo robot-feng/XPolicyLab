@@ -29,6 +29,8 @@ XPolicyLab/
 
 已接入四任务 Panda 关节控制训练，支持官方 Qwen3.5-0.8B 和 G05 两种初始化。环境客户端位于仓库的 `benchmarks/robomme/`。数据准备、两阶段权重、四卡启动命令、原生评估、检查点结构与实测记录见 [RoboMME 训练手册](../../docs/experiments/knowact-robomme/README.md)。
 
+新建的 RoboMME Qwen3.5-0.8B 初始化使用官方静态图像 patch 排列。训练和推理从 checkpoint 的 Hydra 配置读取 `model.model_arch.vision.hf_image_patch_layout`，旧配置缺少该键时沿用原权重的排列。用旧权重另开续训对照，可给 `train.sh` 加 `--hf-image-patches`，新 run 会保存此设置。[输入逐项核验和自主闭环对照](../../docs/experiments/knowact-robomme/visual-input-audit.md)
+
 ## V7.1 原始发布状态
 
 | 项目 | 当前状态 |

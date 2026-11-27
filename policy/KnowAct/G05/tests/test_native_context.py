@@ -18,6 +18,24 @@ def run_chunks(m,segs):
 
 class TestSource(unittest.TestCase):
     def setUp(self): self.m=tiny().eval()
+
+    def test_qwen_still_image_patch_layout(self):
+        # Distinct values in every channel and spatial position expose axis swaps.
+        image = torch.arange(3 * 8 * 8, dtype=torch.float32).view(1, 1, 3, 8, 8)
+        patches = []
+        hook = self.m.vision_tower.register_forward_pre_hook(lambda _, args: patches.append(args[0]))
+        try:
+            self.m._forward_vision({"front": image})
+            self.m.cfg.vision.hf_image_patch_layout = True
+            self.m._forward_vision({"front": image})
+        finally:
+            hook.remove()
+        expected = torch.stack([image[0, 0, :, y:y+4, x:x+4]
+                                for y in (0, 4) for x in (0, 4)])
+        legacy, corrected = [p.view(4, 6, 4, 4) for p in patches]
+        torch.testing.assert_close(legacy, expected[:, [0, 1, 0, 2, 1, 2]])
+        torch.testing.assert_close(corrected, expected[:, [0, 0, 1, 1, 2, 2]])
+
     def test_gdn_multichunk(self):
         for b,k in itertools.product([1,2],[1,2,4,7]):
             c=config().vlm; c.linear_conv_kernel_dim=k
