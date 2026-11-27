@@ -1,0 +1,51 @@
+episode,seed,difficulty,status,terminated,truncated,steps,demo_frames,target_buttons,touched_buttons,source_report
+0,650000,easy,success,True,False,78,86,target_5 target_4 target_6 target_7,target_5 target_4 target_6 target_7,head-test-0/report.json
+1,650100,easy,success,True,False,85,96,target_1 target_0 target_4 target_2,target_1 target_0 target_4 target_2,head-test-0/report.json
+2,650200,medium,success,True,False,115,123,target_4 target_9 target_14 target_13 target_12,target_4 target_9 target_14 target_13 target_12,head-test-0/report.json
+3,650300,hard,success,True,False,190,198,target_8 target_13 target_14 target_19 target_24 target_18,target_8 target_13 target_14 target_19 target_24 target_18,head-test-3/report.json
+4,650400,easy,success,True,False,91,100,target_6 target_7 target_3 target_0,target_6 target_7 target_3 target_0,head-test-3/report.json
+5,650500,easy,success,True,False,28,37,target_1 target_5,target_1 target_5,head-test-3/report.json
+6,650600,medium,success,True,False,135,142,target_1 target_5 target_2 target_7 target_11,target_1 target_5 target_2 target_7 target_11,head-test-6/report.json
+7,650700,hard,success,True,False,80,92,target_7 target_6 target_11 target_12,target_7 target_6 target_11 target_12,head-test-6/report.json
+8,650800,easy,success,True,False,83,96,target_1 target_4 target_3 target_0,target_1 target_4 target_3 target_0,head-test-6/report.json
+9,650900,easy,success,True,False,67,76,target_8 target_4 target_6,target_8 target_4 target_6,head-test-9/report.json
+10,651000,medium,success,True,False,73,83,target_10 target_11 target_7 target_6,target_10 target_11 target_7 target_6,head-test-9/report.json
+11,651100,hard,success,True,False,93,103,target_15 target_10 target_16 target_12,target_15 target_10 target_16 target_12,head-test-9/report.json
+12,651200,easy,success,True,False,87,99,target_3 target_4 target_7 target_5,target_3 target_4 target_7 target_5,head-full-12/report.json
+13,651300,easy,success,True,False,92,101,target_3 target_1 target_2 target_4,target_3 target_1 target_2 target_4,head-full-12/report.json
+14,651400,medium,success,True,False,78,86,target_8 target_12 target_9,target_8 target_12 target_9,head-full-12/report.json
+15,651500,hard,success,True,False,244,258,target_10 target_15 target_21 target_17 target_13 target_19 target_24,target_10 target_15 target_21 target_17 target_13 target_19 target_24,head-full-12/report.json
+16,651600,easy,success,True,False,98,105,target_3 target_7 target_4 target_6,target_3 target_7 target_4 target_6,head-full-12/report.json
+17,651700,easy,success,True,False,62,69,target_6 target_3 target_1,target_6 target_3 target_1,head-full-12/report.json
+18,651800,medium,success,True,False,53,64,target_3 target_2 target_6,target_3 target_2 target_6,head-full-12/report.json
+19,651900,hard,success,True,False,176,182,target_18 target_14 target_13 target_8 target_2 target_1 target_0,target_18 target_14 target_13 target_8 target_2 target_1 target_0,head-full-12/report.json
+20,652000,easy,success,True,False,20,33,target_1 target_0,target_1 target_0,head-full-12/report.json
+21,652100,easy,success,True,False,79,89,target_7 target_3 target_4 target_2,target_7 target_3 target_4 target_2,head-full-12/report.json
+22,652200,medium,success,True,False,147,152,target_13 target_8 target_12 target_9 target_10,target_13 target_8 target_12 target_9 target_10,head-full-22/report.json
+23,652300,hard,success,True,False,181,192,target_6 target_0 target_5 target_10 target_16 target_15 target_21,target_6 target_0 target_5 target_10 target_16 target_15 target_21,head-full-22/report.json
+24,652400,easy,success,True,False,65,72,target_1 target_5 target_8,target_1 target_5 target_8,head-full-22/report.json
+25,652500,easy,success,True,False,18,25,target_4 target_3,target_4 target_3,head-full-22/report.json
+26,652600,medium,success,True,False,90,96,target_1 target_4 target_0 target_5,target_1 target_4 target_0 target_5,head-full-22/report.json
+27,652700,hard,success,True,False,214,224,target_18 target_19 target_14 target_8 target_7 target_12 target_11 target_6,target_18 target_19 target_14 target_8 target_7 target_12 target_11 target_6,head-full-22/report.json
+28,652800,easy,success,True,False,28,37,target_1 target_5,target_1 target_5,head-full-22/report.json
+29,652900,easy,success,True,False,27,32,target_7 target_4,target_7 target_4,head-full-22/report.json
+30,653000,medium,success,True,False,54,67,target_14 target_13 target_8,target_14 target_13 target_8,head-full-22/report.json
+31,653100,hard,success,True,False,119,131,target_1 target_0 target_5 target_10 target_16,target_1 target_0 target_5 target_10 target_16,head-full-22/report.json
+32,653200,easy,success,True,False,24,37,target_3 target_0,target_3 target_0,head-full-32/report.json
+33,653300,easy,success,True,False,54,68,target_1 target_2 target_5,target_1 target_2 target_5,head-full-32/report.json
+34,653400,medium,success,True,False,84,94,target_11 target_10 target_15 target_14,target_11 target_10 target_15 target_14,head-full-32/report.json
+35,653500,hard,success,True,False,224,234,target_2 target_6 target_12 target_7 target_13 target_8 target_9 target_4,target_2 target_6 target_12 target_7 target_13 target_8 target_9 target_4,head-full-32/report.json
+36,653600,easy,success,True,False,75,80,target_7 target_5 target_4 target_3,target_7 target_5 target_4 target_3,head-full-32/report.json
+37,653700,easy,success,True,False,62,71,target_7 target_3 target_1,target_7 target_3 target_1,head-full-32/report.json
+38,653800,medium,success,True,False,135,145,target_7 target_2 target_6 target_10 target_13,target_7 target_2 target_6 target_10 target_13,head-full-32/report.json
+39,653900,hard,success,True,False,139,148,target_24 target_18 target_17 target_12 target_16,target_24 target_18 target_17 target_12 target_16,head-full-32/report.json
+40,654000,easy,success,True,False,78,91,target_0 target_4 target_5 target_2,target_0 target_4 target_5 target_2,head-full-32/report.json
+41,654100,easy,success,True,False,98,105,target_3 target_7 target_4 target_6,target_3 target_7 target_4 target_6,head-full-32/report.json
+42,654200,medium,success,True,False,136,141,target_8 target_5 target_9 target_4 target_1,target_8 target_5 target_9 target_4 target_1,head-full-42/report.json
+43,654300,hard,success,True,False,85,99,target_3 target_4 target_9 target_14,target_3 target_4 target_9 target_14,head-full-42/report.json
+44,654400,easy,success,True,False,20,33,target_0 target_1,target_0 target_1,head-full-42/report.json
+45,654500,easy,success,True,False,90,103,target_6 target_4 target_0 target_1,target_6 target_4 target_0 target_1,head-full-42/report.json
+46,654600,medium,success,True,False,128,140,target_4 target_9 target_13 target_14 target_11,target_4 target_9 target_13 target_14 target_11,head-full-42/report.json
+47,654700,hard,success,True,False,184,195,target_12 target_11 target_7 target_13 target_8 target_9 target_4,target_12 target_11 target_7 target_13 target_8 target_9 target_4,head-full-42/report.json
+48,654800,easy,success,True,False,20,33,target_2 target_1,target_2 target_1,head-full-42/report.json
+49,654900,easy,success,True,False,51,56,target_2 target_4 target_5,target_2 target_4 target_5,head-full-42/report.json

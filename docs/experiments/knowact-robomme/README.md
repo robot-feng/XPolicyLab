@@ -1,5 +1,7 @@
 # KnowAct V7.1 在 RoboMME 上的四卡训练
 
+[成功率复核报告：谁取得了 50/50、逐回合证据与录像](success-rate-review-zh.md) · [打印版 PDF](success-rate-review-zh.pdf)
+
 [示范关节实验：同种子成功率、原模型与动作头录像、可复现命令](context-ablation.md)
 
 PatternLock 后续完成了单轨迹与单任务全部 100 条示范的四卡拟合，附原生成功录像、逐回合成绩以及全 16 任务输入检查。[逐级拟合与闭环实验](fit-ladder.md)
