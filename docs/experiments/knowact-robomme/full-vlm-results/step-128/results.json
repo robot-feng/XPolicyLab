@@ -1,0 +1,75 @@
+{
+  "step": 128,
+  "train_ce": null,
+  "holdout_ce": 1.5389171838760376,
+  "episodes": [
+    {
+      "task": "MoveCube",
+      "split": "train",
+      "episode": 1,
+      "seed": 14100,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 258,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.04718500375747681,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "train",
+      "episode": 4,
+      "seed": 14400,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 236,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.011437024921178818,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "val",
+      "episode": 1,
+      "seed": 1140100,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 262,
+      "steps": 79,
+      "status": "fail",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.04625798389315605,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "val",
+      "episode": 8,
+      "seed": 1140800,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 253,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.09447597712278366,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    }
+  ]
+}
