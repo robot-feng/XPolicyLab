@@ -88,3 +88,26 @@ env -u KNOWACT_REPLAN_STEPS -u KNOWACT_ALLOW_STRIDE_SHIFT "$KNOWACT_PYTHON" "$EX
 16 状态版本在 train/0 的真实回放确认视觉锚点仍为 `[0, 15, 31, 47]`，一共 16 个关节 token、5 次原生上下文追加（4 次示范 + 1 次当前观测）。训练与服务的 token、掩码、示范图像和关节值通过逐项校验，重复取样后原始关节不变。新权重在 WebSocket 原始 RGB 和编码 RGB 两条路径各完成一个 debug 回合；项目测试 32 项和 KnowAct/适配器测试 75 项通过。SHA-256、精确 CE 和验收指标见[可核验的记录](context-checks.json)。大权重留在实验机，GitHub 保存实现、可重现设置、拟合头、逐种子结果和代表录像。
 
 **决策。** 对 PatternLock，用完整公开示范的动作头作为已验证的模仿控制基线。对原生 KnowAct，单纯增加上下文采样，在这次 256 步的配对实验中没有提高完整成功率，不据此启动相同目标的 30K 长跑。下一轮应固定已验证的输入通路，在训练种子上增加“当前该对齐示范的哪一段”的监督：同一当前观测配不同示范检验目标是否切换，同一示范配偏离后的观测检验是否会纠偏。相同测试种子已经用于诊断，新方案先比验证集完整成功、首段命中及偏离后的恢复，再用未参与选择的种子确认。其余任务，尤其没有公开示范或需要脱离示范的任务，仍需独立评估。
+
+## 同一种抓法，方块换了位置：MoveCube 的配对复查（2026-11-27）
+
+PatternLock 要求复现路径；原版 MoveCube 则要求按示范的**方法**移动方块。[环境源码](https://github.com/RoboMME/robomme_benchmark/blob/582ab30fa95ce5503261e03dbc7d4f37937dc39e/src/robomme/robomme_env/MoveCube.py#L640-L652)在示范后将方块、目标区和工具放到第二组姿态。下图是同一条官方专家记录：左列示范，右列执行。红色方块与紫色目标的相对位置也改变了，不能简单把整条抓放轨迹整体平移。
+
+![MoveCube train/4，示范和执行布局、专家第一次闭合夹爪的对照](movecube-layout-train4.jpg)
+
+在官方 train 按编号取前三条初始子目标为“抓起方块”的轨迹，事先按动作方法选回合，不按结果选。对每个种子分别新建相同的执行环境；一组原样回放**示范段专家**的绝对关节及夹爪指令，另一组回放这个**新布局执行段专家**的指令作阳性对照。各自只取抓起、放下两个子目标；指令用完后保持最后一条，等原生环境判分。两次 reset 的手臂起始关节逐项相等（绝对容差 1e-5）。环境预算设置为 1,300 步。
+
+| 官方 train 回合 | 环境种子 | 专家首次关爪位置的平面距离 | 原样回放示范指令 | 回放新布局专家指令 |
+|---|---:|---:|---|---|
+| 1 | 14100 | 7.3 cm | timeout | success，151 步 |
+| 4 | 14400 | 17.9 cm | timeout | success，171 步 |
+| 5 | 14500 | 16.7 cm | timeout | success，150 步 |
+
+距离用 HDF5 中两个阶段首次抓方块且夹爪已闭合时的末端 XY 计算；它是抓取点的距离，不是直接读取的方块中心位移。三次超时均计失败。该表检验“示范指令能否原样搬用”，没有评测 KnowAct 或之前的跟踪器，也没有将执行专家的未来指令当作可部署策略。对部署策略，更有辨别力的配对是：固定抓取方法，只换布局，检查抓取点和落点是否随当前观测改变；再固定布局，在抓取、推、用工具等可行方法之间更换示范，看模型是否具有真正的示范依赖。应分别记录正确方法、抓取/放置阶段和原生整回合成功。
+
+[原始数值](movecube-layout-results.json) · [复现脚本](probe_moved_cube.py)。在仓库根目录运行（仿真环境和官方训练 H5 路径可替换）：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 ../robomme_benchmark/.venv/bin/python docs/experiments/knowact-robomme/probe_moved_cube.py \
+  --h5 ../datasets/robomme_data_h5/record_dataset_MoveCube.h5 --count 3 --output /tmp/movecube-layout.json
+```

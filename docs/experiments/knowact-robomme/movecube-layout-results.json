@@ -1,0 +1,77 @@
+[
+  {
+    "episode": 1,
+    "seed": 14100,
+    "demonstration_close_xyz_m": [
+      -0.07588918507099152,
+      0.05699009448289871,
+      0.018331386148929596
+    ],
+    "execution_close_xyz_m": [
+      -0.002785090357065201,
+      0.05241112783551216,
+      0.019146494567394257
+    ],
+    "close_xy_distance_cm": 7.324735899334929,
+    "replay_demo": {
+      "status": "timeout",
+      "control_steps": 1301,
+      "recorded_commands": 198
+    },
+    "replay_execution_oracle": {
+      "status": "success",
+      "control_steps": 151,
+      "recorded_commands": 166
+    }
+  },
+  {
+    "episode": 4,
+    "seed": 14400,
+    "demonstration_close_xyz_m": [
+      0.0052224257960915565,
+      0.1025274395942688,
+      0.0181388258934021
+    ],
+    "execution_close_xyz_m": [
+      0.056717243045568466,
+      -0.0691181868314743,
+      0.01788359135389328
+    ],
+    "close_xy_distance_cm": 17.92036195913542,
+    "replay_demo": {
+      "status": "timeout",
+      "control_steps": 1301,
+      "recorded_commands": 176
+    },
+    "replay_execution_oracle": {
+      "status": "success",
+      "control_steps": 171,
+      "recorded_commands": 186
+    }
+  },
+  {
+    "episode": 5,
+    "seed": 14500,
+    "demonstration_close_xyz_m": [
+      0.09199877083301544,
+      -0.06679540872573853,
+      0.016369931399822235
+    ],
+    "execution_close_xyz_m": [
+      -0.02315712906420231,
+      0.05457698553800583,
+      0.020337291061878204
+    ],
+    "close_xy_distance_cm": 16.730851553478036,
+    "replay_demo": {
+      "status": "timeout",
+      "control_steps": 1301,
+      "recorded_commands": 186
+    },
+    "replay_execution_oracle": {
+      "status": "success",
+      "control_steps": 150,
+      "recorded_commands": 166
+    }
+  }
+]
