@@ -1,0 +1,9 @@
+split,episode,seed,route,contacts,status,steps
+train,28,17800,0 3 6,0 3 6,success,68
+train,45,19500,0 4 3,0 3,fail,44
+train,5,15500,6 3 4,6 3 4,success,71
+train,49,19900,6 4 5,6 4 5,success,58
+val,1,1150100,0 4 2 1,0 4 3,fail,52
+val,20,1152000,0 3,0 3,success,25
+val,5,1150500,6 4 1,6 3,fail,67
+val,13,1151300,6 3 1,6 4,fail,44

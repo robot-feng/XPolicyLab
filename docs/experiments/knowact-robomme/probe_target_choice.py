@@ -1,11 +1,13 @@
 """Swap four demonstration RGB frames between two feasible paths from the same button."""
 
 import argparse
-from contextlib import closing
+from contextlib import ExitStack, closing
+import hashlib
 import itertools
 import json
 from pathlib import Path
 
+import imageio.v2 as imageio
 import numpy as np
 from robomme.env_record_wrapper import BenchmarkEnvBuilder
 from client_server.ws import WsModelClient
@@ -16,12 +18,23 @@ from XPolicyLab.utils.process_data import get_robot_action_dim_info
 from trace_patternlock import Trace
 
 
+def rgb_digest(frames):
+    digest = hashlib.sha256()
+    for frame in frames:
+        for key in ("cam_head", "cam_wrist"):
+            digest.update(frame["vision"][key]["color"].tobytes())
+    return digest.hexdigest()
+
+
 def capture(builder, index, dims):
     with closing(builder.make_env_for_episode(index)) as env:
         ep = Episode(env, dims, None)
         world = env.unwrapped
+        anchors = frame_indices(len(ep.demonstration), 4)
         return dict(
             demo=ep.demonstration,
+            demo_rgb_sha256=rgb_digest(ep.demonstration[j] for j in anchors),
+            initial_rgb_sha256=rgb_digest([ep.obs]),
             obs=ep.obs,
             target=[b.name for b in world.selected_buttons],
             positions={b.name: b.pose.p[0, :2].cpu().numpy().copy() for b in world.buttons_grid},
@@ -42,7 +55,9 @@ def run(builder, dims, args, recipient, donor, samples, condition):
     receiver = samples[recipient]
     source = samples[donor] if condition == "swap" else receiver
     first, expected = source["target"][:2]
-    with closing(builder.make_env_for_episode(recipient)) as env:
+    label = f"{args.split}-{recipient}-alternative-{donor}-{condition}"
+    with ExitStack() as stack:
+        env = stack.enter_context(closing(builder.make_env_for_episode(recipient)))
         ep = FirstTransition(env, dims, None)
         assert [b.name for b in env.unwrapped.selected_buttons] == receiver["target"]
         for key in ep.obs["state"]:
@@ -59,7 +74,15 @@ def run(builder, dims, args, recipient, donor, samples, condition):
                 "vision": source["demo"][src]["vision"],
             }
 
-        label = f"val-{recipient}-alternative-{donor}-{condition}"
+        if args.video:
+            writer = stack.enter_context(closing(imageio.get_writer(args.out / f"{label}.mp4", fps=20)))
+            for dest in slots:
+                views = ep.demonstration[dest]["vision"]
+                frame = np.concatenate([views[k]["color"] for k in ("cam_head", "cam_wrist")], axis=1)
+                for _ in range(8):
+                    writer.append_data(frame)
+            ep.writer = writer
+            ep.record()
         with WsModelClient(
             url=f"ws://localhost:{args.port}",
             evaluation_id=args.out.name,
@@ -79,10 +102,15 @@ def run(builder, dims, args, recipient, donor, samples, condition):
             else None
         )
         result = dict(
+            split=args.split,
             recipient=recipient,
             alternative=donor,
             condition=condition,
             seed=builder.resolve_episode(recipient)[0],
+            initial_rgb_sha256=receiver["initial_rgb_sha256"],
+            initial_joints=receiver["obs"]["state"]["arm_joint_state"].tolist(),
+            initial_tcp_m=trace[0].tolist(),
+            demo_rgb_sha256=source["demo_rgb_sha256"],
             shown_path=source["target"],
             original_path=receiver["target"],
             touched=touched,
@@ -103,12 +131,12 @@ def run(builder, dims, args, recipient, donor, samples, condition):
 
 def main(args):
     if len(args.pairs) % 2:
-        raise ValueError("Pass pairs of validation episode indices")
+        raise ValueError("Pass pairs of episode indices from the selected split")
     args.out = args.out.resolve()
     args.out.mkdir(exist_ok=True, parents=True)
     builder = BenchmarkEnvBuilder(
         env_id="PatternLock",
-        dataset="val",
+        dataset=args.split,
         action_space="joint_angle",
         gui_render=False,
         max_steps=1300,
@@ -132,5 +160,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", required=True, type=int)
     parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--split", choices=("train", "val"), default="val")
+    parser.add_argument("--video", action="store_true", help="Prepend the four shown demo frames to the actual rollout")
     parser.add_argument("--pairs", type=int, nargs="+", required=True)
     main(parser.parse_args())

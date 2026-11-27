@@ -211,7 +211,10 @@ def main(a):
     if a.tasks:
         plan["tasks"] = a.tasks
     if a.train_episode is not None:
-        plan["train_episode"] = a.train_episode
+        if len(a.train_episode) == 1:
+            plan["train_episode"] = a.train_episode[0]  # Existing single-episode resume plans.
+        else:
+            plan["train_episodes"] = sorted(a.train_episode)
     if a.all_train_demos:
         plan["all_train_demos"] = True
     if a.resume or a.warm_start:
@@ -244,11 +247,11 @@ def main(a):
     metric_name = "train_probe_ce" if a.all_train_demos else "holdout_ce"
     indices = full_pass_indices(train, world, rank, a.seed, start * a.batch) if a.all_train_demos else None
     if a.train_episode is not None:
-        train.index = [
-            (row, t) for row, t in train.index if train.rows[row][1]["episode"] == a.train_episode
-        ]
-        if not train.index:
-            raise ValueError(f"Episode {a.train_episode} is absent from the training split")
+        selected = set(a.train_episode)
+        train.index = [(row, t) for row, t in train.index if train.rows[row][1]["episode"] in selected]
+        missing = selected - {train.rows[row][1]["episode"] for row, _ in train.index}
+        if missing:
+            raise ValueError(f"Episodes absent from the training split: {sorted(missing)}")
     if train.demo_limit != val.demo_limit:
         raise ValueError("Train and holdout demonstration sampling differ")
     if not train.demo_limit and not (a.legacy_execution_only or a.resume):
@@ -388,7 +391,7 @@ if __name__ == "__main__":
     scope.add_argument("--task", help="One prepared official task")
     scope.add_argument("--tasks", nargs="+", help="Explicit list of prepared official tasks")
     selection = p.add_mutually_exclusive_group()
-    selection.add_argument("--train-episode", type=int, help="Fit one trajectory from the training split")
+    selection.add_argument("--train-episode", nargs="+", type=int, help="Fit the listed whole trajectories from the training split")
     selection.add_argument("--all-train-demos", action="store_true", help="Shuffle every official training window once per epoch, with DDP padding")
     p.add_argument("--warm-start", type=Path, help="Seed policy weights and start a fresh optimizer")
     p.add_argument("--demo-state-h5", type=Path, help="Pair the selected demonstration RGB frames with their observed joints from the official training HDF5")
@@ -401,4 +404,6 @@ if __name__ == "__main__":
         p.error("--tasks contains a duplicate")
     if args.train_episode is not None and not args.task:
         p.error("--train-episode requires --task")
+    if args.train_episode and len(set(args.train_episode)) != len(args.train_episode):
+        p.error("--train-episode contains a duplicate")
     main(args)
