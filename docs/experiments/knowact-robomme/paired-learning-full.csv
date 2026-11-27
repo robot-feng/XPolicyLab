@@ -1,9 +1,29 @@
-split,episode,seed,route,contacts,status,steps
-train,28,17800,0 3 6,0 3 6,success,68
-train,45,19500,0 4 3,0 3,fail,44
-train,5,15500,6 3 4,6 3 4,success,71
-train,49,19900,6 4 5,6 4 5,success,58
-val,1,1150100,0 4 2 1,0 4 3,fail,52
-val,20,1152000,0 3,0 3,success,25
-val,5,1150500,6 4 1,6 3,fail,67
-val,13,1151300,6 3 1,6 4,fail,44
+weights,split,episode,seed,route,contacts,status,steps
+fit,train,28,17800,0 3 6,0 3 6,success,68
+fit,train,45,19500,0 4 3,0 3,fail,44
+fit,train,5,15500,6 3 4,6 3 4,success,71
+fit,train,49,19900,6 4 5,6 4 5,success,58
+fit,val,1,1150100,0 4 2 1,0 4 3,fail,52
+fit,val,20,1152000,0 3,0 3,success,25
+fit,val,5,1150500,6 4 1,6 3,fail,67
+fit,val,13,1151300,6 3 1,6 4,fail,44
+fit,val,28,1152800,6 3,6 3,success,34
+fit,val,41,1154100,6 4 7 3,6 4 5,fail,58
+fit,val,33,1153300,1 3,1 3,success,4
+fit,val,44,1154400,1 5,1 3,fail,54
+fit,val,40,1154000,3 7,3 6,fail,147
+fit,val,49,1154900,3 1,3,timeout,1301
+end,train,28,17800,0 3 6,0 3 6,success,51
+end,train,45,19500,0 4 3,0 3,fail,58
+end,train,17,16700,6 3 1 2,6 3 1 2,success,1103
+end,train,93,24300,6 4 2,6 2,fail,63
+end,val,1,1150100,0 4 2 1,0 3,fail,40
+end,val,20,1152000,0 3,0 3,success,28
+end,val,5,1150500,6 4 1,6 1,fail,398
+end,val,13,1151300,6 3 1,6 3 0,fail,177
+end,val,28,1152800,6 3,6 2,fail,95
+end,val,41,1154100,6 4 7 3,6 2,fail,226
+end,val,33,1153300,1 3,1 2,fail,518
+end,val,44,1154400,1 5,1 3,fail,43
+end,val,40,1154000,3 7,3 6,fail,101
+end,val,49,1154900,3 1,3 6,fail,163
