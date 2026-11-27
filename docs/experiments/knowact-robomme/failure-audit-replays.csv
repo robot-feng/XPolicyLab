@@ -1,0 +1,76 @@
+episode,seed,case,steps,status,target,touched,contact_steps
+0,15001,expert,42,success,5 4 3,5 4 3,1 18 42
+0,15001,expert_codec,44,success,5 4 3,5 4 3,1 19 44
+0,15001,all_predicted_on_expert_obs,48,sequence_exhausted,5 4 3,5,1
+0,15001,replace_0,42,success,5 4 3,5 4 3,1 20 42
+0,15001,replace_16,42,fail,5 4 3,5 3,1 42
+0,15001,replace_32,48,sequence_exhausted,5 4 3,5 4,1 18
+1,15100,expert,54,success,4 5 1,4 5 1,1 19 54
+1,15100,expert_codec,57,success,4 5 1,4 5 1,1 19 57
+1,15100,all_predicted_on_expert_obs,57,success,4 5 1,4 5 1,1 21 57
+1,15100,replace_0,54,success,4 5 1,4 5 1,1 21 54
+1,15100,replace_16,54,success,4 5 1,4 5 1,1 26 54
+1,15100,replace_32,54,success,4 5 1,4 5 1,1 19 54
+1,15100,replace_48,57,success,4 5 1,4 5 1,1 19 57
+2,15200,expert,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+2,15200,expert_codec,121,success,7 3 2 6 1,7 3 2 6 1,1 24 50 82 121
+2,15200,all_predicted_on_expert_obs,51,fail,7 3 2 6 1,7 2,1 51
+2,15200,replace_0,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+2,15200,replace_16,51,fail,7 3 2 6 1,7 2,1 51
+2,15200,replace_32,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+2,15200,replace_48,120,success,7 3 2 6 1,7 3 2 6 1,1 23 50 83 120
+2,15200,replace_64,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+2,15200,replace_80,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 93 120
+2,15200,replace_96,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+2,15200,replace_112,121,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 121
+2,15200,replace_128,120,success,7 3 2 6 1,7 3 2 6 1,1 23 51 83 120
+3,15300,expert,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,expert_codec,141,success,16 22 21 17 11,16 22 21 17 11,1 33 56 107 141
+3,15300,all_predicted_on_expert_obs,54,fail,16 22 21 17 11,16 21,1 54
+3,15300,replace_0,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,replace_16,141,success,16 22 21 17 11,16 22 21 17 11,1 33 56 106 141
+3,15300,replace_32,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,replace_48,141,success,16 22 21 17 11,16 22 21 17 11,1 32 53 106 141
+3,15300,replace_64,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,replace_80,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,replace_96,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 114 141
+3,15300,replace_112,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+3,15300,replace_128,146,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 146
+3,15300,replace_144,141,success,16 22 21 17 11,16 22 21 17 11,1 32 56 106 141
+4,15400,expert,21,success,2 1,2 1,1 21
+4,15400,expert_codec,21,success,2 1,2 1,1 21
+4,15400,all_predicted_on_expert_obs,20,success,2 1,2 1,1 20
+4,15400,replace_0,21,success,2 1,2 1,1 21
+4,15400,replace_16,20,success,2 1,2 1,1 20
+4,15400,replace_32,21,success,2 1,2 1,1 21
+5,15500,expert,50,success,6 3 4,6 3 4,1 27 50
+5,15500,expert_codec,50,success,6 3 4,6 3 4,1 30 50
+5,15500,all_predicted_on_expert_obs,52,success,6 3 4,6 3 4,1 27 52
+5,15500,replace_0,50,success,6 3 4,6 3 4,1 27 50
+5,15500,replace_16,50,success,6 3 4,6 3 4,1 27 50
+5,15500,replace_32,52,success,6 3 4,6 3 4,1 27 52
+5,15500,replace_48,50,success,6 3 4,6 3 4,1 27 50
+6,15600,expert,70,success,5 10 14,5 10 14,1 27 70
+6,15600,expert_codec,71,success,5 10 14,5 10 14,1 26 71
+6,15600,all_predicted_on_expert_obs,72,success,5 10 14,5 10 14,1 36 72
+6,15600,replace_0,70,success,5 10 14,5 10 14,1 27 70
+6,15600,replace_16,70,success,5 10 14,5 10 14,1 37 70
+6,15600,replace_32,70,success,5 10 14,5 10 14,1 27 70
+6,15600,replace_48,70,success,5 10 14,5 10 14,1 27 70
+6,15600,replace_64,72,success,5 10 14,5 10 14,1 27 72
+6,15600,replace_80,70,success,5 10 14,5 10 14,1 27 70
+7,15700,expert,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,expert_codec,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 22 54 88 129 173
+7,15700,all_predicted_on_expert_obs,91,fail,9 8 12 17 22 18,9 8 17,1 22 91
+7,15700,replace_0,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_16,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 22 54 89 129 173
+7,15700,replace_32,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_48,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 67 89 129 173
+7,15700,replace_64,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_80,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 91 129 173
+7,15700,replace_96,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_112,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_128,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_144,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_160,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
+7,15700,replace_176,173,success,9 8 12 17 22 18,9 8 12 17 22 18,1 21 54 89 129 173
