@@ -26,6 +26,7 @@ def observation(images, state, prompt):
 
 
 def probe(a):
+    a.data, a.out = a.data.resolve(), a.out.resolve()  # Model switches to the policy checkout.
     cfg = yaml.safe_load((REPO / "policy/KnowAct/deploy.yml").read_text())
     cfg.update(
         env_cfg_type="panda",
@@ -47,22 +48,23 @@ def probe(a):
     )
     a.out.mkdir(parents=True, exist_ok=True)
     for split in ("train", "holdout"):
-        ds = Episodes(a.data, split, model.processor["panda"], ("PatternLock",))
+        ds = Episodes(a.data, split, model.processor["panda"], (a.task,))
         indices = {key: i for i, key in enumerate(ds.index)}
         for row, (folder, meta) in enumerate(ds.rows):
             eid = meta["episode"]
             if eid not in a.episodes:
                 continue
+            prompt = meta.get("deployment_prompt", meta["prompt"])
             rgb = np.load(folder / "rgb.npy", mmap_mode="r")
             predictions, metrics = {}, {}
             free_codes = []
             for mode in ("expert_history", "predicted_history", "no_history", "codec"):
                 model.reset()
                 model.keep_history = mode != "no_history"
-                for frame_index, images in zip(meta["demo_indices"], ds.demo[row]):
+                for frame_index, images in zip(meta.get("demo_indices", ()), ds.demo.get(row, ()), strict=True):
                     model.update_obs(
                         {
-                            **observation(images, ds.state[row][0], meta["deployment_prompt"]),
+                            **observation(images, ds.state[row][0], prompt),
                             "demonstration_frame": dict(
                                 index=frame_index, length=meta["demo_length"]
                             ),
@@ -82,7 +84,7 @@ def probe(a):
                     assert len(target) == len(variable)
                     target_np = target.cpu().numpy()
                     observed = observation(
-                        rgb[t // meta["rgb_stride"]], ds.state[row][t], meta["deployment_prompt"]
+                        rgb[t // meta["rgb_stride"]], ds.state[row][t], prompt
                     )
                     if t:
                         observed["__knowact_execution__"] = {"plan": t // 16 - 1, "steps": 16}
@@ -143,7 +145,7 @@ def probe(a):
                 np.testing.assert_allclose(
                     predictions[mode][:16], predictions["expert_history"][:16], atol=1e-5
                 )
-            np.savez(a.out / f"predictions-{eid}.npz", **predictions)
+            np.savez(a.out / f"predictions-{eid}.npz", seed=meta["seed"], **predictions)
             (a.out / f"probe-{eid}.json").write_text(json.dumps(metrics, indent=2) + "\n")
             print(
                 split,
@@ -160,6 +162,7 @@ if __name__ == "__main__":
     p = argparse.ArgumentParser(description=__doc__)
     for name in ("weights", "data", "out"):
         p.add_argument("--" + name, required=True, type=Path)
+    p.add_argument("--task", default="PatternLock")
     p.add_argument("--episodes", type=int, nargs="+", required=True)
     with torch.inference_mode(), torch.autocast("cuda", dtype=torch.bfloat16):
         probe(p.parse_args())

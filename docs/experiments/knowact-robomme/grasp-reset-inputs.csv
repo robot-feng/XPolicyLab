@@ -1,0 +1,13 @@
+episode,condition,max_arm_vs_record_rad,max_arm_vs_feedback_live_rad,max_arm_vs_feedback_record_rad
+1,record,0.0,0.06882429122924805,0.0
+1,live_q,0.0,0.06882429122924805,0.0
+1,live_rgb,0.06882429122924805,0.0,0.06882429122924805
+1,live,0.06882429122924805,0.0,0.06882429122924805
+1,live_repeat,0.06882429122924805,0.0,0.06882429122924805
+1,record_repeat,0.0,0.06882429122924805,0.0
+4,record,0.0,0.0,0.0
+4,live_q,0.0,0.0,0.0
+4,live_rgb,0.0,0.0,0.0
+4,live,0.0,0.0,0.0
+4,live_repeat,0.0,0.0,0.0
+4,record_repeat,0.0,0.0,0.0
