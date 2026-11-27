@@ -118,17 +118,13 @@ def batch_from(dataset, rng, size, indices=None):
     return {"native_episodes": on_device(batch["native_episodes"])}
 
 
-def select(model):
+def select(model, full_vlm=False):
     model.requires_grad_(False)
     vlm = model.model.vlm
     if vlm.input_proj.weight is not vlm.output_proj.weight:
         raise RuntimeError("The pretrained LM head must remain tied")
-    for part in (
-        vlm.input_proj,
-        vlm.layers[-4:],
-        vlm.norm,
-        model.model.proprio_embedder,
-    ):
+    backbone = (model.model.vision_tower, vlm) if full_vlm else (vlm.input_proj, vlm.layers[-4:], vlm.norm)
+    for part in (*backbone, model.model.proprio_embedder):
         part.float().requires_grad_(True)
     return [p for p in model.parameters() if p.requires_grad]
 
@@ -170,12 +166,15 @@ def main(a):
         vision.hf_image_patch_layout = source_cfg.model.model_arch.vision.get("hf_image_patch_layout", False)
     if a.hf_image_patches:
         vision.hf_image_patch_layout = True
+    if a.full_vlm:
+        cfg.model.model_arch.checkpoint_vlm = True
+        cfg.model.model_arch.checkpoint_vision = True
     if not a.resume and (run / "last.pt").exists():
         raise FileExistsError("Existing training checkpoint; pass --resume")
     cfg.ckpt_path = str(checkpoint)
     cfg.run_dir = str(ini)
     model, procs = setup(cfg, device=f"cuda:{local}")
-    params = select(model)
+    params = select(model, a.full_vlm)
     kernel = next(
         m.chunk_gated_delta_rule
         for m in model.modules()
@@ -200,6 +199,8 @@ def main(a):
     )
     start = 0
     best = float("inf")
+    if a.full_vlm:
+        plan["full_vlm"] = True
     if vision.get("hf_image_patch_layout", False):
         plan["hf_image_patch_layout"] = True
     if a.task or a.tasks or a.warm_start:
@@ -310,12 +311,22 @@ def main(a):
         with torch.autocast("cuda", dtype=torch.bfloat16):
             loss, _ = net(batch)
         loss.backward()
-        if step == start + 1 and any(p.grad is None for p in params):
-            raise RuntimeError(
-                "A statically selected parameter did not receive a gradient"
-            )
+        if step == start + 1:
+            missing = [n for n, p in model.named_parameters() if p.requires_grad and p.grad is None]
+            if missing:
+                raise RuntimeError(f"Trainable parameters without gradients: {missing}")
+        audit = a.full_vlm and rank == 0 and step == start + 1
+        if audit:
+            probes = {"vision_patch": model.model.vision_tower.patch_embed.proj.weight,
+                      "language_first": model.model.vlm.layers[0].mlp.up_proj.weight}
+            before = {k: p.detach().flatten()[:4096].clone() for k, p in probes.items()}
         norm = torch.nn.utils.clip_grad_norm_(params, 1.0, error_if_nonfinite=True)
         optimizer.step()
+        if audit:
+            change = {k: (p.detach().flatten()[:4096] - before[k]).abs().max().item() for k, p in probes.items()}
+            if not all(x > 0 and np.isfinite(x) for x in change.values()):
+                raise RuntimeError(f"Full VLM update check failed: {change}")
+            print("first_update_max_abs", json.dumps(change), flush=True)
         if step == start + 1 or step % 25 == 0:
             totals = loss.detach().float().clone()
             dist.all_reduce(totals)
@@ -386,6 +397,7 @@ if __name__ == "__main__":
     p.add_argument("--save-every", type=int, default=256)
     p.add_argument("--val-windows", type=int, default=32)
     p.add_argument("--resume", action="store_true")
+    p.add_argument("--full-vlm", action="store_true", help="Train the full Qwen vision and language towers with activation checkpointing")
     p.add_argument("--hf-image-patches", action="store_true", help="Use Qwen's official still-image patch layout when adapting older weights")
     scope = p.add_mutually_exclusive_group()
     scope.add_argument("--task", help="One prepared official task")
