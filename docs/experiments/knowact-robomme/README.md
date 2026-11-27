@@ -1,6 +1,8 @@
 # KnowAct V7.1 在 RoboMME 上的四卡训练
 
-[成功率复核报告：谁取得了 50/50、逐回合证据与录像](success-rate-review-zh.md) · [打印版 PDF](success-rate-review-zh.pdf)
+**KnowAct 自主执行结果：** 在 PatternLock 的同一批测试回合（test/0–11）上，基线和三组短程续训均为 **0/12**，尚未验证模型成功率提升。测试集其余 38 个回合没有原生模型成绩。[原生模型逐回合结果](context-native.csv)
+
+完整示范跟踪器的 50/50 只作为任务可被轨迹复现的诊断，不计入 KnowAct 成绩，也不用于选模型。[评分归因复核与录像](success-rate-review-zh.md) · [打印版 PDF](success-rate-review-zh.pdf)
 
 [示范关节实验：同种子成功率、原模型与动作头录像、可复现命令](context-ablation.md)
 
