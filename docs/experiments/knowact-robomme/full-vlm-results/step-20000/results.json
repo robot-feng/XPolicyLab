@@ -1,0 +1,75 @@
+{
+  "step": 20000,
+  "train_ce": 0.028841804713010788,
+  "holdout_ce": 1.7218201160430908,
+  "episodes": [
+    {
+      "task": "MoveCube",
+      "split": "train",
+      "episode": 1,
+      "seed": 14100,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 258,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.028617940843105316,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "train",
+      "episode": 4,
+      "seed": 14400,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 236,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.067266084253788,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "val",
+      "episode": 1,
+      "seed": 1140100,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 262,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.05816546455025673,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    },
+    {
+      "task": "MoveCube",
+      "split": "val",
+      "episode": 8,
+      "seed": 1140800,
+      "difficulty": "easy",
+      "instruction": "watch the video carefully, then move the cube to the target in the same manner as before",
+      "demonstration_frames": 253,
+      "steps": 1301,
+      "status": "timeout",
+      "first_step": {},
+      "closest_tcp_to_cube_m": 0.1197391152381897,
+      "finger_opening_range_m": [
+        0.0,
+        0.07999999821186066
+      ]
+    }
+  ]
+}
